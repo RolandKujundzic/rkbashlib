@@ -14,20 +14,18 @@ function _git_checkout {
 	if test -d "$2"
 	then
 		cd "$2"
-		echo -e "\ngit pull $2"
+		echo "git pull $2"
 		git pull
 		cd "$CURR"
 	elif test -d "../../$2"
 	then
-		echo -e "\nlink to ../../$2"
+		echo "link to ../../$2"
 		ln -s "../../$2" "$2"
 		cd "$CURR"
 		_git_checkout "$1" "$2"
 	else
-		echo -e "\ngit clone $2"
+		echo "git clone $2"
 		git clone "$1/$2.git"
 	fi
-
-	echo -e "done.\n\n"
 }
 

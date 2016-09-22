@@ -4,7 +4,7 @@
 # Create ssh key authentication for server $1 (rk@server.tld).
 #------------------------------------------------------------------------------
 function _ssh_auth {
-	echo -e "\ncreate ssh keys for password less authentication"
+	echo "create ssh keys for password less authentication"
 
 	if ! test -f ~/.ssh/id_rsa.pub; then
 		echo "creating local public+private key: ~/.ssh/id_rsa[.pub] - type 3x ENTER"
@@ -23,7 +23,5 @@ function _ssh_auth {
 			ssh-copy-id -i ~/.ssh/id_rsa.pub $1
 		fi
 	fi
-
-	echo -e "done.\n\n"
 }
 
