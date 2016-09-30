@@ -20,31 +20,18 @@ function _package_json {
 	fi
 
 	local RUN_INSTALL=
-	local RUN_INSTALL_DEV=
 	local HAS_PKG=
 
-	for a in $NPM_PACKAGE; do
+	for a in $NPM_PACKAGE $NPM_PACKAGE_DEV; do
 		HAS_PKG=`grep $a package.json`
 		if ! test -z "$HAS_PKG"; then
 			RUN_INSTALL=1
 		fi
 	done
 
-	for a in $NPM_PACKAGE_DEV; do
-		HAS_PKG=`grep $a package.json`
-		if ! test -z "$HAS_PKG"; then
-			RUN_INSTALL_DEV=1
-		fi
-	done
-
 	if ! test -z "$RUN_INSTALL"; then
 		echo "run: npm install"
 		npm install
-	fi
-
-	if ! test -z "$RUN_INSTALL_DEV"; then
-		echo "run: npm install --dev"
-		npm install --dev
 	fi
 
 	for a in $NPM_PACKAGE; do
