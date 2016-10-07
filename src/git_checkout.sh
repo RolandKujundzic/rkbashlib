@@ -7,6 +7,9 @@
 # - if test/ exists: cd test; git pull test; cd ..
 # - if ../../test: ln -s ../../test; call again (goto 1st case)
 # - else: git clone rk@git.tld:/path/to/repo
+#
+# @param git url
+# @param local directory
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
