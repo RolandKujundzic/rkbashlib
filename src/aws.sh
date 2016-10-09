@@ -2,14 +2,12 @@
 
 #------------------------------------------------------------------------------
 # Install Amazon AWS PHP SDK
+#
+# @require composer
+# @require composer_pkg
 #------------------------------------------------------------------------------
 function _aws {
-
-	if ! test -f composer.phar; then
-		_composer
-	fi
-
-	echo "Install Amazon AWS PHP SDK with composer" 
-	php composer.phar require aws/aws-sdk-php
+	_composer
+	_composer_pkg aws/aws-sdk-php
 }
 
