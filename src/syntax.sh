@@ -4,7 +4,7 @@
 # Abort with SYNTAX: message.
 #------------------------------------------------------------------------------
 function _syntax {
-	echo -e "\nSYNTAX: $APP $1\n\n"
+	echo -e "\nSYNTAX: $APP $1\n\n" 1>&2
 	exit 1
 }
 

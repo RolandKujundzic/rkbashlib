@@ -4,7 +4,7 @@
 # Abort with error message.
 #------------------------------------------------------------------------------
 function _abort {
-	echo -e "\nABORT: $1\n\n" 
+	echo -e "\nABORT: $1\n\n" 1>&2
 	exit 1
 }
 
