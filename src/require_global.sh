@@ -7,7 +7,9 @@
 # @require abort
 #------------------------------------------------------------------------------
 function _require_global {
-	if test -z "${!1}"; then
-		_abort "No such global variable [$1]"
-	fi
+	for a in $1; do
+		if test -z "${!a}"; then
+			_abort "No such global variable $a"
+		fi
+	done
 }
