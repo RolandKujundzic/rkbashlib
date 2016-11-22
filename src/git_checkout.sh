@@ -27,7 +27,7 @@ function _git_checkout {
 		cd "$CURR"
 		_git_checkout "$1" "$2"
 	else
-		echo "git clone $2"
+		echo -e "git clone $2\nEnter password if necessary"
 		git clone "$1" "$2"
 	fi
 }
