@@ -3,8 +3,9 @@
 #-------------------------------------------------------------------------------
 # Install or update npm packages. Create package.json and README.md if missing.
 #
-# @export NPM_PACKAGE="pkg1 .. pkgN"
-# @export NPM_PACKAGE_DEV="pkg1 ... pkgN"
+# @global NPM_PACKAGE="pkg1 .. pkgN"
+# @global NPM_PACKAGE_GLOBAL="pkg1 .. pkgN"
+# @global NPM_PACKAGE_DEV="pkg1 ... pkgN"
 # @require _npm_module
 #-------------------------------------------------------------------------------
 function _package_json {
@@ -18,6 +19,10 @@ function _package_json {
 		echo "create: README.md - adjust content"
 		echo "ToDo" > README.md
 	fi
+
+	for a in $NPM_PACKAGE_GLOBAL; do
+		_npm_module $a -g
+	done
 
 	local RUN_INSTALL=
 	local HAS_PKG=
