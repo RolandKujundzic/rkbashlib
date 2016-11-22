@@ -31,10 +31,11 @@ function _git_checkout {
 		echo -e "git clone $2\nEnter password if necessary"
 		git clone "$1" "$2"
 		if ! test -z "$3"; then
-		cd "$2"
-		echo "run [$3] in $2"
-		$3
-		cd ..
+			cd "$2"
+			echo "run [$3] in $2"
+			$3
+			cd ..
+		fi
 	fi
 }
 
