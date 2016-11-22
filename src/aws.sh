@@ -3,8 +3,7 @@
 #------------------------------------------------------------------------------
 # Install Amazon AWS PHP SDK
 #
-# @require composer
-# @require composer_pkg
+# @require composer, composer_pkg
 #------------------------------------------------------------------------------
 function _aws {
 	_composer

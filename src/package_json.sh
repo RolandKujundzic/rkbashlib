@@ -3,10 +3,8 @@
 #-------------------------------------------------------------------------------
 # Install or update npm packages. Create package.json and README.md if missing.
 #
-# @global NPM_PACKAGE="pkg1 .. pkgN"
-# @global NPM_PACKAGE_GLOBAL="pkg1 .. pkgN"
-# @global NPM_PACKAGE_DEV="pkg1 ... pkgN"
-# @require _npm_module
+# @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
+# @require npm_module
 #-------------------------------------------------------------------------------
 function _package_json {
 

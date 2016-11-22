@@ -6,8 +6,7 @@
 # @param source path
 # @param target path
 # @param [md5] if set make md5 file comparison
-# @require abort
-# @require md5
+# @require abort, md5
 #------------------------------------------------------------------------------
 function _cp {
 

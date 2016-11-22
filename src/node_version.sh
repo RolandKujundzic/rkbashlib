@@ -3,12 +3,12 @@
 #------------------------------------------------------------------------------
 # Check node.js version. Update to NPM_VERSION
 #
-# @global NODE_VERSION
-# @global NPM_VERSION
-# @require ver3
-# @require abort
+# @global NODE_VERSION, NPM_VERSION
+# @require ver3, abort, require_global
 #------------------------------------------------------------------------------
 function _node_version {
+	_require_global "NODE_VERSION NPM_VERSION"
+
 	local CURR_NODE_VERSION=`node --version`
 	if [ $(ver3 $CURR_NODE_VERSION) -lt $(ver3 $NODE_VERSION) ]
 	then
