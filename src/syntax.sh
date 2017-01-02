@@ -4,6 +4,7 @@
 # Abort with SYNTAX: message.
 #
 # @global APP, APP_DESC
+# @param message
 #------------------------------------------------------------------------------
 function _syntax {
 	echo -e "\nSYNTAX: $APP $1\n\n" 1>&2
