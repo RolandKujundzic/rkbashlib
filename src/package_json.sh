@@ -2,6 +2,7 @@
 
 #-------------------------------------------------------------------------------
 # Install or update npm packages. Create package.json and README.md if missing.
+# Apply patches if patch/patch.sh exists.
 #
 # @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
 # @require npm_module
@@ -44,5 +45,12 @@ function _package_json {
 	for a in $NPM_PACKAGE_DEV; do
 		_npm_module $a --save-dev
 	done
+
+  if test -f patch/patch.sh; then
+    echo "Apply patches: patch/patch.sh"
+    cd patch
+    ./patch.sh
+    cd ..
+  fi
 }
 
