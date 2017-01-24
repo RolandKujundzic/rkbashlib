@@ -7,7 +7,7 @@
 # @param version number (nn.mm.kk)
 # @print int
 #------------------------------------------------------------------------------
-function ver3 {
+function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
 }
 
