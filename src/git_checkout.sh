@@ -10,6 +10,7 @@
 #
 # @param git url
 # @param local directory
+# @param after_checkout (e.g. "./run.sh build")
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
@@ -27,8 +28,14 @@ function _git_checkout {
 		cd "$CURR"
 		_git_checkout "$1" "$2"
 	else
-		echo "git clone $2"
+		echo -e "git clone $2\nEnter password if necessary"
 		git clone "$1" "$2"
+		if ! test -z "$3"; then
+			cd "$2"
+			echo "run [$3] in $2"
+			$3
+			cd ..
+		fi
 	fi
 }
 

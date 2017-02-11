@@ -1,6 +1,9 @@
 #!/bin/bash
 
-SCRIPT_NAME=`realpath "$0"`
+SCRIPT_NAME="$0"
+
+command -v realpath > /dev/null 2>&1 && SCRIPT_NAME=`realpath "$0"`
+
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
 . "$SCRIPT_DIR/src/abort.sh"

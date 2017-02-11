@@ -2,10 +2,10 @@
 
 #-------------------------------------------------------------------------------
 # Install or update npm packages. Create package.json and README.md if missing.
+# Apply patches if patch/patch.sh exists.
 #
-# @export NPM_PACKAGE="pkg1 .. pkgN"
-# @export NPM_PACKAGE_DEV="pkg1 ... pkgN"
-# @require _npm_module
+# @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
+# @require npm_module
 #-------------------------------------------------------------------------------
 function _package_json {
 
@@ -18,6 +18,10 @@ function _package_json {
 		echo "create: README.md - adjust content"
 		echo "ToDo" > README.md
 	fi
+
+	for a in $NPM_PACKAGE_GLOBAL; do
+		_npm_module $a -g
+	done
 
 	local RUN_INSTALL=
 	local HAS_PKG=
@@ -41,5 +45,12 @@ function _package_json {
 	for a in $NPM_PACKAGE_DEV; do
 		_npm_module $a --save-dev
 	done
+
+  if test -f patch/patch.sh; then
+    echo "Apply patches: patch/patch.sh"
+    cd patch
+    ./patch.sh
+    cd ..
+  fi
 }
 
