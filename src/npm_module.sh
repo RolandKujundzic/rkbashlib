@@ -2,6 +2,10 @@
 
 #------------------------------------------------------------------------------
 # Install npm module $1 (globally if $2 = -g)
+#
+# @sudo
+# @param npm module name
+# @param -g (optional) install globally
 #------------------------------------------------------------------------------
 function _npm_module {
 
