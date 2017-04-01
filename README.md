@@ -56,6 +56,7 @@ Create directory sh/run. Example:
 
 ```sh
 #!/bin/bash
+# (re)build with: /path/to/rkscript/merge2run "abort syntax custom.sh main.sh"
 MERGE2RUN="abort syntax custom.sh main.sh"
 
 #
