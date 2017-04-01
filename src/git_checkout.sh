@@ -11,6 +11,7 @@
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
+# @require abort
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
@@ -30,6 +31,11 @@ function _git_checkout {
 	else
 		echo -e "git clone $2\nEnter password if necessary"
 		git clone "$1" "$2"
+
+		if ! test -d "$2/.git"; then
+			_abort "git clone failed - no $2/.git directory"
+		fi
+
 		if ! test -z "$3"; then
 			cd "$2"
 			echo "run [$3] in $2"
