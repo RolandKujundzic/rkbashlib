@@ -5,7 +5,7 @@
 #
 # @param path
 #------------------------------------------------------------------------------
-function realpath_osx {
+function _realpath_osx {
 	local REALPATH=
 	local LINK=
 	local CURR=$PWD
