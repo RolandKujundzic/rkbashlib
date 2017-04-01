@@ -16,7 +16,7 @@ function _composer {
 	if ! test -f composer.phar; then
 		echo "install composer"
 		curl -sS https://getcomposer.org/installer | php
-  fi
+	fi
 
 	if test "$1" = "init"; then
 		php composer.phar require --dev apigen/apigen

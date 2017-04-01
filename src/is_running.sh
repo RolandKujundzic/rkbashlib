@@ -19,32 +19,32 @@
 #------------------------------------------------------------------------------
 function _is_running {
 
-  if test -z "$1"; then
-    _abort "no process name"
-  fi
+	if test -z "$1"; then
+		_abort "no process name"
+	fi
 
-  # use [a] = a to ignore "grep process"
-  local APACHE2='[a]pache2.*k start'
-  local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
-  local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
-  local NGINX='[n]ginx.*master process'
+	# use [a] = a to ignore "grep process"
+	local APACHE2='[a]pache2.*k start'
+	local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
+	local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
+	local NGINX='[n]ginx.*master process'
 
-  local IS_RUNNING=
+	local IS_RUNNING=
 
-  if ! test -z "$2"; then
+	if ! test -z "$2"; then
 		if test "$1" = "CUSTOM"; then
-    	IS_RUNNING=$(ps aux | grep -E "$2")
+			IS_RUNNING=$(ps aux | grep -E "$2")
 		elif test "$1" = "PORT"; then
 			IS_RUNNING=$(netstat -tulpn | grep ":$2")
 		fi
-  elif test -z "${!1}"; then
-    _abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
-  else
-    IS_RUNNING=$(ps aux | grep -E "${!1}")
-  fi
+	elif test -z "${!1}"; then
+		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
+	else
+		IS_RUNNING=$(ps aux | grep -E "${!1}")
+	fi
 
-  if ! test -z "$IS_RUNNING"; then
-    echo "$1_running"
-  fi
+	if ! test -z "$IS_RUNNING"; then
+		echo "$1_running"
+	fi
 }
 

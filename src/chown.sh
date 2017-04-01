@@ -22,7 +22,7 @@ function _chown {
 	fi
 
 	local CURR_OWNER=$(stat -c '%U' "$2")
-  local CURR_GROUP=$(stat -c '%G' "$3")
+	local CURR_GROUP=$(stat -c '%G' "$3")
 
 	if test -z "$CURR_OWNER" || test -z "$CURR_GROUP"
 	then

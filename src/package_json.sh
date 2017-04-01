@@ -46,11 +46,11 @@ function _package_json {
 		_npm_module $a --save-dev
 	done
 
-  if test -f patch/patch.sh; then
-    echo "Apply patches: patch/patch.sh"
-    cd patch
-    ./patch.sh
-    cd ..
-  fi
+	if test -f patch/patch.sh; then
+		echo "Apply patches: patch/patch.sh"
+		cd patch
+		./patch.sh
+		cd ..
+	fi
 }
 

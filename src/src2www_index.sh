@@ -16,7 +16,7 @@ function _src2www_index {
 		cat www_src/app_header.html >> www/index.html
 	fi
 
-  cat www_src/main.html >> www/index.html
+	cat www_src/main.html >> www/index.html
 
 	if test -f www_src/app_footer.html; then
 		cat www_src/app_footer.html >> www/index.html
