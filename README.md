@@ -60,8 +60,7 @@ Create directory sh/run. Example:
 MERGE2RUN="abort syntax custom.sh main.sh"
 
 #
-# Only abort is from rkscript. Include custom.sh, syntax.sh and main.sh from 
-# sh/run/. 
+# Only abort is from rkscript. Include custom.sh, syntax.sh and main.sh from sh/run/. 
 #
 
 ```
