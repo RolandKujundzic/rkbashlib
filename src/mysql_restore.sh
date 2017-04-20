@@ -5,7 +5,7 @@
 #
 # @param dump_archive
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, extract_tgz, cd, cp, rm, mkdir, mysql_load
+# @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
@@ -18,6 +18,13 @@ function _mysql_restore {
 	_cd $TMP_DIR
 
 	_extract_tgz "$FILE" "tables.txt"
+
+	cat create_tables.sql | sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' > create_tables.fix.sql
+	local IS_DIFFERENT=`cmp -b create_tables.sql create_tables.fix.sql`
+
+	if ! test -z "$IS_DIFFERENT"; then
+		_mv create_tables.fix.sql create_tables.sql
+	fi
 
 	for a in `cat tables.txt`
 	do
