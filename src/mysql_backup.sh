@@ -14,7 +14,7 @@ function _mysql_backup {
 
 	local DUMP="mysql_dump."`date +"%H%M"`".tgz"
 	local DAILY_DUMP="mysql_dump."`date +"%Y%m%d"`".tgz"
-	local FILES="'tables.txt'"
+	local FILES="tables.txt"
 
 	if test -f "tables.txt"; then
 		_abort "last dump failed or is still running"
@@ -27,18 +27,20 @@ function _mysql_backup {
 	# dump structure
 	echo "create_tables.sql" > tables.txt
 	_mysql_dump "create_tables.sql" "-d"
-	FILES="$FILES 'create_tables.sql'"
+	FILES="$FILES create_tables.sql"
 
 	for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
 	do
 		# dump table
 		echo "$T" >> tables.txt
 		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE $T"
-		FILES="$FILES '$T"".sql'"
+		FILES="$FILES $T"".sql"
 	done
 
 	echo "archive database dump as $DUMP"
-	tar -czf "$DUMP" $FILES || _abort "tar -czf '$DUMP' $FILES failed"
+	SECONDS=0
+	tar -czf $DUMP $FILES || _abort "tar -czf $DUMP $FILES failed"
+	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	_cp "$DUMP" "$DAILY_DUMP"
 
