@@ -8,7 +8,7 @@
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, cd, cp, mysql_dump
+# @require abort, cd, cp, mysql_dump, create_tgz, rm
 #------------------------------------------------------------------------------
 function _mysql_backup {
 
@@ -37,15 +37,9 @@ function _mysql_backup {
 		FILES="$FILES $T"".sql"
 	done
 
-	echo "archive database dump as $DUMP"
-	SECONDS=0
-	tar -czf $DUMP $FILES || _abort "tar -czf $DUMP $FILES failed"
-	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
-
+	_create_tgz $DUMP "$FILES"
 	_cp "$DUMP" "$DAILY_DUMP"
-
-	# cleanup
-	rm $FILES
+	_rm "$FILES"
 
 	_cd
 }
