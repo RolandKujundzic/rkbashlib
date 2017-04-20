@@ -9,13 +9,13 @@
 # @require abort
 #------------------------------------------------------------------------------
 function _cd {
-	LAST_DIR="$PWD"
+	echo "cd '$1'"
 
-	if ! test -z "$1"
+	if test -z "$1"
 	then
 		if ! test -z "$LAST_DIR"
 		then
-			_cp "$LAST_DIR"
+			_cd "$LAST_DIR"
 			return
 		else
 			_abort "empty directory path"
@@ -26,7 +26,8 @@ function _cd {
 		_abort "no such directory [$1]"
 	fi
 
-	echo "cd '$1'"
+	LAST_DIR="$PWD"
+
 	cd "$1" || _abort "cd '$1' failed"
 }
 
