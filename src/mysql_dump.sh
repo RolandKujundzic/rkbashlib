@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 # Create mysql dump. Abort if error.
 #
-# @param path
+# @param save_path
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
@@ -16,7 +16,9 @@ function _mysql_dump {
 	fi
 
 	echo "mysqldump $2 ... > $1"
+	SECONDS=0
 	mysqldump $2 $MYSQL_CONN > "$1" || _abort "mysqldump $2 ... > $1 failed"
+	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
 		_abort "no such dump [$1]"
