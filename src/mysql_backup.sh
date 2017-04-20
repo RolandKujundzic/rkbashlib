@@ -22,7 +22,7 @@ function _mysql_backup {
 
 	_cd $1
 
-	echo "update $DUMP and $DAILY_DUMP" > $LOCK
+	echo "update $DUMP and $DAILY_DUMP"
 
 	# dump structure
 	echo "create_tables.sql" > tables.txt
@@ -32,8 +32,8 @@ function _mysql_backup {
 	for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
 	do
 		# dump table
-		echo $T >> tables.txt
-		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE"
+		echo "$T" >> tables.txt
+		_mysql_dump "'$T"".sql'" "--extended-insert=FALSE --no-create-info=TRUE '$T'"
 		FILES="$FILES '$T'"
 	done
 
