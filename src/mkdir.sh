@@ -4,6 +4,7 @@
 # Create directory (including parent directories) if directory does not exists.
 #
 # @param path
+# @param abort_if_exists (optional - if set abort if directory already exists)
 # @require abort
 #------------------------------------------------------------------------------
 function _mkdir {
@@ -16,7 +17,12 @@ function _mkdir {
 		echo "mkdir -p $1"
 		mkdir -p $1 || _abort "mkdir -p '$1'"
 	else
-		echo "directory $1 already exists"
+		if test -z "$2"
+		then
+			echo "directory $1 already exists"
+		else
+			_abort "directory $1 already exists"
+		fi
 	fi
 }
 
