@@ -25,7 +25,7 @@ function _mysql_backup {
 	echo "update $DUMP and $DAILY_DUMP"
 
 	# dump structure
-	echo "create_tables.sql" > tables.txt
+	echo "create_tables" > tables.txt
 	_mysql_dump "create_tables.sql" "-d"
 	FILES="$FILES create_tables.sql"
 
