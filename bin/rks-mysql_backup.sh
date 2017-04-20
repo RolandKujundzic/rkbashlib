@@ -22,13 +22,13 @@ function _abort {
 # @require abort
 #------------------------------------------------------------------------------
 function _cd {
-	LAST_DIR="$PWD"
+	echo "cd '$1'"
 
-	if ! test -z "$1"
+	if test -z "$1"
 	then
 		if ! test -z "$LAST_DIR"
 		then
-			_cp "$LAST_DIR"
+			_cd "$LAST_DIR"
 			return
 		else
 			_abort "empty directory path"
@@ -39,7 +39,8 @@ function _cd {
 		_abort "no such directory [$1]"
 	fi
 
-	echo "cd '$1'"
+	LAST_DIR="$PWD"
+
 	cd "$1" || _abort "cd '$1' failed"
 }
 
@@ -89,7 +90,7 @@ function _cp {
 #------------------------------------------------------------------------------
 # Create mysql dump. Abort if error.
 #
-# @param path
+# @param save_path
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
@@ -102,7 +103,9 @@ function _mysql_dump {
 	fi
 
 	echo "mysqldump $2 ... > $1"
+	SECONDS=0
 	mysqldump $2 $MYSQL_CONN > "$1" || _abort "mysqldump $2 ... > $1 failed"
+	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
 		_abort "no such dump [$1]"
@@ -137,7 +140,7 @@ function _mysql_backup {
 
 	_cd $1
 
-	echo "update $DUMP and $DAILY_DUMP" > $LOCK
+	echo "update $DUMP and $DAILY_DUMP"
 
 	# dump structure
 	echo "create_tables.sql" > tables.txt
@@ -147,8 +150,8 @@ function _mysql_backup {
 	for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
 	do
 		# dump table
-		echo $T >> tables.txt
-		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE"
+		echo "$T" >> tables.txt
+		_mysql_dump "'$T"".sql'" "--extended-insert=FALSE --no-create-info=TRUE '$T'"
 		FILES="$FILES '$T'"
 	done
 
