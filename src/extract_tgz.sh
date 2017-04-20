@@ -1,10 +1,11 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Extract tgz archive $1
+# Extract tgz archive $1. If second parameter is existing directory, remove
+# before extraction.
 #
 # @param tgz_file
-# @param dirname (optional - if set check if directory was created)
+# @param path (optional - if set check if path was created)
 # @require abort, rm
 #------------------------------------------------------------------------------
 function _extract_tgz {
@@ -13,7 +14,7 @@ function _extract_tgz {
 		_abort "Invalid archive path [$1]"
 	fi
 
-	if ! test -z "$2" && test -d "$2"; then
+	if [ ! -z "$2" && -d $2 ]; then
 		_rm "$2"
 	fi
 
@@ -24,8 +25,8 @@ function _extract_tgz {
 
 	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
 
-	if ! test -z "$2" && ! test -d "$2"; then
-		_abort "Directory $2 was not created"
+	if [ ! -z "$2" && [ ! -d "$2" || ! -f "$2"]]; then
+		_abort "Path $2 was not created"
 	fi
 }
 
