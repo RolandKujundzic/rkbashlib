@@ -64,7 +64,7 @@ function _cp {
 		local MD2=`_md5 "$2"`
 
 		if test "$MD1" = "$MD2"; then
-			echo "Do not overwrite $1 with $2 (same content)"
+			echo "Do not overwrite $2 with $1 (same content)"
 		else
 			echo "Copy file $1 to $2 (update)"
 			cp "$1" "$2" || _abort "cp '$1' '$2'"
@@ -92,6 +92,7 @@ function _build {
 	./merge2run.sh "$2 $1"
 	chmod 755 run.sh
 	_cp run.sh "$BIN" md5
+	rm run.sh
 }
 
 
@@ -101,4 +102,4 @@ function _build {
 
 test -d bin || mkdir bin
 
-_build bin/rks-mysql_backup "abort cd cp mysql_dump mysql_backup" 
+_build rks-mysql_backup "abort cd cp mysql_dump mysql_backup" 
