@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="copyright abort extract_tgz cd cp rm mkdir mysql_load rks-mysql_restore"
+MERGE2RUN="copyright abort extract_tgz cd cp rm mkdir mv mysql_load mysql_restore rks-mysql_restore"
 
 
 #
@@ -179,6 +179,33 @@ function _mkdir {
 
 
 #------------------------------------------------------------------------------
+# Move files/directories. Target path directory must exist.
+#
+# @param source_path
+# @param target_path
+# @require abort
+#------------------------------------------------------------------------------
+function _mv {
+
+	if test -z "$1"; then
+		_abort "Empty source path"
+	fi
+
+	if test -z "$2"; then
+		_abort "Empty target path"
+	fi
+
+	local PDIR=`dirname "$2"`
+	if ! test -d "$PDIR"; then
+		_abort "No such directory [$PDIR]"
+	fi
+
+	echo "mv '$1' '$2'"
+	mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+}
+
+
+#------------------------------------------------------------------------------
 # Load mysql dump. Abort if error.
 #
 # @param dump_file
@@ -205,6 +232,42 @@ function _mysql_load {
 	SECONDS=0
 	mysql $MYSQL_CONN < "$1" || _abort "mysql ... < $1 failed"
 	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+}
+
+
+#------------------------------------------------------------------------------
+# Restore mysql database. Use mysql_dump.TS.tgz created with mysql_backup.
+#
+# @param dump_archive
+# @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
+# @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
+#------------------------------------------------------------------------------
+function _mysql_restore {
+
+	local TMP_DIR="/tmp/mysql_dump"
+	local FILE=`basename $1`
+
+	_mkdir $TMP_DIR 1
+	_cp "$1" "$TMP_DIR/$FILE"
+
+	_cd $TMP_DIR
+
+	_extract_tgz "$FILE" "tables.txt"
+
+	cat create_tables.sql | sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' > create_tables.fix.sql
+	local IS_DIFFERENT=`cmp -b create_tables.sql create_tables.fix.sql`
+
+	if ! test -z "$IS_DIFFERENT"; then
+		_mv create_tables.fix.sql create_tables.sql
+	fi
+
+	for a in `cat tables.txt`
+	do
+		_mysql_load $a
+	done
+
+	_cd
+	_rm $TMP_DIR
 }
 
 
