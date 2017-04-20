@@ -33,8 +33,8 @@ function _mysql_backup {
 	do
 		# dump table
 		echo "$T" >> tables.txt
-		_mysql_dump "'$T"".sql'" "--extended-insert=FALSE --no-create-info=TRUE '$T'"
-		FILES="$FILES '$T'"
+		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE $T"
+		FILES="$FILES '$T"".sql'"
 	done
 
 	echo "archive database dump as $DUMP"
