@@ -134,7 +134,7 @@ function _mysql_dump {
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	mysqldump $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
+	nice -n 10 ionice -c2 -n 7 mysqldump --single-transaction --quick $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
 	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
