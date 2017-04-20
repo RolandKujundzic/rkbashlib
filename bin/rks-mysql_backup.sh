@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="abort cd cp mysql_dump mysql_backup rks-mysql_backup"
+MERGE2RUN="abort cd cp create_tgz mysql_dump mysql_backup rm rks-mysql_backup"
 
 
 #------------------------------------------------------------------------------
@@ -88,6 +88,36 @@ function _cp {
 
 
 #------------------------------------------------------------------------------
+# Create tgz archive $1 with files from file/directory list $2.
+#
+# @param tgz_file
+# @param directory/file list
+# @require abort
+#------------------------------------------------------------------------------
+function _create_tgz {
+
+	for a in $2
+	do
+		if ! test -f $a && ! test -d $a
+		then
+			_abort "No such file or directory $a"
+		fi
+	done
+
+	if test -z "$1"; then
+		_abort "Empty archive path"
+	fi
+
+  echo "create archive $1"
+  SECONDS=0
+  tar -czf $1 $2 || _abort "tar -czf $1 $2 failed"
+  echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+
+	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
+}
+
+
+#------------------------------------------------------------------------------
 # Create mysql dump. Abort if error.
 #
 # @param save_path
@@ -126,7 +156,7 @@ function _mysql_dump {
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, cd, cp, mysql_dump
+# @require abort, cd, cp, mysql_dump, create_tgz, rm
 #------------------------------------------------------------------------------
 function _mysql_backup {
 
@@ -155,17 +185,39 @@ function _mysql_backup {
 		FILES="$FILES $T"".sql"
 	done
 
-	echo "archive database dump as $DUMP"
-	SECONDS=0
-	tar -czf $DUMP $FILES || _abort "tar -czf $DUMP $FILES failed"
-	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
-
+	_create_tgz $DUMP "$FILES"
 	_cp "$DUMP" "$DAILY_DUMP"
-
-	# cleanup
-	rm $FILES
+	_rm "$FILES"
 
 	_cd
+}
+
+
+#------------------------------------------------------------------------------
+# Remove files/directories.
+#
+# @param path_list
+# @param int (optional - abort if set and path is invalid)
+# @require abort
+#------------------------------------------------------------------------------
+function _rm {
+
+	if test -z "$1"; then
+		_abort "Empty remove path list"
+	fi
+
+	for a in $1
+	do
+		if ! test -f $a && ! test -d $a
+		then
+			if ! test -z "$2"; then
+				_abort "No such file or directory $a"
+			fi
+		else
+			echo "remove $a"
+			rm -rf $a
+		fi
+	done
 }
 
 
