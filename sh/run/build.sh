@@ -17,4 +17,5 @@ function _build {
 
 test -d bin || mkdir bin
 
-_build rks-mysql_backup "abort cd cp mysql_dump mysql_backup" 
+_build rks-mysql_backup "abort cd cp create_tgz mysql_dump mysql_backup rm"
+_build rks-mysql_restore "abort extract_tgz cd cp rm mkdir mysql_load"
