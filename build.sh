@@ -2,6 +2,11 @@
 MERGE2RUN="abort md5 cp build"
 
 
+#
+# Copyright (c) 2017 Roland Kujundzic <roland@kujundzic.de>
+#
+
+
 #------------------------------------------------------------------------------
 # Abort with error message.
 #
@@ -89,7 +94,7 @@ function _cp {
 function _build {
 	local BIN="bin/$1"".sh"
 
-	./merge2run.sh "$2 $1"
+	./merge2run.sh "copyright $2 $1"
 	chmod 755 run.sh
 	_cp run.sh "$BIN" md5
 	rm run.sh

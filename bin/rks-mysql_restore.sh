@@ -1,5 +1,10 @@
 #!/bin/bash
-MERGE2RUN="abort extract_tgz cd cp rm mkdir mysql_load rks-mysql_restore"
+MERGE2RUN="copyright abort extract_tgz cd cp rm mkdir mysql_load rks-mysql_restore"
+
+
+#
+# Copyright (c) 2017 Roland Kujundzic <roland@kujundzic.de>
+#
 
 
 #------------------------------------------------------------------------------

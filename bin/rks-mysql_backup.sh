@@ -1,5 +1,10 @@
 #!/bin/bash
-MERGE2RUN="abort cd cp create_tgz mysql_dump mysql_backup rm rks-mysql_backup"
+MERGE2RUN="copyright abort cd cp create_tgz mysql_dump mysql_backup rm rks-mysql_backup"
+
+
+#
+# Copyright (c) 2017 Roland Kujundzic <roland@kujundzic.de>
+#
 
 
 #------------------------------------------------------------------------------
