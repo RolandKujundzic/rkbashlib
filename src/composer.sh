@@ -5,12 +5,13 @@
 # and phpunit/phpunit. Use install if 
 #
 # @param [|init|remove|install] (optional - default = empty)
+# @require rm
 #------------------------------------------------------------------------------
 function _composer {
 
 	if test "$1" = "remove"; then
 		echo "remove composer"
-		rm -rf composer.phar vendor composer.lock ~/.composer
+		_rm "composer.phar vendor composer.lock ~/.composer"
 	fi
 
 	if ! test -f composer.phar; then
