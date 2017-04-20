@@ -15,9 +15,9 @@ function _mysql_dump {
 		_abort "mysql connection string MYSQL_CONN is empty"
 	fi
 
-	echo "mysqldump $2 ... > $1"
+	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	mysqldump $2 $MYSQL_CONN > "$1" || _abort "mysqldump $2 ... > $1 failed"
+	mysqldump $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
 	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
