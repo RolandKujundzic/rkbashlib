@@ -14,7 +14,7 @@ function _extract_tgz {
 		_abort "Invalid archive path [$1]"
 	fi
 
-	if [ ! -z "$2" && -d $2 ]; then
+	if ! test -z "$2" && test -d $2; then
 		_rm "$2"
 	fi
 
@@ -25,8 +25,10 @@ function _extract_tgz {
 
 	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
 
-	if [ ! -z "$2" && [ ! -d "$2" || ! -f "$2"]]; then
-		_abort "Path $2 was not created"
+	if ! test -z "$2"; then
+		if ! test -d "$2" && ! test -f "$2"; then
+			_abort "Path $2 was not created"
+		fi
 	fi
 }
 
