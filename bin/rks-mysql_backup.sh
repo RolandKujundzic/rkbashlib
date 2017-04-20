@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="copyright abort cd cp create_tgz mysql_dump mysql_backup rm rks-mysql_backup"
+MERGE2RUN="copyright abort cd cp create_tgz rm mysql_dump mysql_backup rks-mysql_backup"
 
 
 #
@@ -123,6 +123,34 @@ function _create_tgz {
 
 
 #------------------------------------------------------------------------------
+# Remove files/directories.
+#
+# @param path_list
+# @param int (optional - abort if set and path is invalid)
+# @require abort
+#------------------------------------------------------------------------------
+function _rm {
+
+	if test -z "$1"; then
+		_abort "Empty remove path list"
+	fi
+
+	for a in $1
+	do
+		if ! test -f $a && ! test -d $a
+		then
+			if ! test -z "$2"; then
+				_abort "No such file or directory $a"
+			fi
+		else
+			echo "remove $a"
+			rm -rf $a
+		fi
+	done
+}
+
+
+#------------------------------------------------------------------------------
 # Create mysql dump. Abort if error.
 #
 # @param save_path
@@ -195,34 +223,6 @@ function _mysql_backup {
 	_rm "$FILES"
 
 	_cd
-}
-
-
-#------------------------------------------------------------------------------
-# Remove files/directories.
-#
-# @param path_list
-# @param int (optional - abort if set and path is invalid)
-# @require abort
-#------------------------------------------------------------------------------
-function _rm {
-
-	if test -z "$1"; then
-		_abort "Empty remove path list"
-	fi
-
-	for a in $1
-	do
-		if ! test -f $a && ! test -d $a
-		then
-			if ! test -z "$2"; then
-				_abort "No such file or directory $a"
-			fi
-		else
-			echo "remove $a"
-			rm -rf $a
-		fi
-	done
 }
 
 
