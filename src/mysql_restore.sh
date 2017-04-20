@@ -28,7 +28,7 @@ function _mysql_restore {
 
 	for a in `cat tables.txt`
 	do
-		_mysql_load $a
+		_mysql_load $a".sql"
 	done
 
 	_cd
