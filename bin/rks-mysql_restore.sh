@@ -208,7 +208,8 @@ function _mv {
 
 
 #------------------------------------------------------------------------------
-# Load mysql dump. Abort if error.
+# Load mysql dump. Abort if error. If restore.sh exists append load command to 
+# restore.sh
 #
 # @param dump_file
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
@@ -230,10 +231,15 @@ function _mysql_load {
 		_abort "invalid mysql dump [$1]"
 	fi
 
-	echo "mysql ... < $1"
-	SECONDS=0
-	mysql $MYSQL_CONN < "$1" || _abort "mysql ... < $1 failed"
-	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+	if test -f "restore.sh"; then
+		echo "add $1 to restore.sh"
+		echo "mysql $MYSQL_CONN < $1 &" >> restore.sh
+	else
+		echo "mysql ... < $1"
+		SECONDS=0
+		mysql $MYSQL_CONN < "$1" || _abort "mysql ... < $1 failed"
+		echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+	fi
 }
 
 
@@ -241,6 +247,7 @@ function _mysql_load {
 # Restore mysql database. Use mysql_dump.TS.tgz created with mysql_backup.
 #
 # @param dump_archive
+# @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
 #------------------------------------------------------------------------------
@@ -266,10 +273,19 @@ function _mysql_restore {
 	for a in `cat tables.txt`
 	do
 		_mysql_load $a".sql"
+
+		if ! test -z "$2" && test "$a" = "create_tables"; then
+			echo "create restore.sh"
+			echo "#!/bin/bash" > restore.sh
+			chmod 755 restore.sh
+		fi
 	done
 
 	_cd
-	_rm $TMP_DIR
+
+	if test -z "$2"; then
+		_rm $TMP_DIR
+	fi
 }
 
 
