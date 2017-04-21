@@ -25,6 +25,8 @@ function _mysql_restore {
 
 	if ! test -z "$IS_DIFFERENT"; then
 		_mv create_tables.fix.sql create_tables.sql
+	else
+		_rm create_tables.fix.sql
 	fi
 
 	for a in `cat tables.txt`
@@ -42,6 +44,8 @@ function _mysql_restore {
 
 	if test -z "$2"; then
 		_rm $TMP_DIR
+	else
+		_rm "$TMP_DIR/create_tables.sql $TMP_DIR/$FILE $TMP_DIR/tables.txt"
 	fi
 }
 
