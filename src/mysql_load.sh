@@ -26,7 +26,7 @@ function _mysql_load {
 
 	if test -f "restore.sh"; then
 		echo "add $1 to restore.sh"
-		echo "mysql $MYSQL_CONN < $1 &" >> restore.sh
+		echo "mysql $MYSQL_CONN < $1 && rm $1 &" >> restore.sh
 	else
 		echo "mysql ... < $1"
 		SECONDS=0
