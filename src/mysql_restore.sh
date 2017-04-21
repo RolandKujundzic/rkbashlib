@@ -4,6 +4,7 @@
 # Restore mysql database. Use mysql_dump.TS.tgz created with mysql_backup.
 #
 # @param dump_archive
+# @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
 #------------------------------------------------------------------------------
@@ -29,9 +30,18 @@ function _mysql_restore {
 	for a in `cat tables.txt`
 	do
 		_mysql_load $a".sql"
+
+		if ! test -z "$2" && test "$a" = "create_tables"; then
+			echo "create restore.sh"
+			echo "#!/bin/bash" > restore.sh
+			chmod 755 restore.sh
+		fi
 	done
 
 	_cd
-	_rm $TMP_DIR
+
+	if test -z "$2"; then
+		_rm $TMP_DIR
+	fi
 }
 
