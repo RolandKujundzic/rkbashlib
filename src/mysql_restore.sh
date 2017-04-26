@@ -31,6 +31,7 @@ function _mysql_restore {
 
 	for a in `cat tables.txt`
 	do
+		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load $a".sql"
 
 		if ! test -z "$2" && test "$a" = "create_tables"; then
@@ -40,12 +41,35 @@ function _mysql_restore {
 		fi
 	done
 
+  if ! test -z "$2"; then
+    echo "start table imports in background"  
+    . restore.sh
+
+    _rm "create_tables.sql"
+    local IMPORT=1
+    SECONDS=0
+
+    while test "$IMPORT" = "1"
+    do
+      IMPORT=0
+      for a in `cat tables.txt`
+      do
+        # sql file is removed after successfull import
+        if test -f $a".sql"; then
+          IMPORT=1
+        else
+          echo "$a import finished"
+        fi
+      done
+
+      sleep 10
+    done
+
+    echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+  fi
+
 	_cd
 
-	if test -z "$2"; then
-		_rm $TMP_DIR
-	else
-		_rm "$TMP_DIR/create_tables.sql $TMP_DIR/$FILE $TMP_DIR/tables.txt"
-	fi
+	_rm $TMP_DIR
 }
 
