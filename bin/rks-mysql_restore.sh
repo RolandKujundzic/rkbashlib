@@ -232,8 +232,9 @@ function _mysql_load {
 	fi
 
 	if test -f "restore.sh"; then
+		local LOG="$1"".log"
 		echo "add $1 to restore.sh"
-		echo "mysql $MYSQL_CONN < $1 &" >> restore.sh
+		echo "mysql $MYSQL_CONN < $1 &> $LOG && rm $1 &" >> restore.sh
 	else
 		echo "mysql ... < $1"
 		SECONDS=0
@@ -268,10 +269,13 @@ function _mysql_restore {
 
 	if ! test -z "$IS_DIFFERENT"; then
 		_mv create_tables.fix.sql create_tables.sql
+	else
+		_rm create_tables.fix.sql
 	fi
 
 	for a in `cat tables.txt`
 	do
+		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load $a".sql"
 
 		if ! test -z "$2" && test "$a" = "create_tables"; then
@@ -281,11 +285,36 @@ function _mysql_restore {
 		fi
 	done
 
+  if ! test -z "$2"; then
+    echo "start table imports in background"  
+    . restore.sh
+
+    _rm "create_tables.sql"
+    local IMPORT=1
+    SECONDS=0
+
+    while test "$IMPORT" = "1"
+    do
+      IMPORT=0
+      for a in `cat tables.txt`
+      do
+        # sql file is removed after successfull import
+        if test -f $a".sql"; then
+          IMPORT=1
+        else
+          echo "$a import finished"
+        fi
+      done
+
+      sleep 10
+    done
+
+    echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+  fi
+
 	_cd
 
-	if test -z "$2"; then
-		_rm $TMP_DIR
-	fi
+	_rm $TMP_DIR
 }
 
 
@@ -295,5 +324,14 @@ function _mysql_restore {
 
 MYSQL_CONN="-h localhost -u DBUSER -pDBPASS DBNAME"
 
-_mysql_restore /path/to/mysql_dump.sql
+BACKUP_TODAY="/path/to/mysql_dump."`date +"%Y%m%d"`".tgz"
+BACKUP_YESTERDAY="/path/to/mysql_dump."`date --date='-1 day' +"%Y%m%d"`".tgz"
+
+if test -f "$BACKUP_TODAY"; then
+  _mysql_restore "$BACKUP_TODAY" 1
+elif test -f "$BACKUP_YESTERDAY"; then
+  _mysql_restore "$BACKUP_YESTERDAY" 1
+else
+  _abort "neither yesterdays ($BACKUP_YESTERDAY) nor todays ($BACKUP_TODAY) backup found"
+fi
 
