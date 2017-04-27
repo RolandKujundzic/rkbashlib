@@ -5,8 +5,10 @@
 #------------------------------------------------------------------------------
 function _mb_check {
 
-	echo -e "\nSearch all *.php files in src/ - output filename if string function\nmight need to be replaced with mb_* version\n"
-	sleep 5
+	echo -e "\nSearch all *.php files in src/ - output filename if string function\nmight need to be replaced with mb_* version.\n"
+	echo -e "Type any key to continue or wait 5 sec.\n"
+
+	read -n1 -t 5 ignore_keypress
 
 	# do not use ereg*
 	MB_FUNCTIONS="parse_str split stripos stristr strlen strpos strrchr strrichr strripos strrpos strstr strtolower strtoupper strwidth substr_count substr"
