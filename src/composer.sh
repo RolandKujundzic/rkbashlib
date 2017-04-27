@@ -41,7 +41,7 @@ function _composer {
 		fi
 
  		echo -e "[q] = quit\n\n"
-		echo -n "If type ENTER or wait 10 sec [$DO] will be selected. Your Choice? "
+		echo -n "Type ENTER or wait 10 sec to select default. Your Choice? [$DO]  "
 		read -n1 -t 10 USER_DO
 		echo
 
