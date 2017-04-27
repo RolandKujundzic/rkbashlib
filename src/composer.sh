@@ -1,10 +1,11 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Install composer (getcomposer.org). Use init parameter to install apigen/apigen
-# and phpunit/phpunit. Use install if 
+# Install composer (getcomposer.org). If no parameter is given ask for action
+# or execute default action (install composer if missing otherwise update) after
+# 10 sec. 
 #
-# @param [|init|remove|install] (optional - default = empty)
+# @param [install|update|remove] (empty = default = update or install)
 # @require rm
 #------------------------------------------------------------------------------
 function _composer {
@@ -21,24 +22,28 @@ function _composer {
 
 		if test -z "$GLOBAL_COMPOSER" && test -z "$LOCAL_COMPOSER"; then
 			DO=l
-			echo "[g]+ENTER = global composer installation: /usr/local/bin/composer"
-			echo "[l]+ENTER = local composer installation: composer.phar"
+			echo "[g] = global composer installation: /usr/local/bin/composer"
+			echo "[l] = local composer installation: composer.phar"
 		else
-			DO=u
-
 			if test -f composer.json; then
-				echo "[i]+ENTER = install packages from composer.json"
-				echo "[u]+ENTER = update packages from composer.json"
+				DO=i
+				if test -d vendor; then
+					DO=u
+				fi
+
+				echo "[i] = install packages from composer.json"
+				echo "[u] = update packages from composer.json"
 			fi
 
 			if ! test -z "$LOCAL_COMPOSER"; then
-				echo "[r]+ENTER = remove local composer.phar"
+				echo "[r] = remove local composer.phar"
 			fi
 		fi
 
- 		echo -e "[q]+ENTER = quit\n\n"
-		echo -n "If you wait 10 sec [$DO] will be selected. Your Choice? "
-		read -t 10 USER_DO
+ 		echo -e "[q] = quit\n\n"
+		echo -n "If type ENTER or wait 10 sec [$DO] will be selected. Your Choice? "
+		read -n1 -t 10 USER_DO
+		echo
 
 		if ! test -z "$USER_DO"; then
 			DO=$USER_DO
@@ -81,14 +86,10 @@ function _composer {
 		COMPOSER="composer"
 	fi
 
-	if test "$DO" = "init" || test "$DO" = "d"; then
-		$COMPOSER require --dev apigen/apigen
-	fi
-
 	if test -f composer.json; then
 		if test "$DO" = "install" || test "$DO" = "i"; then
 			$COMPOSER install
-		elif test "$DO" = "u"; then
+		elif test "$DO" = "update" || test "$DO" = "u"; then
 			$COMPOSER update
 		fi
 	fi
