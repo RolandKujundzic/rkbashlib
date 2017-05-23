@@ -34,8 +34,14 @@ function _cp {
     echo "Copy file $1 to $2"
 		cp "$1" "$2" || _abort "cp '$1' '$2'"
 	elif test -d "$1"; then
-		echo "Copy directory $1 to $2"
-		cp -r "$1" "$2" || _abort "cp -r '$1' '$2'"
+		if test -d "$2"; then
+			local PDIR=`dirname $2`"/"
+			echo "Copy directory $1 to $PDIR"
+			cp -r "$1" "$PDIR" || _abort "cp -r '$1' '$PDIR'"
+		else
+			echo "Copy directory $1 to $2"
+			cp -r "$1" "$2" || _abort "cp -r '$1' '$2'"
+		fi
 	else
 		_abort "No such file or directory [$1]"
   fi
