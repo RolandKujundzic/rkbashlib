@@ -3,14 +3,21 @@
 #------------------------------------------------------------------------------
 # Install files from APP_FILE_LIST and APP_DIR_LIST to APP_PREFIX.
 #
-# @param string app dir
-# @param string app url
-# @global APP_PREFIX, APP_FILE_LIST, APP_DIR_LIST
-# @require mkdir cp dl_unpack abort md5
+# @param string app dir 
+# @param string app url (optional)
+# @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST
+# @require mkdir cp dl_unpack abort md5 require_global
 #------------------------------------------------------------------------------
 function _install_app {
 
-	_dl_unpack $1 $2
+	if test -z "$1"; then
+		_abort "use _install_app . $2"
+	fi
+
+	if ! test -z "$2"; then 
+		_require_global "APP_PREFIX APP_FILE_LIST APP_DIR_LIST"
+		_dl_unpack $1 $2
+	fi
 
   if ! test -d $APP_PREFIX; then
     _mkdir $APP_PREFIX
