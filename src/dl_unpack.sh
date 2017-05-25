@@ -11,6 +11,7 @@ function _dl_unpack {
 
 	if test -d "$1"; then
 		echo "Use existing unpacked directory $1"
+		return
 	fi
 
 	local ARCHIVE=`basename $2`
