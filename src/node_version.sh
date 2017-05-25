@@ -39,6 +39,7 @@ function _node_version {
 		echo -e "Update npm from $CURR_NPM_VERSION to latest\nType in sudo password if necessary"
 		sudo npm install npm@latest -g
 		sudo npm update --depth=0 -g
+		sudo chown -R $USER:$(id -gn $USER) /home/$USER/.config
 	fi
 }
 
