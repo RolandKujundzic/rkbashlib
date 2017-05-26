@@ -3,22 +3,26 @@
 #------------------------------------------------------------------------------
 # Add ios platform to cordova. If platforms/ios exists do nothing.
 # Apply patches from www_src/patch if found.
+#
+# @param optional action e.g. clean
+# @require rm os_type patch
 #------------------------------------------------------------------------------
 function _cordova_add_ios {
 
-	test -d platforms/ios && return
+  local OS_TYPE=$(_os_type)
 
-	cordova platform add ios
+  if "$OS_TYPE" != "macos"; then
+		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
+  fi
 
-	local PATCH_LIST="MainViewController.m"
-	for a in $PATCH_LIST
-	do
-		local SRC=`find platforms/ios | grep $a`
+	if test "$1" = "clean" && test -d platforms/ios; then
+		_rm platforms/ios
+	fi
 
-		if test -f www_src/patch/$a.patch && test -f "$SRC"
-		then
-			patch $SRC www_src/patch/$a.patch
-		fi
-	done
+	if ! test -d platforms/ios; then
+		echo "cordova platform add ios"
+		cordova platform add ios
+		_patch www_src/patch/ios
+	fi
 }
 
