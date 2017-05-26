@@ -20,6 +20,9 @@ function _node_version {
 			APP_FILE_LIST="bin/npm bin/node share/man/man1/node.1 share/systemtap/tapset/node.stp"
 			APP_DIR_LIST="include/node lib/node_modules share/doc/node"
 
+			local CURR_SUDO=$SUDO
+			SUDO=sudo
+
 			if test -z "$CURR_NODE_VERSION" && test -f /usr/local/bin/node; then
 				APP_PREFIX="/opt/node_$CURR_NODE_VERSION"
 				echo "backup current node version to $APP_PREFIX"
@@ -28,6 +31,8 @@ function _node_version {
 
 			APP_PREFIX="/usr/local"
 			_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
+
+			SUDO=$CURR_SUDO
 		else
 			_abort "Update node.js to version >= $NODE_VERSION - see https://nodejs.org/"
 		fi
