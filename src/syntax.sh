@@ -2,6 +2,7 @@
 
 #------------------------------------------------------------------------------
 # Abort with SYNTAX: message.
+# Usually APP=$0
 #
 # @global APP, APP_DESC
 # @param message
