@@ -11,22 +11,36 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
 . "$SCRIPT_DIR/src/abort.sh"
 . "$SCRIPT_DIR/src/syntax.sh"
+. "$SCRIPT_DIR/src/confirm.sh"
+. "$SCRIPT_DIR/src/rm.sh"
 
 APP=$0
 
 if test -z "$1"; then
-	_syntax "[func1 func2 ... main]"
+	if test -f sh/run/merge2run.sh; then
+		. sh/run/merge2run.sh
+	else
+		_syntax "[func1 func2 ... main]"
+	fi
+else
+	MERGE2RUN="$1"
 fi
 
 if test -f "run.sh"; then
-	_abort "run.sh already exists"
+	_confirm "Remove existing run.sh?"
+
+	if test $CONFIRM = "y"; then
+		_rm run.sh
+	else
+		_abort "run.sh already exists"
+	fi
 fi
 
 echo -e "\nCreate run.sh"
 
-echo -e "#!/bin/bash\nMERGE2RUN=\"$1\"\n" > run.sh
+echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > run.sh
 
-for a in $1
+for a in $MERGE2RUN
 do
 	FUNC="$SCRIPT_DIR/src/$a.sh"
 
