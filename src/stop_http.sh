@@ -4,9 +4,16 @@
 # Stop webserver (apache2, nginx) on port 80 if running.
 # Ignore docker webservice on port 80.
 #
-# @require is_running
+# @require is_running os_type
+# @os linux
 #------------------------------------------------------------------------------
 function _stop_http {
+
+  local OS_TYPE=$(_os_type)
+  if test "$OS_TYPE" != "linux"; then
+    return
+  fi
+
   if test "$(_is_running PORT 80)" != "PORT_running"; then
     echo "no service on port 80"
     return
