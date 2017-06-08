@@ -7,7 +7,7 @@
 # @require docker_stop
 #------------------------------------------------------------------------------
 function _docker_rm {
-	_docker_stop
+	_docker_stop "$1"
 
 	local HAS_CONTAINER=`docker ps -a | grep "$1"`
 
