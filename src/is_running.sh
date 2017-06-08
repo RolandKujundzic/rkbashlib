@@ -15,6 +15,8 @@
 #
 # @param Process Expression Name 
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
+# @require os_type
+# @os linux
 # @return "$1_running"
 #------------------------------------------------------------------------------
 function _is_running {
@@ -22,6 +24,11 @@ function _is_running {
 	if test -z "$1"; then
 		_abort "no process name"
 	fi
+
+	local OS_TYPE=$(_os_type)
+	if test "$OS_TYPE" != "linux"; then
+		return
+	fi		
 
 	# use [a] = a to ignore "grep process"
 	local APACHE2='[a]pache2.*k start'
