@@ -20,7 +20,7 @@ function _mkdir {
 	else
 		if test -z "$2"
 		then
-			echo "directory $1 already exists"
+			echo "_mkdir: ignore existing directory $1"
 		else
 			_abort "directory $1 already exists"
 		fi
