@@ -22,7 +22,7 @@ function _cp {
 		local MD2=`_md5 "$2"`
 
 		if test "$MD1" = "$MD2"; then
-			echo "Do not overwrite $2 with $1 (same content)"
+			echo "_cp: keep $2 (same as $1)"
 		else
 			echo "Copy file $1 to $2 (update)"
 			$SUDO cp "$1" "$2" || _abort "cp '$1' '$2'"
