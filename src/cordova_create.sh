@@ -4,7 +4,7 @@
 # Create corodva project in app/ directory.
 # 
 # @param app name
-# @require abort os_type cordova_add_android cordova_add_ios patch mkdir
+# @require abort os_type cordova_add_android cordova_add_ios rm patch mkdir
 #------------------------------------------------------------------------------
 function _cordova_create {
 	if test -d "app/$1"; then
