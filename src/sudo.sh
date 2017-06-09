@@ -11,7 +11,7 @@ function _sudo {
 	SUDO=sudo
 
 	echo -e "sudo $1\nType in sudo password if necessary"
-	$1 || _abort "sudo command failed"
+	sudo $1 || _abort "sudo command failed"
 
 	SUDO=$CURR_SUDO
 }
