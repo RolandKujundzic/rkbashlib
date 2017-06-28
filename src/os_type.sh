@@ -8,7 +8,7 @@
 function _os_type {
 	if [ "$(uname)" = "Darwin" ]; then
 		echo "macos"        
-	elif [ test "$OSTYPE" = "linux-gnu" ]; then
+	elif [ "$OSTYPE" = "linux-gnu" ]; then
 		echo "linux"
 	elif [ $(expr substr $(uname -s) 1 5) = "Linux" ]; then
 		echo "linux"
