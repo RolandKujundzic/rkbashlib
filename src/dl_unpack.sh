@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Download and unpack archive.
+# Download and unpack archive (tar or zip).
 #
 # @param string directory name
 # @param string download url
@@ -25,8 +25,15 @@ function _dl_unpack {
 		_abort "No such archive $ARCHIVE - download of $2 failed"
 	fi
 
-	echo "Unpack $ARCHIVE"
-	tar -xf "$ARCHIVE"
+	local EXTENSION="${ARCHIVE##*.}"
+
+	if test "$EXTENSION" = "zip"; then
+		echo "Unpack zip $ARCHIVE"
+		unzip "$ARCHIVE"
+	else
+		echo "Unpack tar $ARCHIVE"
+		tar -xf "$ARCHIVE"
+	fi
 
 	if ! test -d "$1"; then
 		_abort "tar -xf $ARCHIVE failed"
