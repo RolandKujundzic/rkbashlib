@@ -22,7 +22,15 @@ function _mv {
 		_abort "No such directory [$PDIR]"
 	fi
 
-	echo "mv '$1' '$2'"
-	mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+	local AFTER_LAST_SLASH=${1##*/}
+
+	if test "$AFTER_LAST_SLASH" = "*"
+	then
+		echo "mv $1 $2"
+		mv $1 $2 || _abort "mv $1 $2 failed"
+	else
+		echo "mv '$1' '$2'"
+		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+	fi
 }
 
