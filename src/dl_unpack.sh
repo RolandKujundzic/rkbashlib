@@ -5,7 +5,7 @@
 #
 # @param string directory name
 # @param string download url
-# @require abort
+# @require abort mv
 #------------------------------------------------------------------------------
 function _dl_unpack {
 
@@ -26,16 +26,25 @@ function _dl_unpack {
 	fi
 
 	local EXTENSION="${ARCHIVE##*.}"
+	local UNPACK_CMD=
 
 	if test "$EXTENSION" = "zip"; then
-		echo "Unpack zip $ARCHIVE"
+		UNPACK_CMD="unzip"
+		echo "Unpack zip: $UNPACK_CMD '$ARCHIVE'"
 		unzip "$ARCHIVE"
 	else
-		echo "Unpack tar $ARCHIVE"
+		UNPACK_CMD="tar -xf"
+		echo "Unpack tar: $UNPACK_CMD '$ARCHIVE'"
 		tar -xf "$ARCHIVE"
 	fi
 
 	if ! test -d "$1"; then
-		_abort "tar -xf $ARCHIVE failed"
+		local BASE="${ARCHIVE%.*}"
+
+		if test -d $BASE; then
+			_mv "$BASE" "$1"
+		else
+			_abort "$UNPACK_CMD $ARCHIVE failed"
+		fi
   fi
 }
