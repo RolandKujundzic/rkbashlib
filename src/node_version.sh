@@ -6,7 +6,7 @@
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST
 # @require ver3 abort require_global install_app mkdir cp dl_unpack md5 
-# @require sudo rm os_type
+# @require sudo rm mv os_type
 #------------------------------------------------------------------------------
 function _node_version {
 

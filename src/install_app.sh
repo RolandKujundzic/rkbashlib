@@ -6,7 +6,7 @@
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST
-# @require mkdir cp dl_unpack abort md5 rm require_global
+# @require mkdir cp dl_unpack abort md5 mv rm require_global
 #------------------------------------------------------------------------------
 function _install_app {
 
