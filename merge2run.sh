@@ -15,6 +15,7 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 . "$SCRIPT_DIR/src/rm.sh"
 
 APP=$0
+OUT=run.sh
 
 if test -z "$1"; then
 	if test -f sh/run/merge2run.sh; then
@@ -23,22 +24,27 @@ if test -z "$1"; then
 		_syntax "[func1 func2 ... main]"
 	fi
 else
-	MERGE2RUN="$1"
-fi
-
-if test -f "run.sh"; then
-	_confirm "Remove existing run.sh?"
-
-	if test $CONFIRM = "y"; then
-		_rm run.sh
+	if test -f sh/run/merge2$1; then
+		. sh/run/merge2$1
+		OUT=$1
 	else
-		_abort "run.sh already exists"
+		MERGE2RUN="$1"
 	fi
 fi
 
-echo -e "\nCreate run.sh"
+if test -f "$OUT"; then
+	_confirm "Remove existing $OUT?"
 
-echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > run.sh
+	if test $CONFIRM = "y"; then
+		_rm $OUT
+	else
+		_abort "$OUT already exists"
+	fi
+fi
+
+echo -e "\nCreate $OUT"
+
+echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > $OUT
 
 for a in $MERGE2RUN
 do
@@ -49,9 +55,9 @@ do
 	fi
 
 	echo "use function _$a ($FUNC)"
-	tail -n +2 "$FUNC" >> run.sh
+	tail -n +2 "$FUNC" >> $OUT
 done
 
-chmod 755 run.sh
+chmod 755 $OUT
 
 echo -e "done.\n\n"
