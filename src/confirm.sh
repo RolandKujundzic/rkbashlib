@@ -6,7 +6,7 @@
 # key was pressed or 10 sec expired.
 #
 # @param string message
-# @global CONFIRM
+# @export CONFIRM
 #------------------------------------------------------------------------------
 function _confirm {
 	CONFIRM=n
