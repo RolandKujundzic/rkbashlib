@@ -5,9 +5,9 @@ use File::Basename;
 
 my $src_dir = dirname(__FILE__).'/../src';
 
-require $src_dir.'/dos2unix.pl';
-require $src_dir.'/abort.pl';
-require $src_dir.'/syntax_error.pl';
+require $src_dir.'/dos2unix.pm';
+require $src_dir.'/abort.pm';
+require $src_dir.'/syntax_error.pm';
 
 #------------------------------------------------------------------------------
 # M A I N
