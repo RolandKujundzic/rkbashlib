@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Basename;
+
+my $src_dir = dirname(__FILE__).'/../src';
+
+require $src_dir.'/dos2unix.pl';
+require $src_dir.'/abort.pl';
+require $src_dir.'/syntax_error.pl';
+
+#------------------------------------------------------------------------------
+# M A I N
+#------------------------------------------------------------------------------
+
+my $file = $ARGV[0];
+my ($data, $line);
+
+$ENV{'SCRIPT_NAME'} = "rks-dos2unix";
+
+if (!$file) {
+  syntax_error("[file]");
+}
+
+dos2unix($file);
+
