@@ -24,7 +24,7 @@ if test -z "$1"; then
 		_syntax "[func1 func2 ... main]"
 	fi
 else
-	if test -f sh/run/merge2$1; then
+	if test -f "sh/run/merge2$1"; then
 		. sh/run/merge2$1
 		OUT=$1
 	else
