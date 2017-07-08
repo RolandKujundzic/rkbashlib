@@ -89,7 +89,8 @@ function _cd {
 # @param source path
 # @param target path
 # @param [md5] if set make md5 file comparison
-# @require abort, md5
+# @global SUDO
+# @require abort md5
 #------------------------------------------------------------------------------
 function _cp {
 
@@ -104,10 +105,10 @@ function _cp {
 		local MD2=`_md5 "$2"`
 
 		if test "$MD1" = "$MD2"; then
-			echo "Do not overwrite $2 with $1 (same content)"
+			echo "_cp: keep $2 (same as $1)"
 		else
 			echo "Copy file $1 to $2 (update)"
-			cp "$1" "$2" || _abort "cp '$1' '$2'"
+			$SUDO cp "$1" "$2" || _abort "cp '$1' '$2'"
 		fi
 
 		return
@@ -115,10 +116,16 @@ function _cp {
 
   if test -f "$1"; then
     echo "Copy file $1 to $2"
-		cp "$1" "$2" || _abort "cp '$1' '$2'"
+		$SUDO cp "$1" "$2" || _abort "cp '$1' '$2'"
 	elif test -d "$1"; then
-		echo "Copy directory $1 to $2"
-		cp -r "$1" "$2" || _abort "cp -r '$1' '$2'"
+		if test -d "$2"; then
+			local PDIR=`dirname $2`"/"
+			echo "Copy directory $1 to $PDIR"
+			$SUDO cp -r "$1" "$PDIR" || _abort "cp -r '$1' '$PDIR'"
+		else
+			echo "Copy directory $1 to $2"
+			$SUDO cp -r "$1" "$2" || _abort "cp -r '$1' '$2'"
+		fi
 	else
 		_abort "No such file or directory [$1]"
   fi
@@ -157,6 +164,7 @@ function _rm {
 # Create directory (including parent directories) if directory does not exists.
 #
 # @param path
+# @global SUDO
 # @param abort_if_exists (optional - if set abort if directory already exists)
 # @require abort
 #------------------------------------------------------------------------------
@@ -168,11 +176,11 @@ function _mkdir {
 
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
-		mkdir -p $1 || _abort "mkdir -p '$1'"
+		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
 	else
 		if test -z "$2"
 		then
-			echo "directory $1 already exists"
+			echo "_mkdir: ignore existing directory $1"
 		else
 			_abort "directory $1 already exists"
 		fi
@@ -202,8 +210,16 @@ function _mv {
 		_abort "No such directory [$PDIR]"
 	fi
 
-	echo "mv '$1' '$2'"
-	mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+	local AFTER_LAST_SLASH=${1##*/}
+
+	if test "$AFTER_LAST_SLASH" = "*"
+	then
+		echo "mv $1 $2"
+		mv $1 $2 || _abort "mv $1 $2 failed"
+	else
+		echo "mv '$1' '$2'"
+		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+	fi
 }
 
 
