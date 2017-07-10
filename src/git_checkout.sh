@@ -21,6 +21,7 @@ function _git_checkout {
 		cd "$2"
 		echo "git pull $2"
 		git pull
+		test -s .gitmodules && git submodule update --init --recursive
 		cd "$CURR"
 	elif test -d "../../$2"
 	then
@@ -34,6 +35,12 @@ function _git_checkout {
 
 		if ! test -d "$2/.git"; then
 			_abort "git clone failed - no $2/.git directory"
+		fi
+
+		if test -s "$2/.gitmodules"; then
+			cd "$2"
+			git submodule update --init --recursive
+			cd ..
 		fi
 
 		if ! test -z "$3"; then
