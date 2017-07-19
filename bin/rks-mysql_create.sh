@@ -52,30 +52,20 @@ function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
+	_mysql_split_dsn
+
+	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
+	if ! test -z "$HAS_DB"; then
+		echo "Keep existing database $DB_NAME"
+		return
+	fi
+
 	if test -z "$MYSQL"; then
 		if test "$UID" = "0"; then
 			MYSQL="mysql -u root"
 		else
 			_abort "you must be root to run [mysql -u root]"
 		fi
-	fi
-
-	if test -z "$DB_NAME" && test -z "$DB_PASS" 
-	then
-		if test -f 'settings.php'; then
-			_mysql_split_dsn settings.php
-		elif test -f 'index.php'; then
-			_mysql_split_dsn index.php
-		fi
-	fi
-
-	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
-		_abort "database name [$DB_NAME] or password [$DB_PASS] is empty"
-	fi
-
-	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
-	if ! test -z "$HAS_DB"; then
-		_abort "Please delete existing database $DB_NAME first" 
 	fi
 
 	echo "create mysql database $DB_NAME"
@@ -87,9 +77,10 @@ function _mysql_create_db {
 
 
 #------------------------------------------------------------------------------
-# Split php database connect string SETTINGS_DSN.
+# Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
+# do nothing.
 #
-# @param php_file
+# @param php_file (if empty try settings.php, index.php)
 # @export DB_NAME, DB_PASS
 # @require abort
 #------------------------------------------------------------------------------
@@ -98,8 +89,25 @@ function _mysql_split_dsn {
 	local PATH_RKPHPLIB=
 	local PHP_CODE=
 
+	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"
+	then
+		# use already defined DB_NAME and DB_PASS
+		return
+	fi
+
 	if ! test -f "$1"; then
-		_abort "no such file [$1]"
+
+		if test -z "$DB_NAME" && test -z "$DB_PASS"
+		then
+			if test -f 'settings.php'; then
+				_mysql_split_dsn settings.php
+			elif test -f 'index.php'; then
+				_mysql_split_dsn index.php
+			else
+				_abort "no such file [$1]"
+			fi
+		fi
+
 	fi
 
 	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
@@ -123,6 +131,10 @@ function _mysql_split_dsn {
 
 	PHP_CODE=$SPLIT_DSN' print $dsn["password"];'
 	DB_PASS=`php -r "$PHP_CODE"`
+
+	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
+		_abort "database name [$DB_NAME] or password [$DB_PASS] is empty"
+	fi
 }
 
 
