@@ -108,5 +108,5 @@ function _build {
 test -d bin || mkdir bin
 
 _build rks-mysql_backup "abort cd cp create_tgz rm mysql_dump mysql_backup"
-_build rks-mysql_restore "abort extract_tgz cd cp rm mkdir mv mysql_load mysql_restore"
+_build rks-mysql_restore "abort confirm extract_tgz cd cp rm mkdir mv mysql_load mysql_restore"
 _build rks-mysql_create "abort syntax mysql_create_db mysql_split_dsn"
