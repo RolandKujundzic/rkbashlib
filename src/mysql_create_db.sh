@@ -14,30 +14,20 @@ function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
+	_mysql_split_dsn
+
+	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
+	if ! test -z "$HAS_DB"; then
+		echo "Keep existing database $DB_NAME"
+		return
+	fi
+
 	if test -z "$MYSQL"; then
 		if test "$UID" = "0"; then
 			MYSQL="mysql -u root"
 		else
 			_abort "you must be root to run [mysql -u root]"
 		fi
-	fi
-
-	if test -z "$DB_NAME" && test -z "$DB_PASS" 
-	then
-		if test -f 'settings.php'; then
-			_mysql_split_dsn settings.php
-		elif test -f 'index.php'; then
-			_mysql_split_dsn index.php
-		fi
-	fi
-
-	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
-		_abort "database name [$DB_NAME] or password [$DB_PASS] is empty"
-	fi
-
-	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
-	if ! test -z "$HAS_DB"; then
-		_abort "Please delete existing database $DB_NAME first" 
 	fi
 
 	echo "create mysql database $DB_NAME"
