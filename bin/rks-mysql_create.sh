@@ -101,8 +101,10 @@ function _mysql_split_dsn {
 		then
 			if test -f 'settings.php'; then
 				_mysql_split_dsn settings.php
+				return
 			elif test -f 'index.php'; then
 				_mysql_split_dsn index.php
+				return
 			else
 				_abort "no such file [$1]"
 			fi
