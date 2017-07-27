@@ -4,6 +4,7 @@
 # Install or update npm packages. Create package.json and README.md if missing.
 # Apply patches if patch/patch.sh exists.
 #
+# @param upgrade (default = empty = false)
 # @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
 # @require npm_module
 #-------------------------------------------------------------------------------
@@ -17,6 +18,12 @@ function _package_json {
 	if ! test -f README.md; then
 		echo "create: README.md - adjust content"
 		echo "ToDo" > README.md
+	fi
+
+	if ! test -z "$1"; then
+		echo "upgrade package.json"
+		_npm_module npm-check-updates -g
+		npm-check-updates -u
 	fi
 
 	for a in $NPM_PACKAGE_GLOBAL; do
