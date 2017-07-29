@@ -54,18 +54,18 @@ function _mysql_create_db {
 
 	_mysql_split_dsn
 
-	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
-	if ! test -z "$HAS_DB"; then
-		echo "Keep existing database $DB_NAME"
-		return
-	fi
-
 	if test -z "$MYSQL"; then
 		if test "$UID" = "0"; then
 			MYSQL="mysql -u root"
 		else
 			_abort "you must be root to run [mysql -u root]"
 		fi
+	fi
+
+	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
+	if ! test -z "$HAS_DB"; then
+		echo "Keep existing database $DB_NAME"
+		return
 	fi
 
 	echo "create mysql database $DB_NAME"
