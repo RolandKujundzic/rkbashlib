@@ -11,7 +11,7 @@ function _cordova_add_ios {
 
   local OS_TYPE=$(_os_type)
 
-  if "$OS_TYPE" != "macos"; then
+  if test "$OS_TYPE" != "macos"; then
 		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
   fi
 
