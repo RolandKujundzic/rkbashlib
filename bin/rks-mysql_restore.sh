@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="copyright abort confirm extract_tgz cd cp rm mkdir mv mysql_load mysql_restore rks-mysql_restore"
+MERGE2RUN="copyright abort confirm extract_tgz cd cp rm mkdir mv mysql_load mysql_restore mysql_conn rks-mysql_restore"
 
 
 #
@@ -246,22 +246,14 @@ function _mv {
 
 #------------------------------------------------------------------------------
 # Load mysql dump. Abort if error. If restore.sh exists append load command to 
-# restore.sh. If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
+# restore.sh. 
 #
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort confirm
+# @require abort confirm mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_load {
-
-	if test -z "$MYSQL_CONN"; then
-		if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
-		else
-			_abort "mysql connection string MYSQL_CONN is empty"
-		fi
-	fi
 
 	local DUMP=$1
 
@@ -289,8 +281,9 @@ function _mysql_load {
 	if test -f "restore.sh"; then
 		local LOG="$DUMP"".log"
 		echo "add $DUMP to restore.sh"
-		echo "mysql $MYSQL_CONN < $DUMP &> $LOG && rm $DUMP &" >> restore.sh
+		echo "_restore $DUMP &" >> restore.sh
 	else
+		_mysql_conn
 		echo "mysql ... < $DUMP"
 		SECONDS=0
 		mysql $MYSQL_CONN < "$DUMP" || _abort "mysql ... < $DUMP failed"
@@ -305,7 +298,7 @@ function _mysql_load {
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
+# @require abort extract_tgz cd cp rm mv mkdir mysql_load mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
@@ -334,8 +327,16 @@ function _mysql_restore {
 		_mysql_load $a".sql"
 
 		if ! test -z "$2" && test "$a" = "create_tables"; then
+			_mysql_conn
 			echo "create restore.sh"
-			echo "#!/bin/bash" > restore.sh
+			echo -e "#!/bin/bash\n" > restore.sh
+			echo -e "MYSQL_CONN=$MYSQL_CONN\n" >> restore.sh
+			echo 'function _restore {' >> restore.sh
+			echo '  echo "start restore $1"' >> restore.sh
+			echo '  mysql $MYSQL_CON < $1".sql" &> $1".sql.log" && rm $1".sql" || echo "import $1 failed"' >> restore.sh
+			echo '  echo "done."' >> restore.sh
+			echo -e "}\n\n" >> restore.sh
+
 			chmod 755 restore.sh
 		fi
 	done
@@ -370,6 +371,26 @@ function _mysql_restore {
 	_cd
 
 	_rm $TMP_DIR
+}
+
+
+#------------------------------------------------------------------------------
+# Export MYSQL_CONN connection string.
+# If MYSQL_CONN is empty bu DB_NAME and DB_PASS exist use these.
+#
+# @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
+# @abort
+# @require abort
+#------------------------------------------------------------------------------
+function _mysql_conn {
+
+	if test -z "$MYSQL_CONN"; then
+		if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
+			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+		else
+			_abort "mysql connection string MYSQL_CONN is empty"
+		fi
+	fi
 }
 
 

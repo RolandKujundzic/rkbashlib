@@ -2,22 +2,14 @@
 
 #------------------------------------------------------------------------------
 # Load mysql dump. Abort if error. If restore.sh exists append load command to 
-# restore.sh. If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
+# restore.sh. 
 #
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort confirm
+# @require abort confirm mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_load {
-
-	if test -z "$MYSQL_CONN"; then
-		if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
-		else
-			_abort "mysql connection string MYSQL_CONN is empty"
-		fi
-	fi
 
 	local DUMP=$1
 
@@ -45,8 +37,9 @@ function _mysql_load {
 	if test -f "restore.sh"; then
 		local LOG="$DUMP"".log"
 		echo "add $DUMP to restore.sh"
-		echo "mysql $MYSQL_CONN < $DUMP &> $LOG && rm $DUMP &" >> restore.sh
+		echo "_restore $DUMP &" >> restore.sh
 	else
+		_mysql_conn
 		echo "mysql ... < $DUMP"
 		SECONDS=0
 		mysql $MYSQL_CONN < "$DUMP" || _abort "mysql ... < $DUMP failed"

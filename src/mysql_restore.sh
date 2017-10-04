@@ -6,7 +6,7 @@
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, extract_tgz, cd, cp, rm, mv, mkdir, mysql_load
+# @require abort extract_tgz cd cp rm mv mkdir mysql_load mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
@@ -35,8 +35,16 @@ function _mysql_restore {
 		_mysql_load $a".sql"
 
 		if ! test -z "$2" && test "$a" = "create_tables"; then
+			_mysql_conn
 			echo "create restore.sh"
-			echo "#!/bin/bash" > restore.sh
+			echo -e "#!/bin/bash\n" > restore.sh
+			echo -e "MYSQL_CONN=$MYSQL_CONN\n" >> restore.sh
+			echo 'function _restore {' >> restore.sh
+			echo '  echo "start restore $1"' >> restore.sh
+			echo '  mysql $MYSQL_CON < $1".sql" &> $1".sql.log" && rm $1".sql" || echo "import $1 failed"' >> restore.sh
+			echo '  echo "done."' >> restore.sh
+			echo -e "}\n\n" >> restore.sh
+
 			chmod 755 restore.sh
 		fi
 	done
