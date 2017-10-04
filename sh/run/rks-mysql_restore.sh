@@ -4,6 +4,7 @@
 # M A I N
 #------------------------------------------------------------------------------
 
+FIX_MYSQL_DUMP=1
 MYSQL_CONN="-h localhost -u DBUSER -pDBPASS DBNAME"
 
 BACKUP_TODAY="/path/to/mysql_dump."`date +"%Y%m%d"`".tgz"

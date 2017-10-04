@@ -278,6 +278,15 @@ function _mysql_load {
 		_abort "invalid mysql dump [$DUMP]"
 	fi
 
+	if ! test -z "$FIX_MYSQL_DUMP"; then
+		echo "fix $DUMP"
+		local TMP_DUMP=`dirname $DUMP`"/_fix.sql"
+		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > $TMP_DUMP
+		sed -e "s/^\/\*\!.*//" < $DUMP | sed -e "s/^INSERT INTO/INSERT IGNORE INTO/" >> $TMP_DUMP
+		echo -e "\nCOMMIT;\n" >> $TMP_DUMP
+		mv "$TMP_DUMP" "$DUMP"
+	fi
+
 	if test -f "restore.sh"; then
 		local LOG="$DUMP"".log"
 		echo "add $DUMP to restore.sh"
@@ -395,6 +404,7 @@ function _mysql_conn {
 # M A I N
 #------------------------------------------------------------------------------
 
+FIX_MYSQL_DUMP=1
 MYSQL_CONN="-h localhost -u DBUSER -pDBPASS DBNAME"
 
 BACKUP_TODAY="/path/to/mysql_dump."`date +"%Y%m%d"`".tgz"
