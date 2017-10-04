@@ -330,11 +330,10 @@ function _mysql_restore {
 			_mysql_conn
 			echo "create restore.sh"
 			echo -e "#!/bin/bash\n" > restore.sh
-			echo -e "MYSQL_CONN=$MYSQL_CONN\n" >> restore.sh
+			echo -e "MYSQL_CONN=\"$MYSQL_CONN\"\n" >> restore.sh
 			echo 'function _restore {' >> restore.sh
-			echo '  echo "start restore $1"' >> restore.sh
-			echo '  mysql $MYSQL_CON < $1".sql" &> $1".sql.log" && rm $1".sql" || echo "import $1 failed"' >> restore.sh
-			echo '  echo "done."' >> restore.sh
+			echo '  mysql $MYSQL_CONN < $1 &> $1".log" && rm $1 || echo "import $1 failed"' >> restore.sh
+			echo '  echo "$1 import finished"' >> restore.sh
 			echo -e "}\n\n" >> restore.sh
 
 			chmod 755 restore.sh
@@ -357,8 +356,6 @@ function _mysql_restore {
         # sql file is removed after successfull import
         if test -f $a".sql"; then
           IMPORT=1
-        else
-          echo "$a import finished"
         fi
       done
 
