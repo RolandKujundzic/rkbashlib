@@ -17,7 +17,7 @@ function _patch {
 
 	. $1/patch.sh
 
-  for a in $PATCH_LIST
+	local a=; for a in $PATCH_LIST
   do
     local SRC=`find $PATCH_DIR | grep $a`
 

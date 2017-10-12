@@ -23,7 +23,7 @@ function _src2www_index {
 		cat www_src/app_footer.html >> www/index.html
 	fi
 
-	for a in www_src/*.inc.html; do
+	local a=; for a in www_src/*.inc.html; do
 		cat $a >> www/index.html
 	done
 

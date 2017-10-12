@@ -23,13 +23,13 @@ function _install_app {
     _mkdir $APP_PREFIX
   fi
 
-  for FILE in $APP_FILE_LIST
+	local FILE=; for FILE in $APP_FILE_LIST
   do
     _mkdir `dirname $APP_PREFIX/$FILE`
     _cp $1/$FILE $APP_PREFIX/$FILE md5
   done
 
-  for DIR in $APP_DIR_LIST
+	local DIR=; for DIR in $APP_DIR_LIST
   do
     _mkdir `dirname $APP_PREFIX/$DIR`
     _cp $1/$DIR $APP_PREFIX/$DIR

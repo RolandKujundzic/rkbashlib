@@ -13,7 +13,7 @@ function _mb_check {
 	# do not use ereg*
 	MB_FUNCTIONS="parse_str split stripos stristr strlen strpos strrchr strrichr strripos strrpos strstr strtolower strtoupper strwidth substr_count substr"
 
-	for a in $MB_FUNCTIONS
+	local a=; for a in $MB_FUNCTIONS
 	do
 		FOUND=`grep -d skip -r --include=*.php $a'(' src | grep -v 'mb_'$a'('`
 

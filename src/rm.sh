@@ -13,7 +13,7 @@ function _rm {
 		_abort "Empty remove path list"
 	fi
 
-	for a in $1
+	local a=; for a in $1
 	do
 		if ! test -f $a && ! test -d $a
 		then

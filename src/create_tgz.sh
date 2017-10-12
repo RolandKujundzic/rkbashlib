@@ -8,8 +8,7 @@
 # @require _abort
 #------------------------------------------------------------------------------
 function _create_tgz {
-
-	for a in $2
+	local a=; for a in $2
 	do
 		if ! test -f $a && ! test -d $a
 		then

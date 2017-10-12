@@ -26,7 +26,7 @@ function _package_json {
 		npm-check-updates -u
 	fi
 
-	for a in $NPM_PACKAGE_GLOBAL; do
+	local a=; for a in $NPM_PACKAGE_GLOBAL; do
 		_npm_module $a -g
 	done
 

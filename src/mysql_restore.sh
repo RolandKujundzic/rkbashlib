@@ -29,7 +29,7 @@ function _mysql_restore {
 		_rm create_tables.fix.sql
 	fi
 
-	for a in `cat tables.txt`
+	local a=; for a in `cat tables.txt`
 	do
 		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load $a".sql"

@@ -29,7 +29,7 @@ function _mysql_backup {
 	_mysql_dump "create_tables.sql" "-d"
 	FILES="$FILES create_tables.sql"
 
-	for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
+	local T=; for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
 	do
 		# dump table
 		echo "$T" >> tables.txt

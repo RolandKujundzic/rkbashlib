@@ -8,7 +8,7 @@
 #------------------------------------------------------------------------------
 function _src2www_copy {
 
-	for a in $SRC2WWW_FILES $SRC2WWW_DIR; do
+	local a=; for a in $SRC2WWW_FILES $SRC2WWW_DIR; do
 		cp -r www_src/$a www/
 	done
 
