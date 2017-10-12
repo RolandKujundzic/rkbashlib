@@ -42,7 +42,6 @@ function _required_rkscript {
 		LIST="$RESULT"
 	fi
 
-echo "($BASE) export: $LIST"
 	REQUIRED_RKSCRIPT="$LIST"
 }
 
