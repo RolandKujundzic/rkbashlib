@@ -5,7 +5,7 @@
 #
 # @param source_path
 # @param target_path
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mv {
 

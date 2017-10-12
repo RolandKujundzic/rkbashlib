@@ -7,7 +7,7 @@
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort confirm mysql_conn
+# @require _abort _confirm _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_load {
 

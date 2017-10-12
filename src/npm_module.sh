@@ -6,7 +6,7 @@
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
-# @require node_version
+# @require _node_version
 #------------------------------------------------------------------------------
 function _npm_module {
 

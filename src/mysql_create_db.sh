@@ -8,7 +8,7 @@
 # @param dbname = username
 # @param password
 # @export DB_NAME, DB_PASS
-# @require abort mysql_split_dsn
+# @require _abort _mysql_split_dsn
 #------------------------------------------------------------------------------
 function _mysql_create_db {
 	DB_NAME=$1

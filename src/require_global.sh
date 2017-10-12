@@ -4,7 +4,7 @@
 # Abort if global variable is empty.
 #
 # @param variable name
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _require_global {
 	for a in $1; do

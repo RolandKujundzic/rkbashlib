@@ -5,7 +5,7 @@
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _rm {
 

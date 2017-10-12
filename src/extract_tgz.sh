@@ -6,7 +6,7 @@
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
-# @require abort, rm
+# @require _abort _rm
 #------------------------------------------------------------------------------
 function _extract_tgz {
 

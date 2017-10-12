@@ -7,7 +7,7 @@
 # @param owner
 # @param group 
 # @sudo
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _chown {
 

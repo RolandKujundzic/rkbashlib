@@ -5,7 +5,7 @@
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/api)
-# @require composer, abort
+# @require _composer _abort 
 #------------------------------------------------------------------------------
 function _apigen_doc {
 

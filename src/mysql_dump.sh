@@ -7,7 +7,7 @@
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mysql_dump {
 

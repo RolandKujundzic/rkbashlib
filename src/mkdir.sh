@@ -6,7 +6,7 @@
 # @param path
 # @global SUDO
 # @param abort_if_exists (optional - if set abort if directory already exists)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mkdir {
 

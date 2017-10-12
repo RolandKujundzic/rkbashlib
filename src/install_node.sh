@@ -4,7 +4,7 @@
 # Install NODE_VERSION from latest binary package.
 #
 # @global NODE_VERSION 
-# @require abort os_type require_global install_app
+# @require _abort _os_type _require_global _install_app
 #------------------------------------------------------------------------------
 function _install_node {
 

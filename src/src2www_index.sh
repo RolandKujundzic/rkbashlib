@@ -7,6 +7,7 @@
 # - if main.js exists append hidden div#app_main with main.html and script block
 #		with main.js
 #	- footer.html
+#
 #------------------------------------------------------------------------------
 function _src2www_index {
 

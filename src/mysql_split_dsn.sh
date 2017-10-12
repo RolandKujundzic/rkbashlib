@@ -6,7 +6,7 @@
 #
 # @param php_file (if empty try settings.php, index.php)
 # @export DB_NAME, DB_PASS
-# @require abort
+# @require _abort 
 #------------------------------------------------------------------------------
 function _mysql_split_dsn {
 	local SETTINGS_DSN=

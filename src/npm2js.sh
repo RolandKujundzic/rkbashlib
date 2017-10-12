@@ -5,7 +5,7 @@
 #
 # @param target path
 # @param node_modules/$2 (source path)
-# @require abort, cp
+# @require _abort _cp
 #------------------------------------------------------------------------------
 function _npm2js {
 

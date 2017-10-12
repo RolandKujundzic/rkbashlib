@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 # Re-create database if inside docker.
 #
-# @require abort confirm mysql_split_dsn mysql_create_db mysql_load mysql_conn
+# @require _mysql_split_dsn _mysql_create_db _mysql_load
 # @export DB_NAME DB_PASS MYSQL_CONN
 #------------------------------------------------------------------------------
 function _recreate_docker_db {

@@ -5,7 +5,7 @@
 #
 # @param tgz_file
 # @param directory/file list
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _create_tgz {
 

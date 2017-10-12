@@ -4,7 +4,7 @@
 # Print md5sum of file.
 #
 # @param file
-# @require abort
+# @require _abort
 # @print md5sum
 #------------------------------------------------------------------------------
 function _md5 {

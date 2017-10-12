@@ -5,7 +5,7 @@
 #
 # @param string directory name
 # @param string download url
-# @require abort mv
+# @require _abort _mv
 #------------------------------------------------------------------------------
 function _dl_unpack {
 

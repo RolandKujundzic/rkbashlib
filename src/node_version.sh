@@ -6,7 +6,7 @@
 # Use NODE_VERSION=v6.11.0 and NPM_VERSION=5.0.3 ad default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST
-# @require ver3 require_global install_node sudo
+# @require _ver3 _require_global _install_node _sudo
 #------------------------------------------------------------------------------
 function _node_version {
 

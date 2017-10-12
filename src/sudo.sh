@@ -4,7 +4,7 @@
 # Switch to sudo mode. Switch back after command is executed.
 #
 # @param command
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _sudo {
 	local CURR_SUDO=$SUDO

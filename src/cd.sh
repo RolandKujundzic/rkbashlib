@@ -6,7 +6,7 @@
 #
 # @param path
 # @export LAST_DIR
-# @require abort
+# @require _abort 
 #------------------------------------------------------------------------------
 function _cd {
 	echo "cd '$1'"

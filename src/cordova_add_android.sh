@@ -5,7 +5,7 @@
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
-# @require rm os_type patch
+# @require _rm _os_type _patch
 #------------------------------------------------------------------------------
 function _cordova_add_android {
 

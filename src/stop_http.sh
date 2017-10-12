@@ -4,7 +4,7 @@
 # Stop webserver (apache2, nginx) on port 80 if running.
 # Ignore docker webservice on port 80.
 #
-# @require is_running os_type
+# @require _is_running _os_type
 # @os linux
 #------------------------------------------------------------------------------
 function _stop_http {

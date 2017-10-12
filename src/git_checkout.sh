@@ -11,7 +11,7 @@
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"

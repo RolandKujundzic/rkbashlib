@@ -7,7 +7,7 @@
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require abort md5
+# @require _abort _md5
 #------------------------------------------------------------------------------
 function _cp {
 

@@ -8,7 +8,7 @@
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, cd, cp, mysql_dump, create_tgz, rm
+# @require _abort _cd _cp _mysql_dump _create_tgz _rm
 #------------------------------------------------------------------------------
 function _mysql_backup {
 

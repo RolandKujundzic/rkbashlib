@@ -7,6 +7,7 @@
 # PATCH_DIR=platforms/ios
 #
 # @param directory path
+# @require _abort
 #------------------------------------------------------------------------------
 function _patch {
 

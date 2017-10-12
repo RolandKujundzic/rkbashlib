@@ -6,7 +6,7 @@
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort extract_tgz cd cp rm mv mkdir mysql_load mysql_conn
+# @require _abort _extract_tgz _cd _cp _rm _mv _mkdir _mysql_load _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
