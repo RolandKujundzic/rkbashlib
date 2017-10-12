@@ -6,8 +6,15 @@
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
+# @require node_version
 #------------------------------------------------------------------------------
 function _npm_module {
+
+  local HAS_NPM=`which npm`
+  if test -z "$HAS_NPM"; then
+		_node_version
+  fi
+
 	local EXTRA_PARAM=
 
 	if test "$1" = "ios-deploy"; then
