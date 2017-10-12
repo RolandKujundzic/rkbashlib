@@ -17,6 +17,10 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 APP=$0
 OUT=run.sh
 
+if ! test -z "$MERGE2RUN_OUTPUT"; then
+	OUT="$MERGE2RUN_OUTPUT"
+fi
+
 if test -z "$1"; then
 	if test -f sh/run/merge2run.sh; then
 		. sh/run/merge2run.sh
