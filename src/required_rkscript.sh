@@ -21,6 +21,10 @@ function _required_rkscript {
 	local a=; for a in $RKSCRIPT_FUNCTIONS; do
 		b=`cat "$1" | sed -e "s/function .*//" | grep "$a "`
 
+		if test -z "$b"; then
+			b=`cat "$1" | sed -e "s/function .*//" | grep "^\s*$a\s*$"`
+		fi
+
 		if ! test -z "$b" && test "$FUNC" != "$a"; then
 			LIST="$a $LIST"
 		fi
@@ -38,6 +42,7 @@ function _required_rkscript {
 		LIST="$RESULT"
 	fi
 
+echo "($BASE) export: $LIST"
 	REQUIRED_RKSCRIPT="$LIST"
 }
 

@@ -41,7 +41,7 @@ function _syntax {
 #------------------------------------------------------------------------------
 # Abort if user is not root.
 #
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _run_as_root {
 	if test "$UID" != "0"
@@ -57,7 +57,7 @@ function _run_as_root {
 #
 # @param path
 # @export LAST_DIR
-# @require abort
+# @require _abort 
 #------------------------------------------------------------------------------
 function _cd {
 	echo "cd '$1'"

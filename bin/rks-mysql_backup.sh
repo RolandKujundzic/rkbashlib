@@ -24,7 +24,7 @@ function _abort {
 #
 # @param path
 # @export LAST_DIR
-# @require abort
+# @require _abort 
 #------------------------------------------------------------------------------
 function _cd {
 	echo "cd '$1'"
@@ -57,7 +57,7 @@ function _cd {
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require abort md5
+# @require _abort _md5
 #------------------------------------------------------------------------------
 function _cp {
 
@@ -104,11 +104,10 @@ function _cp {
 #
 # @param tgz_file
 # @param directory/file list
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _create_tgz {
-
-	for a in $2
+	local a=; for a in $2
 	do
 		if ! test -f $a && ! test -d $a
 		then
@@ -134,7 +133,7 @@ function _create_tgz {
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _rm {
 
@@ -142,7 +141,7 @@ function _rm {
 		_abort "Empty remove path list"
 	fi
 
-	for a in $1
+	local a=; for a in $1
 	do
 		if ! test -f $a && ! test -d $a
 		then
@@ -164,7 +163,7 @@ function _rm {
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mysql_dump {
 
@@ -196,7 +195,7 @@ function _mysql_dump {
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort, cd, cp, mysql_dump, create_tgz, rm
+# @require _abort _cd _cp _mysql_dump _create_tgz _rm
 #------------------------------------------------------------------------------
 function _mysql_backup {
 
@@ -217,7 +216,7 @@ function _mysql_backup {
 	_mysql_dump "create_tables.sql" "-d"
 	FILES="$FILES create_tables.sql"
 
-	for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
+	local T=; for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
 	do
 		# dump table
 		echo "$T" >> tables.txt

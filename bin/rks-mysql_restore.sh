@@ -45,7 +45,7 @@ function _confirm {
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
-# @require abort, rm
+# @require _abort _rm
 #------------------------------------------------------------------------------
 function _extract_tgz {
 
@@ -78,7 +78,7 @@ function _extract_tgz {
 #
 # @param path
 # @export LAST_DIR
-# @require abort
+# @require _abort 
 #------------------------------------------------------------------------------
 function _cd {
 	echo "cd '$1'"
@@ -111,7 +111,7 @@ function _cd {
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require abort md5
+# @require _abort _md5
 #------------------------------------------------------------------------------
 function _cp {
 
@@ -158,7 +158,7 @@ function _cp {
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _rm {
 
@@ -166,7 +166,7 @@ function _rm {
 		_abort "Empty remove path list"
 	fi
 
-	for a in $1
+	local a=; for a in $1
 	do
 		if ! test -f $a && ! test -d $a
 		then
@@ -187,7 +187,7 @@ function _rm {
 # @param path
 # @global SUDO
 # @param abort_if_exists (optional - if set abort if directory already exists)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mkdir {
 
@@ -214,7 +214,7 @@ function _mkdir {
 #
 # @param source_path
 # @param target_path
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mv {
 
@@ -251,7 +251,7 @@ function _mv {
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort confirm mysql_conn
+# @require _abort _confirm _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_load {
 
@@ -307,7 +307,7 @@ function _mysql_load {
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require abort extract_tgz cd cp rm mv mkdir mysql_load mysql_conn
+# @require _abort _extract_tgz _cd _cp _rm _mv _mkdir _mysql_load _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
@@ -330,7 +330,7 @@ function _mysql_restore {
 		_rm create_tables.fix.sql
 	fi
 
-	for a in `cat tables.txt`
+	local a=; for a in `cat tables.txt`
 	do
 		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load $a".sql"
@@ -386,7 +386,7 @@ function _mysql_restore {
 #
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _mysql_conn {
 
