@@ -181,7 +181,7 @@ $REDIRECT
 #------------------------------------------------------------------------------
 
 APP=$0
-APP_DESC="Create lets_encrypt SSL certificate"
+APP_DESC="Create apache2 http and https site configuration"
 
 _run_as_root
 _cd /etc/apache2/sites-available
@@ -201,8 +201,8 @@ for i in "$@"; do
 			DOCROOT="${i#*=}"
 			shift
 			;;
-		www_redir=*)
-			WWW_REDIR="${i#*=}"
+		ssl_redir=*)
+			SSL_REDIR="${i#*=}"
 			shift
 			;;
 		*)
@@ -212,13 +212,19 @@ for i in "$@"; do
 done
 
 if test -z "$DOMAIN" || test -z "$EMAIL" || test -z "$DOCROOT"; then
-	_syntax "domain=name.tld email=admin@name.tld docroot=/webhome/domain[.tld]/www [www_redir=y]"
+	_syntax "domain=name.tld email=admin@name.tld docroot=/path/to/name.tld [ssl_redir=www|yes|no]"
 fi
 
-if test -z "$WWW_REDIR"; then
+if ! test -d "$DOCROOT"; then
+	_abort "No such directory $DOCROOT"
+fi
+
+if test "$SSL_REDIR" = "yes"; then
 	REDIRECT="Redirect / https://$DOMAIN/"
-else
+elif test "$SSL_REDIR" = "www"; then
 	REDIRECT="Redirect / https://www.$DOMAIN/"
+else
+	REDIRECT=""
 fi
 
 HTTP_SITE="80-"$DOMAIN".conf"
@@ -239,4 +245,11 @@ fi
 
 _https_conf
 echo "$HTTPS_CONF" > $HTTPS_SITE
+
+echo -e "\n$HTTP_SITE and $HTTPS_SITE have been created in $PWD
+Run the following command to activate site:
+
+a2ensite $HTTP_SITE # don't activate if SSL_REDIR=www|yes
+a2ensite $HTTPS_SITE # don't activate if you have no SSL certificate
+service apache2 reload\n\n"
 

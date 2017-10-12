@@ -108,7 +108,7 @@ for i in "$@"; do
 done
 
 if test -z "$DOMAIN" || test -z "$EMAIL" || test -z "$DOCROOT"; then
-	_syntax "domain=name.tld email=admin@name.tld docroot=/webhome/domain[.tld]/www [ssl_redir=www|yes|no]"
+	_syntax "domain=name.tld email=admin@name.tld docroot=/path/to/name.tld [ssl_redir=www|yes|no]"
 fi
 
 if ! test -d "$DOCROOT"; then

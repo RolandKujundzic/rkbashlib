@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="copyright abort syntax run_as_root rks-lets_encrypt"
+MERGE2RUN="copyright abort syntax run_as_root cd rks-lets_encrypt"
 
 
 #
@@ -48,6 +48,38 @@ function _run_as_root {
 	then
 		_abort "Please change into root and try again"
 	fi
+}
+
+
+#------------------------------------------------------------------------------
+# Change to directory $1. If parameter is empty and _cd was executed before 
+# change to last directory.
+#
+# @param path
+# @export LAST_DIR
+# @require abort
+#------------------------------------------------------------------------------
+function _cd {
+	echo "cd '$1'"
+
+	if test -z "$1"
+	then
+		if ! test -z "$LAST_DIR"
+		then
+			_cd "$LAST_DIR"
+			return
+		else
+			_abort "empty directory path"
+		fi
+	fi
+
+	if ! test -d "$1"; then
+		_abort "no such directory [$1]"
+	fi
+
+	LAST_DIR="$PWD"
+
+	cd "$1" || _abort "cd '$1' failed"
 }
 
 
@@ -108,7 +140,7 @@ check)
   echo -e "\n$CERT_STATUS: $ENDDATE\n"
   ;;
 create)
-  _create_ssl_certificate
+  _create_ssl_certificate $2 $3
   ;;
 *)
   _syntax "[create|check]"
