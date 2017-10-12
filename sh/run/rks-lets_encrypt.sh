@@ -57,7 +57,7 @@ check)
   echo -e "\n$CERT_STATUS: $ENDDATE\n"
   ;;
 create)
-  _create_ssl_certificate
+  _create_ssl_certificate $2 $3
   ;;
 *)
   _syntax "[create|check]"
