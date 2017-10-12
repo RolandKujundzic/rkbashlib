@@ -18,8 +18,7 @@ function _install_node {
 
 	if test -d /usr/local/bin && test "$OS_TYPE" = "linux"
 	then
-		APP_FILE_LIST="bin/npm bin/node share/man/man1/node.1 share/systemtap/tapset/node.stp"
-		APP_DIR_LIST="include/node lib/node_modules share/doc/node"
+		APP_SYNC="bin include lib share"
 		APP_PREFIX="/usr/local"
 
 		local CURR_SUDO=$SUDO
