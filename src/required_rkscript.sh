@@ -16,15 +16,28 @@ function _required_rkscript {
 
 	_require_global RKSCRIPT_FUNCTIONS
 
-	REQUIRED_RKSCRIPT=
-
+	local LIST=
 	local b=	
 	local a=; for a in $RKSCRIPT_FUNCTIONS; do
 		b=`cat "$1" | sed -e "s/function .*//" | grep "$a "`
 
 		if ! test -z "$b" && test "$FUNC" != "$a"; then
-			REQUIRED_RKSCRIPT="$a $REQUIRED_RKSCRIPT"
+			LIST="$a $LIST"
 		fi
 	done
+
+	if ! test -z "$2"; then		
+		local RESULT="$LIST"
+
+		for a in $LIST; do
+			b="$RKSCRIPT_PATH/src/"${a:1}".sh"
+			_required_rkscript $b $2
+			RESULT=`echo "$RESULT $REQUIRED_RKSCRIPT" | sed -e "s/ /\n/g" | sort -u | xargs`
+		done
+
+		LIST="$RESULT"
+	fi
+
+	REQUIRED_RKSCRIPT="$LIST"
 }
 
