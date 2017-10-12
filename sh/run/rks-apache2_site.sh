@@ -40,7 +40,7 @@ $REDIRECT
 
 <IfModule mod_ssl.c>
 	$HTTPS_ALIAS
-	<VirtualHost _default_:443>
+	<VirtualHost *:443>
 		ServerName $DOMAIN
 		ServerAdmin $EMAIL
 		DocumentRoot $DOCROOT
@@ -127,10 +127,14 @@ elif test "$SSL_REDIR" = "www"; then
 	REDIRECT="Redirect permanent / https://www.$DOMAIN/"
 	HTTP_ALIAS="ServerAlias www.$DOMAIN"
 	SSL_DIR="www.$DOMAIN"
-	HTTPS_ALIAS="<VirtualHost _default_:443>
-ServerName $DOMAIN
-Redirect permanent / https://www.$DOMAIN/
-</VirtualHost>
+	HTTPS_ALIAS="<VirtualHost *:443>
+		ServerName $DOMAIN
+		Redirect permanent / https://www.$DOMAIN/
+
+		SSLEngine on
+		SSLCertificateFile      /etc/letsencrypt/live/$DOMAIN/fullchain.pem
+		SSLCertificateKeyFile   /etc/letsencrypt/live/$DOMAIN/privkey.pem
+	</VirtualHost>
 "
 fi
 

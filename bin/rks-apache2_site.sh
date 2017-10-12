@@ -108,6 +108,7 @@ function _confirm {
 function _http_conf {
 	HTTP_CONF="<VirtualHost *:80>
 ServerName $DOMAIN
+$HTTP_ALIAS
 ServerAdmin $EMAIL
 DocumentRoot $DOCROOT
 
@@ -137,13 +138,14 @@ function _https_conf {
 	HTTPS_CONF="
 <VirtualHost *:80>
 ServerName $DOMAIN
+$HTTP_ALIAS
 $REDIRECT
 </VirtualHost>
 
 <IfModule mod_ssl.c>
-	<VirtualHost _default_:443>
+	$HTTPS_ALIAS
+	<VirtualHost *:443>
 		ServerName $DOMAIN
-
 		ServerAdmin $EMAIL
 		DocumentRoot $DOCROOT
 
@@ -169,8 +171,8 @@ $REDIRECT
 		</Directory>
 
 		SSLEngine on
-		SSLCertificateFile      /etc/letsencrypt/live/$DOMAIN/fullchain.pem
-		SSLCertificateKeyFile   /etc/letsencrypt/live/$DOMAIN/privkey.pem
+		SSLCertificateFile      /etc/letsencrypt/live/$SSL_DIR/fullchain.pem
+		SSLCertificateKeyFile   /etc/letsencrypt/live/$SSL_DIR/privkey.pem
 	</VirtualHost>
 </IfModule>"
 }
@@ -219,12 +221,25 @@ if ! test -d "$DOCROOT"; then
 	_abort "No such directory $DOCROOT"
 fi
 
+SSL_DIR="$DOMAIN"
+REDIRECT=""
+HTTPS_ALIAS=""
+
 if test "$SSL_REDIR" = "yes"; then
-	REDIRECT="Redirect / https://$DOMAIN/"
+	REDIRECT="Redirect permanent / https://$DOMAIN/"
 elif test "$SSL_REDIR" = "www"; then
-	REDIRECT="Redirect / https://www.$DOMAIN/"
-else
-	REDIRECT=""
+	REDIRECT="Redirect permanent / https://www.$DOMAIN/"
+	HTTP_ALIAS="ServerAlias www.$DOMAIN"
+	SSL_DIR="www.$DOMAIN"
+	HTTPS_ALIAS="<VirtualHost *:443>
+		ServerName $DOMAIN
+		Redirect permanent / https://www.$DOMAIN/
+
+		SSLEngine on
+		SSLCertificateFile      /etc/letsencrypt/live/$DOMAIN/fullchain.pem
+		SSLCertificateKeyFile   /etc/letsencrypt/live/$DOMAIN/privkey.pem
+	</VirtualHost>
+"
 fi
 
 HTTP_SITE="80-"$DOMAIN".conf"
