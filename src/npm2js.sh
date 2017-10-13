@@ -4,7 +4,7 @@
 # Copy module from node_module/$2 to $1 if necessary
 #
 # @param target path
-# @param node_modules/$2 (source path)
+# @param source path (node_modules/$2)
 # @require _abort _cp
 #------------------------------------------------------------------------------
 function _npm2js {
