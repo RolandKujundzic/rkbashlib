@@ -1,21 +1,18 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Patch if $1/patch.sh exists. Example patch.sh:
+# Patch either PATCH_LIST and PATCH_DIR are set or $1/patch.sh exists.
+# If $1/patch.sh exists it must export PATCH_LIST and PATCH_DIR.
+# Apply patch if target file and patch file exist.
 #
-# PATCH_LIST=MainViewController.m
-# PATCH_DIR=platforms/ios
-#
-# @param directory path
+# @param patch file directory
 # @require _abort
 #------------------------------------------------------------------------------
 function _patch {
 
-	if ! test -f "$1/patch.sh"; then
-		return
+	if test -f "$1/patch.sh"; then
+		. $1/patch.sh
 	fi
-
-	. $1/patch.sh
 
 	local a=; for a in $PATCH_LIST
   do
