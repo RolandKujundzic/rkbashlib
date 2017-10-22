@@ -5,7 +5,7 @@
 #
 # @param string directory name
 # @param string download url
-# @require _abort _mv
+# @require _abort _mv _mkdir
 #------------------------------------------------------------------------------
 function _dl_unpack {
 
@@ -31,7 +31,17 @@ function _dl_unpack {
 	if test "$EXTENSION" = "zip"; then
 		UNPACK_CMD="unzip"
 		echo "Unpack zip: $UNPACK_CMD '$ARCHIVE'"
-		unzip "$ARCHIVE"
+
+		local HAS_DIR=`unzip -l "$ARCHIVE" | grep "$1\$"`
+
+		if test -z "$HAS_DIR"; then
+			_mkdir "$1"
+			cd "$1"
+			unzip "../$ARCHIVE"
+			cd ..
+		else
+			unzip "$ARCHIVE"
+		fi
 	else
 		UNPACK_CMD="tar -xf"
 		echo "Unpack tar: $UNPACK_CMD '$ARCHIVE'"
