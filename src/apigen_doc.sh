@@ -5,7 +5,7 @@
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/api)
-# @require _composer _abort 
+# @require _composer _abort _confirm _rm
 #------------------------------------------------------------------------------
 function _apigen_doc {
 
@@ -28,8 +28,11 @@ function _apigen_doc {
 		_abort "no such directory [$SRC_DIR]"
 	fi
 
-	if ! test -d "$DOC_DIR"; then
-		_abort "remove existing documentation directory [$DOC_DIR] first"
+	if test -d "$DOC_DIR"; then
+		_confirm "Remove existing documentation directory [$DOC_DIR] ?"
+		if test "$CONFIRM" = "y"; then
+			_rm "$DOC_DIR"
+		fi
 	fi
 
 	vendor/apigen/apigen/bin/apigen generate -s "$SRC_DIR" -d "$DOC_DIR"
