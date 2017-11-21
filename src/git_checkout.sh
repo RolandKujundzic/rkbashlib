@@ -21,7 +21,8 @@ function _git_checkout {
 		cd "$2"
 		echo "git pull $2"
 		git pull
-		test -s .gitmodules && git submodule update --init --recursive
+		test -s .gitmodules && git submodule foreach git pull origin master
+		# test -s .gitmodules && git submodule update --init --recursive
 		cd "$CURR"
 	elif test -d "../../$2"
 	then
@@ -39,7 +40,8 @@ function _git_checkout {
 
 		if test -s "$2/.gitmodules"; then
 			cd "$2"
-			git submodule update --init --recursive
+			git submodule foreach git pull origin master
+			# git submodule update --init --recursive
 			cd ..
 		fi
 
