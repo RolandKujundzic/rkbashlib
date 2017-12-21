@@ -2,7 +2,7 @@
 
 #------------------------------------------------------------------------------
 # Export MYSQL_CONN connection string.
-# If MYSQL_CONN is empty bu DB_NAME and DB_PASS exist use these.
+# If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
 #
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
