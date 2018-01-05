@@ -9,31 +9,22 @@
 # @require _abort  
 #------------------------------------------------------------------------------
 function _find_docroot {
-	echo "_find_docroot: [$1]"
-
-	if test -z "$1" || ! test -d "$1"; then
-		_abort "Invalid directory [$1]"
-	fi
-
-	if test -f "$DOCROOT/index.php" && ( test -f "$DOCROOT/settingxs.php" || test -d "$DOCROOT/data" ); then
-		# DOCROOT already defined
-		return
-	fi
-
 	local DIR=$(realpath "$1")
+	local LAST_DIR=
+
+	while test -d "$DIR" && ! (test -f "$DIR/index.php" && ( test -f "$DIR/settingxs.php" || test -d "$DIR/data" )); do
+		LAST_DIR="$DIR"
+		DIR=$(dirname "$DIR")
+
+		if test "$DIR" = "$LAST_DIR" || ! test -d "$DIR"; then
+			_abort "failed to find DOCROOT of [$1]"
+		fi
+	done
 
 	if test -f "$DIR/index.php" && ( test -f "$DIR/settingxs.php" || test -d "$DIR/data" ); then
-		echo "export DOCROOT=$DIR"
 		DOCROOT="$DIR"
-		return
-	fi
-
-	local PARENT_DIR=$(dirname "$DIR")
-
-	if test "$DIR" != "$PARENT_DIR" && test -d "$PARENT_DIR"; then
-		_find_docroot "$PARENT_DIR"
 	else
-		_abort "failed to find DOCROOT"
+		_abort "failed to find DOCROOT of [$1]"
 	fi
 }
 
