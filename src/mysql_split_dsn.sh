@@ -4,9 +4,9 @@
 # Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
 # do nothing.
 #
-# @param php_file (if empty try settings.php, index.php)
+# @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @export DB_NAME, DB_PASS
-# @require _abort 
+# @require _abort _find_docroot 
 #------------------------------------------------------------------------------
 function _mysql_split_dsn {
 	local SETTINGS_DSN=
@@ -20,20 +20,17 @@ function _mysql_split_dsn {
 	fi
 
 	if ! test -f "$1"; then
+		_find_docroot
 
-		if test -z "$DB_NAME" && test -z "$DB_PASS"
-		then
-			if test -f 'settings.php'; then
-				_mysql_split_dsn settings.php
-				return
-			elif test -f 'index.php'; then
-				_mysql_split_dsn index.php
-				return
-			else
-				_abort "no such file [$1]"
-			fi
+		if test -f "$DOCROOT/settings.php"; then
+			_mysql_split_dsn settings.php
+			return
+		elif test -f "$DOCROOT/index.php"; then
+			_mysql_split_dsn index.php
+			return
 		fi
 
+		_abort "no such file [$1]"
 	fi
 
 	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
