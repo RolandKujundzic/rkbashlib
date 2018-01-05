@@ -20,13 +20,13 @@ function _mysql_split_dsn {
 	fi
 
 	if ! test -f "$1"; then
-		_find_docroot
+		test -z "$DOCROOT" && _find_docroot "$PWD"
 
 		if test -f "$DOCROOT/settings.php"; then
-			_mysql_split_dsn settings.php
+			_mysql_split_dsn "$DOCROOT/settings.php"
 			return
 		elif test -f "$DOCROOT/index.php"; then
-			_mysql_split_dsn index.php
+			_mysql_split_dsn "$DOCROOT/index.php"
 			return
 		fi
 
