@@ -13,13 +13,13 @@ function _file_priv {
 		_abort "no such directory [$1]"
 	fi
 
-  local PRIV="$2"
+	local PRIV="$2"
 
-  if test -z "$PRIV"; then
-    PRIV=644
-  else
-    _is_integer "$PRIV"
-  fi
+	if test -z "$PRIV"; then
+		PRIV=644
+	else
+		_is_integer "$PRIV"
+	fi
 
 	find "$1" -type f ! -name '.*' ! -name '*.sh' -exec chmod $PRIV {} \;
 }
