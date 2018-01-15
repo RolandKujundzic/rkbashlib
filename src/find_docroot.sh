@@ -4,13 +4,24 @@
 # Find document root of php project (realpath). Search for directory with 
 # index.php and (settings.php file or data/ dir).
 #
-# @param string path e.g. $PWD
+# @param string path e.g. $PWD (optional use $PWD as default)
 # @export DOCROOT
 # @require _abort  
 #------------------------------------------------------------------------------
 function _find_docroot {
-	local DIR=$(realpath "$1")
+	local DIR=
 	local LAST_DIR=
+
+	if test -z "$1"; then
+		DIR=$(realpath "$PWD")
+	else
+		DIR=$(realpath "$1")
+	fi
+
+	if ! test -z "$DOCROOT" && (test -f "$DOCROOT/index.php" && ( test -f "$DOCROOT/settingxs.php" || test -d "$DOCROOT/data" )); then
+		echo "use DOCROOT=$DOCROOT"
+		return
+	fi
 
 	while test -d "$DIR" && ! (test -f "$DIR/index.php" && ( test -f "$DIR/settingxs.php" || test -d "$DIR/data" )); do
 		LAST_DIR="$DIR"
