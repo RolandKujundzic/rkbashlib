@@ -17,13 +17,8 @@ function _mkdir {
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
 		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
-	else
-		if test -z "$2"
-		then
-			echo "_mkdir: ignore existing directory $1"
-		else
-			_abort "directory $1 already exists"
-		fi
+	elif ! if test -z "$2"; then
+		_abort "directory $1 already exists"
 	fi
 }
 
