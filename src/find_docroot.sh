@@ -18,6 +18,11 @@ function _find_docroot {
 		DIR=$(realpath "$1")
 	fi
 
+	local BASE=`basename $DIR`
+	if test "$BASE"="cms"; then
+		DOCROOT=`dirname $DIR`
+	fi
+
 	if ! test -z "$DOCROOT" && (test -f "$DOCROOT/index.php" && ( test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data" )); then
 		echo "use DOCROOT=$DOCROOT"
 		return
