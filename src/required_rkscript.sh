@@ -12,7 +12,8 @@
 #------------------------------------------------------------------------------
 function _required_rkscript {
 	local BASE=`basename "$1"`
-	local FUNC="_"${BASE::-3}
+	# negative offset doesn't work in OSX bash replace ${BASE::-3} with ${BASE:0:${#BASE}-3}
+	local FUNC="_"${BASE:0:${#BASE}-3}
 
 	_require_global RKSCRIPT_FUNCTIONS
 

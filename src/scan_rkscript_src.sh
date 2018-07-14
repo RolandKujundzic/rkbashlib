@@ -17,7 +17,8 @@ function _scan_rkscript_src {
 
 	local F=
 	local a=; for a in *.sh; do
-		F="_"${a::-3}
+		# negative length doesn't work in OSX bash replace ${a::-3} with ${a:0:${#a}-3}
+		F="_"${a:0:${#a}-3}
 		RKSCRIPT_FUNCTIONS="$F $RKSCRIPT_FUNCTIONS"
 	done
 
