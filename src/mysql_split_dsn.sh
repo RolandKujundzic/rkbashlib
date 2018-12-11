@@ -44,7 +44,11 @@ function _mysql_split_dsn {
 	fi
  
 	if test -z "$PATH_RKPHPLIB"; then
-		_abort "autodetect PATH_RKPHPLIB failed"
+		if test -d "/home/rk/Desktop/workspace/rkphplib/src"; then
+			PATH_RKPHPLIB="/home/rk/Desktop/workspace/rkphplib/src/"
+		else
+			_abort "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/"
+		fi
 	fi
 
 	local SPLIT_DSN='require("'$PATH_RKPHPLIB'ADatabase.class.php"); $dsn = \rkphplib\ADatabase::splitDSN("'$SETTINGS_DSN'");'
