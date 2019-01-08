@@ -10,7 +10,7 @@
 #------------------------------------------------------------------------------
 function _mysql_split_dsn {
 	local SETTINGS_DSN=
-	local PATH_RKPHPLIB=
+	local PATH_RKPHPLIB=$PATH_RKPHPLIB
 	local PHP_CODE=
 
 	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"
@@ -36,8 +36,10 @@ function _mysql_split_dsn {
 	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
 	SETTINGS_DSN=`php -r "$PHP_CODE"`
 
-	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("PATH_RKPHPLIB")) print PATH_RKPHPLIB;'
-	PATH_RKPHPLIB=`php -r "$PHP_CODE"`
+	if test -z "$PATH_RKPHPLIB"; then
+		PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("PATH_RKPHPLIB")) print PATH_RKPHPLIB;'
+		PATH_RKPHPLIB=`php -r "$PHP_CODE"`
+	fi
 		
 	if test -z "$SETTINGS_DSN"; then
 		_abort "autodetect SETTINGS_DSN failed"
