@@ -17,7 +17,7 @@ function _cert_domain {
 	local HAS_DOMAIN=`openssl x509 -text -noout -in "/etc/letsencrypt/live/$1/fullchain.pem" | grep "DNS:$1"`
          
 	if test -z "$HAS_DOMAIN"; then
-		MISSING_DOMAIN="$  MISSING_DOMAIN $1"
+		MISSING_DOMAIN="$MISSING_DOMAIN $1"
 		return false
 	fi
 
