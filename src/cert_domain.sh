@@ -1,27 +1,22 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Append $1 to MISSING_DOMAIN if /.../$2/fullchain.pem doesn not contain DNS:$1.
-# Return false if not found.
+# Abort if domain is missing or /.../$2/fullchain.pem doesn not contain DNS:$1.
 #
-# @global MISSING_DOMAIN
 # @param string domain
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
-# @return boolean
+# @require _abort
 #------------------------------------------------------------------------------
 function _cert_domain {
 	if ! test -f "/etc/letsencrypt/live/$1/fullchain.pem"; then
-  		return false
+		_abort "no such file /etc/letsencrypt/live/$1/fullchain.pem"
   	fi
      
 	local HAS_DOMAIN=`openssl x509 -text -noout -in "/etc/letsencrypt/live/$1/fullchain.pem" | grep "DNS:$1"`
          
 	if test -z "$HAS_DOMAIN"; then
-		MISSING_DOMAIN="$MISSING_DOMAIN $1"
-		return false
+		_abort "missing domain $1 in /etc/letsencrypt/live/$1/fullchain.pem"
 	fi
-
-	return true
 }
 
 
