@@ -8,14 +8,20 @@
 # @require _abort
 #------------------------------------------------------------------------------
 function _cert_domain {
-	if ! test -f "/etc/letsencrypt/live/$1/fullchain.pem"; then
-		_abort "no such file /etc/letsencrypt/live/$1/fullchain.pem"
+	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"
+
+	if ! test -z "$2"; then
+		CERT_FILE="/etc/letsencrypt/live/$2/fullchain.pem"
+	fi
+
+	if ! test -f "$CERT_FILE"; then
+		_abort "no such file $CERT_FILE"
   	fi
      
-	local HAS_DOMAIN=`openssl x509 -text -noout -in "/etc/letsencrypt/live/$1/fullchain.pem" | grep "DNS:$1"`
+	local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
          
 	if test -z "$HAS_DOMAIN"; then
-		_abort "missing domain $1 in /etc/letsencrypt/live/$1/fullchain.pem"
+		_abort "missing domain $1 in $CERT_FILE"
 	fi
 }
 
