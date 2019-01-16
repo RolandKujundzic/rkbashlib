@@ -20,7 +20,7 @@ function _ip_address {
 	fi
 
 	local HOST=`hostname`
-	local PING_OK=`ping4 -c 1 $HOST 2> /dev/null | grep $IP_ADDRESS`
+	local PING_OK=`$PING4 -c 1 $HOST 2> /dev/null | grep $IP_ADDRESS`
 
 	if test -z "$PING_OK"; then
 		_abort "failed to detect IP_ADDRESS ($PING4 -c 1 $HOST != $IP_ADDRESS)"
