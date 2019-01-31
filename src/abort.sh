@@ -14,8 +14,12 @@ function _abort {
 	fi
 
 	echo -e "\nABORT: $1\n\n" 1>&2
-	# make shure APP dies even if _abort is called from subprocess
-  kill $(ps aux | grep "$APP" | awk '{print $2}')
+
+	if ! test -z "$APP"; then
+		# make shure APP dies even if _abort is called from subprocess
+  	kill $(ps aux | grep "$APP" | awk '{print $2}')
+	fi
+
 	exit 1
 }
 
