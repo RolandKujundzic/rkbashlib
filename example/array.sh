@@ -16,3 +16,7 @@ LIST="xyzuvw aa bb cc dd ee fghi"
 
 test $LIST
 test "$LIST"
+
+STRING="abcdefgh"
+
+echo "STRING[0]=[${STRING:0}] STRING[0:1]=[${STRING:0:1}] STRING[0:3]=[${STRING:0:3}] STRING[3]=[${STRING:3}] STRING[-2]=[${STRING: -2}]"
