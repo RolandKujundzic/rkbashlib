@@ -30,7 +30,7 @@ function _rkscript {
 	fi
 
 	if ! test -d "$RKSCRIPT" || ! test -f "$RKSCRIPT/abort.sh"; then
-		$ABORT "invalid RKSCRIPT path [$RKSCRIPT] - $APP"
+		$ABORT "invalid RKSCRIPT path [$RKSCRIPT] - $APP_PREFIX $APP"
 	fi
 
 	for a in $1; do
