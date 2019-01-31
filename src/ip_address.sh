@@ -3,11 +3,12 @@
 #------------------------------------------------------------------------------
 # Export ip address
 #
-# @export IP_ADDRESS, PING4
+# @export IP_ADDRESS, IP6_ADDRESS, PING4
 # @require _abort
 #------------------------------------------------------------------------------
 function _ip_address {
 	IP_ADDRESS=`ip route get 1 | awk '{print $NF;exit}'`
+	IP6_ADDRESS=`ip -6 addr | grep 'scope global' | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d'`
 
 	if test -z "$IP_ADDRESS" || test "$IP_ADDRESS" = "0"; then
 		IP_ADDRESS=`ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'`
