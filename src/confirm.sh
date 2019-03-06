@@ -6,7 +6,7 @@
 # key was pressed or 10 sec expired.
 #
 # @param string message
-# @export CONFIRM
+# @export CONFIRM CONFIRM_TEXT
 #------------------------------------------------------------------------------
 function _confirm {
 	CONFIRM=n
@@ -14,6 +14,8 @@ function _confirm {
 	echo -n "$1  y [n]  "
 	read -n1 -t 10 CONFIRM
 	echo
+
+	CONFIRM_TEXT="$CONFIRM"
 
 	if test "$CONFIRM" != "y"; then
 		CONFIRM=n

@@ -12,6 +12,12 @@ function _find_docroot {
 	local DIR=
 	local LAST_DIR=
 
+	if ! test -z "$DOCROOT"; then
+		DOCROOT=`realpath $DOCROOT`
+		echo "use existing DOCROOT=$DOCROOT"
+		return
+	fi
+
 	if test -z "$1"; then
 		DIR=$(realpath "$PWD")
 	else
