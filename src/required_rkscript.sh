@@ -37,7 +37,8 @@ function _required_rkscript {
 		for a in $LIST; do
 			b="$RKSCRIPT_PATH/src/"${a:1}".sh"
 			_required_rkscript $b $2
-			RESULT=`echo "$RESULT $REQUIRED_RKSCRIPT" | sed -e "s/ /\n/g" | sort -u | xargs`
+			# OSX workaround: use [sed -e 's/ /\'$'\n/g'] instead of [sed -e "s/ /\n/g"]
+			RESULT=`echo "$RESULT $REQUIRED_RKSCRIPT" | sed -e 's/ /\'$'\n/g' | sort -u | xargs`
 		done
 
 		LIST="$RESULT"
