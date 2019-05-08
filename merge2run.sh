@@ -49,7 +49,8 @@ else
 				INCLUDE="$REQUIRED_RKSCRIPT $INCLUDE"
 			done
 
-			INCLUDE=`echo "$INCLUDE" | sed -e "s/ /\n/g" | sed -e "s/^_//g" | xargs`
+			# OSX workaround: use [sed -e 's/ /\'$'\n/g'] instead of [sed -e "s/ /\n/g"]
+			INCLUDE=`echo "$INCLUDE" | sed -e 's/ /\'$'\n/g' | sed -e "s/^_//g" | xargs`
 			MERGE2RUN="$INCLUDE $MERGE2RUN"
 		fi
 	else
