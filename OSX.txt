@@ -1,0 +1,11 @@
+Bash is broken in OSX (Mac), e.g.
+
+1) sed replace with NEWLINE:
+
+BROKEN: 	echo 'a b c' | sed -e "s/ /\n/g"				# Result in OSX: anbnc
+WORKS:		echo 'a b c' | sed -e 's/ /\'$'\n/g'
+
+2) negative substring index:
+
+BROKEN:		echo ${UID::-2}						# Result in OSX: -bash: -2: substring expression < 0
+WORKS:		echo ${UID::${#UID}-2}
