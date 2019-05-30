@@ -18,16 +18,17 @@ function _confirm {
 
 	CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 
-  while read -d $'\0' 
-  do
-    if test "$REPLY" = "--$CONFIRM_COUNT=y"; then
-			echo "found --$CONFIRM_COUNT=y, accept: $1" 
+	while read -d $'\0' 
+	do
+		local CCKEY="--q$CONFIRM_COUNT"
+		if test "$REPLY" = "$CCKEY=y"; then
+			echo "found $CCKEY=y, accept: $1" 
 			CONFIRM=y
-		elif test "$REPLY" = "-n"; then
-			echo "found --$CONFIRM_COUNT=n, reject: $1" 
-      CONFIRM=n
-    fi
-  done < /proc/$$/cmdline
+		elif test "$REPLY" = "$CCKEY=n"; then
+			echo "found $CCKEY=n, reject: $1" 
+			CONFIRM=n
+		fi
+	done < /proc/$$/cmdline
 
 	if ! test -z "$CONFIRM"; then
 		# found -y or -n parameter
