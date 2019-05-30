@@ -16,13 +16,13 @@ function _cert_domain {
 
 	if ! test -f "$CERT_FILE"; then
 		_abort "no such file $CERT_FILE"
-  	fi
-     
-	local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
+	else   
+		local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
          
-	if test -z "$HAS_DOMAIN"; then
-		_abort "missing domain $1 in $CERT_FILE"
-	fi
+		if test -z "$HAS_DOMAIN"; then
+			_abort "missing domain $1 in $CERT_FILE"
+		fi
+ 	fi
 }
 
 
