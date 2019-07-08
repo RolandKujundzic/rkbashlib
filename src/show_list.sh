@@ -5,10 +5,17 @@
 #
 # @param list
 # @param linebreak
+# @param label (optional)
+# @require _label
 #------------------------------------------------------------------------------
 function _show_list {
 	local i=0
 	local a=
+
+	if ! test -z "$3"; then
+		echo ""
+		_label "$3"
+	fi
 
 	for a in $1
 	do
@@ -20,4 +27,6 @@ function _show_list {
 			echo ""
 		fi
 	done
+
+	echo ""
 }
