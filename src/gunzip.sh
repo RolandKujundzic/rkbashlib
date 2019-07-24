@@ -25,6 +25,7 @@ function _gunzip {
 	fi
 
 	echo "gunzip $1"
-	gunzip "$1"
+	# -f: Fix "Too many levels of symbolic links" error
+	gunzip -f "$1"
 }
 
