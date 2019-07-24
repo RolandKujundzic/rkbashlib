@@ -7,6 +7,7 @@
 #
 # @param dbname = username
 # @param password
+# @global MYSQL, DB_CHARSET
 # @export DB_NAME, DB_PASS
 # @require _abort _mysql_split_dsn
 #------------------------------------------------------------------------------
@@ -30,10 +31,29 @@ function _mysql_create_db {
 		return
 	fi
 
+	local CHARSET=
+
+	if test "$DB_CHARSET" = "utf8mb4"; then
+		CHARSET="DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci"
+	elif test "$DB_CHARSET" = "utf8"; then
+		CHARSET="DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci"
+	elif test "$DB_CHARSET" = "latin1"; then
+		CHARSET="DEFAULT CHARACTER SET latin1 DEFAULT COLLATE latin1_german1_ci"
+	else
+		_confirm "Use charset utf8mb4"
+		if test "$CONFIRM" = "y"; then
+			CHARSET="DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci"
+		fi
+	fi
+
+	if test -z "$CHARSET"; then
+		_abort "no charset - use [utf8|latin1|utf8mb4=ask]"
+	fi
+
 	echo "create mysql database $DB_NAME"
-	echo "CREATE DATABASE $DB_NAME" | $MYSQL || _abort "create database $DB_NAME failed"
+	echo "CREATE DATABASE $DB_NAME $CHARSET" | $MYSQL || _abort "create database $DB_NAME failed"
 	echo "create mysql database user $DB_NAME"
-	echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'" | $MYSQL || \
+	echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL || \
 		_abort "create database user $DB_NAME failed"
 }
 
