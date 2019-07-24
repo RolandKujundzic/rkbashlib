@@ -4,7 +4,7 @@
 # Show "message  Press y or n  " and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
-# question 1 and reject question 2.
+# question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
 #
 # @param string message
 # @export CONFIRM CONFIRM_TEXT
@@ -14,9 +14,9 @@ function _confirm {
 
 	if test -z "$CONFIRM_COUNT"; then
 		CONFIRM_COUNT=1
+	else
+		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 	fi
-
-	CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 
 	while read -d $'\0' 
 	do
