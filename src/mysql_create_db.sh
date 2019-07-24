@@ -3,7 +3,8 @@
 #------------------------------------------------------------------------------
 # Create Mysql Database and user. Define MYSQL="mysql -u root" if not set 
 # and user is root. If dbname and password are empty try to autodetect from 
-# settings.php or index.php.
+# settings.php or index.php. DB_CHARSET=[utf8|latin1|utf8mb4=ask] or empty
+# (=server default) if nothing is set.
 #
 # @param dbname = username
 # @param password
@@ -44,10 +45,6 @@ function _mysql_create_db {
 		if test "$CONFIRM" = "y"; then
 			CHARSET="DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci"
 		fi
-	fi
-
-	if test -z "$CHARSET"; then
-		_abort "no charset - use [utf8|latin1|utf8mb4=ask]"
 	fi
 
 	echo "create mysql database $DB_NAME"
