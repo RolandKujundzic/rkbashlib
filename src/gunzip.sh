@@ -13,7 +13,8 @@ function _gunzip {
 		_abort "no such gzip file [$1]"
 	fi
 
-	local IS_GZIP=`file "$1"  | grep 'gzip compressed data'`
+	local REAL_FILE=`realpath "$1"`
+	local IS_GZIP=`file "$REAL_FILE"  | grep 'gzip compressed data'`
 
 	if test -z "$IS_GZIP"; then
 		if test -z "$2"; then
@@ -24,8 +25,18 @@ function _gunzip {
 		fi
 	fi
 
-	echo "gunzip $1"
-	# -f: Fix "Too many levels of symbolic links" error
-	gunzip -f "$1"
+	local TARGET=`echo "$1" | sed -e 's/\.gz$//'`
+
+	if test -L "$1"; then
+		echo "gunzip -c '$1' > '$TARGET'"
+		gunzip -c "$1" > "$TARGET"
+	else
+		echo "gunzip $1"
+		gunzip "$1"
+	fi
+
+	if ! test -f "$TARGET"; then
+		_abort "gunzip failed - no such file $TARGET"
+	fi
 }
 
