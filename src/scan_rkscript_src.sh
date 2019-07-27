@@ -1,14 +1,21 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Scan $RKSCRIPT_PATH/src/* directory.
+# Scan $RKSCRIPT_PATH/src/* directory. Cache result RKSCRIPT_FUNCTIONS.
 #
 # @export RKSCRIPT_FUNCTIONS 
 # @global RKSCRIPT_PATH
-# @require _require_global _cd
+# @require _require_global _cd _cache
 #------------------------------------------------------------------------------
 function _scan_rkscript_src {
 	RKSCRIPT_FUNCTIONS=
+
+	_cache RKSCRIPT_FUNCTIONS
+
+	if ! test -z "$RKSCRIPT_FUNCTIONS"; then
+		echo "use cached result of _scan_rkscript_src (RKSCRIPT_FUNCTIONS)"
+		return
+	fi
 
 	_require_global RKSCRIPT_PATH
 
@@ -23,5 +30,6 @@ function _scan_rkscript_src {
 	done
 
 	_cd $CURR
+	_cache RKSCRIPT_FUNCTIONS "$RKSCRIPT_FUNCTIONS"
 }
 
