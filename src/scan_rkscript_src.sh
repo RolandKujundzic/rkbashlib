@@ -10,7 +10,11 @@
 function _scan_rkscript_src {
 	RKSCRIPT_FUNCTIONS=
 
-	_cache RKSCRIPT_FUNCTIONS
+	local HAS_CACHE=`type -t _cache`
+
+	if test "$HAS_CACHE" = "function"; then
+		_cache RKSCRIPT_FUNCTIONS
+	fi
 
 	if ! test -z "$RKSCRIPT_FUNCTIONS"; then
 		echo "use cached result of _scan_rkscript_src (RKSCRIPT_FUNCTIONS)"
@@ -22,14 +26,17 @@ function _scan_rkscript_src {
 	local CURR=$PWD
 	_cd $RKSCRIPT_PATH/src
 
-	local F=
-	local a=; for a in *.sh; do
+	local F=; local a=;
+	for a in *.sh; do
 		# negative length doesn't work in OSX bash replace ${a::-3} with ${a:0:${#a}-3}
 		F="_"${a:0:${#a}-3}
 		RKSCRIPT_FUNCTIONS="$F $RKSCRIPT_FUNCTIONS"
 	done
 
 	_cd $CURR
-	_cache RKSCRIPT_FUNCTIONS "$RKSCRIPT_FUNCTIONS"
+
+	if test "$HAS_CACHE" = "function"; then
+		_cache RKSCRIPT_FUNCTIONS "$RKSCRIPT_FUNCTIONS"
+	fi
 }
 
