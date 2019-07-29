@@ -33,7 +33,9 @@ function _chown {
 	then
 		echo "sudo chown -R '$2.$3' '$1'"
 		echo "sudo might ask for root password"
-		sudo chown -R "$2.$3" "$1"
+		_sudo "chown -R '$2.$3' '$1'"
+	else
+		echo "keep owner '$2.$3' of '$1'"
 	fi
 }
 

@@ -5,7 +5,7 @@
 #
 # @param file mode (octal)
 # @param file path
-# @require _abort
+# @require _abort _sudo
 #------------------------------------------------------------------------------
 function _chmod {
 
@@ -30,6 +30,6 @@ function _chmod {
 		return
 	fi
 
-	chmod -R $1 "$2" || sudo chmod -R $1 "$2" || _abort "chmod -R $1 '$2'"
+	_sudo "chmod -R $1 '$2'"
 }
 
