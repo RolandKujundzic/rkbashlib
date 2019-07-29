@@ -19,7 +19,8 @@ function _sudo {
 	local FLAG=$(($2 + 0))
 
 	if test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
-		eval "$EXEC" || eval "sudo $EXEC" || _abort "sudo $EXEC"
+		echo "$EXEC"
+		eval "$EXEC" || ( echo "try sudo $EXEC"; eval "sudo $EXEC" || _abort "sudo $EXEC" )
 	else
 		echo -e "sudo $EXEC\nType in sudo password if necessary"
 		eval "sudo $EXEC" || _abort "sudo $EXEC"
