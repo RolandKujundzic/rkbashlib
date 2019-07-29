@@ -6,7 +6,7 @@
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require _abort _extract_tgz _cd _cp _rm _mv _mkdir _mysql_load _mysql_conn
+# @require _abort _extract_tgz _cd _cp _chmod _rm _mv _mkdir _mysql_load _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_restore {
 
@@ -43,8 +43,7 @@ function _mysql_restore {
 			echo '  mysql $MYSQL_CONN < $1 &> $1".log" && rm $1 || echo "import $1 failed"' >> restore.sh
 			echo '  echo "$1 import finished"' >> restore.sh
 			echo -e "}\n\n" >> restore.sh
-
-			chmod 755 restore.sh
+			_chmod 755 restore.sh
 		fi
 	done
 
