@@ -12,17 +12,24 @@ function _cmd {
 	COMMAND_COUNT=$((COMMAND_COUNT + 1))
 
 	_mkdir ".cmd"
-	local CMD=".cmd/$COMMAND_COUNT"
+
+	# ToDo: unescape $1 to avoid eval
+	# local EXEC=`printf "%b" "$1"`
+	local EXEC="$1"
+
+	# change $2 into number
 	local FLAG=$(($2 + 0))
 
-	echo -e "#!/bin/bash\n\ncd '$PWD'\n$1 > '$CMD.log' 2> '$CMD.err'\n" > "$CMD.sh"
+	local CMD=".cmd/$COMMAND_COUNT"
+
+	echo -e "#!/bin/bash\n\ncd '$PWD'\n$EXEC > '$CMD.log' 2> '$CMD.err'\n" > "$CMD.sh"
 
 	if test $((FLAG & 2)) = 2; then
 		test $((FLAG & 1)) = 0 && echo -n "execute in $PWD: $CMD.sh ... "
 		/bin/bash "$CMD.sh" || _abort "command failed"
   else
-		test $((FLAG & 1)) = 0 && echo -n "execute in $PWD: $1 ... "
-		$1 > "$CMD.log" 2> "$CMD.err" || _abort "command failed"
+		test $((FLAG & 1)) = 0 && echo -n "execute in $PWD: $EXEC ... "
+		eval "$EXEC > '$CMD.log' 2> '$CMD.err'" || _abort "command failed"
 	fi
 	
 	if test $((FLAG & 1)) = 1; then

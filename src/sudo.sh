@@ -11,13 +11,18 @@ function _sudo {
 	local CURR_SUDO=$SUDO
 	SUDO=sudo
 
+	# ToDo: unescape $1 to avoid eval. Example: use [$EXEC] instead of [eval "$EXEC"]
+	# and [_sudo "cp 'a' 'b'"] will execute [cp "'a'" "'b'"].
+	local EXEC="$1"
+
+	# change $2 into number
 	local FLAG=$(($2 + 0))
 
 	if test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
-		$1 || sudo $1 || _abort "sudo $1"
+		eval "$EXEC" || eval "sudo $EXEC" || _abort "sudo $EXEC"
 	else
-		echo -e "sudo $1\nType in sudo password if necessary"
-		sudo $1 || _abort "sudo $1"
+		echo -e "sudo $EXEC\nType in sudo password if necessary"
+		eval "sudo $EXEC" || _abort "sudo $EXEC"
 	fi
 
 	SUDO=$CURR_SUDO
