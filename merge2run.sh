@@ -70,6 +70,14 @@ fi
 
 echo -e "\nCreate $OUT"
 
+# make MERGE2RUN\ entries unique - but main must stay at the end!
+M2R_LIST=( $MERGE2RUN )
+MERGE2RUN=`echo "$MERGE2RUN" | sed -e 's/ /\n/g' | sort -u - | tr '\n' ' '`
+
+# put main function last
+MAIN_FUNC=${M2R_LIST[-1]}
+MERGE2RUN=`echo "$MERGE2RUN" | sed -e "s/ $MAIN_FUNC//"`" $MAIN_FUNC"
+
 echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > $OUT
 
 for a in $MERGE2RUN
