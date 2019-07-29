@@ -25,7 +25,7 @@ function _chmod {
 
 	local PRIV=`stat -c "%a" "$2"`
 
-	if test "$1" = "$PRIV" || "$1" = "0$PRIV"; then
+	if test "$1" = "$PRIV" || test "$1" = "0$PRIV"; then
 		echo "keep existing mode $1 of $2"
 		return
 	fi
