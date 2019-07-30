@@ -25,6 +25,6 @@ function _rsync {
 
 	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"
 	_log "$RSYNC" rsync
-	eval "$RSYNC ${LOG_CMD[rsync]}"
+	eval "$RSYNC ${LOG_CMD[rsync]}" || _abort "$RSYNC"
 }
 
