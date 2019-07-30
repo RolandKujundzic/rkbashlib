@@ -30,13 +30,26 @@ function _build {
 # Install lib/rkscript.sh in $1 (= /usr/local/lib/rkscript.sh).
 #------------------------------------------------------------------------------
 function _install {
-	local INSTALL_DIR="$1"
+	local HAS_DOCKER=`docker ps 2> /dev/null | grep "$1"`
 
-	test -z "$INSTALL_DIR" && INSTALL_DIR=/usr/local/lib
-
-	_confirm "Install lib/rkscript.sh [$INSTALL_DIR] ?"
-	if test "$CONFIRM" = "y"; then
-		_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
+	if test "$1" = "localhost"; then
+		_cp lib/rkscript.sh /usr/local/lib/rkscript.sh md5
+	elif ! test -z "$HAS_DOCKER"; then
+		echo "docker cp lib/rkscript.sh $1:/usr/local/lib/"
+		docker cp lib/rkscript.sh $1:/usr/local/lib/
+	elif test -d "$1"; then
+		_cp lib/rkscript.sh "$1/rkscript.sh" md5
+	elif ! test -z "$1"; then
+		echo "copy lib/rkscript.sh to $1:/usr/local/lib/"
+		echo "scp lib/rkscript.sh '$1:/usr/local/lib/'"
+		scp lib/rkscript.sh "$1:/usr/local/lib/"
+	else
+		_confirm "Install lib/rkscript.sh to [/usr/local/lib/rkscript.sh] ?"
+		if test "$CONFIRM" = "y"; then
+			_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
+		else
+			_syntax "install [localhost=ask=/usr/local/lib/rkscript.sh|install/path|dockername|user@domain.tld]"
+		fi
 	fi
 }
 
@@ -60,6 +73,7 @@ SCRIPT_SRC=`dirname "$APP"`"/src"
 . "$SCRIPT_SRC/chmod.sh"
 . "$SCRIPT_SRC/sudo.sh"
 . "$SCRIPT_SRC/confirm.sh"
+. "$SCRIPT_SRC/syntax.sh"
 . "$SCRIPT_SRC/require_program.sh"
 
 echo
