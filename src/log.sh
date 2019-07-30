@@ -25,7 +25,7 @@ function _log {
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
 	LOG_FILE[$2]=".rkscript/$2/${LOG_COUNT[$2]}.nfo"
-	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>>&1"
+	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>&1"
 
 	_mkdir ".rkscript/$2"
 
