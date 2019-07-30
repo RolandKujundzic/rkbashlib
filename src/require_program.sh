@@ -9,12 +9,6 @@
 # @require _abort
 #------------------------------------------------------------------------------
 function _require_program {
-
-	HAS_PROGRAM=`which "$1"`
-
-	if test -z "$HAS_PROGRAM" && ! test -z "$2"
-	then
-		_abort "No such program [$1]"
-	fi
+	command -v "$1" > /dev/null 2>&1 || ( test -z "$2" &&  _abort "No such program [$1]" )
 }
 
