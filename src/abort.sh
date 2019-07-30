@@ -17,7 +17,7 @@ function _abort {
 
 	if ! test -z "$APP"; then
 		# make shure APP dies even if _abort is called from subprocess
-		kill $(ps aux | grep "$APP" | awk '{print $2}')
+		kill $(ps aux | grep "$APP" | awk '{print $2}') 2 > /dev/null 1>&2
 	fi
 
 	exit 1
