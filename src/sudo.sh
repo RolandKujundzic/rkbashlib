@@ -2,10 +2,10 @@
 
 #------------------------------------------------------------------------------
 # Switch to sudo mode. Switch back after command is executed.
-#
+# 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
-# @require _abort
+# @require _abort _log
 #------------------------------------------------------------------------------
 function _sudo {
 	local CURR_SUDO=$SUDO
@@ -19,11 +19,12 @@ function _sudo {
 	local FLAG=$(($2 + 0))
 
 	if test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
-		echo "$EXEC"
-		eval "$EXEC" || ( echo "try sudo $EXEC"; eval "sudo $EXEC" || _abort "sudo $EXEC" )
+		_log "$EXEC" sudo
+		eval "$EXEC ${LOG_CMD[sudo]}" || \
+			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC" )
 	else
-		echo -e "sudo $EXEC\nType in sudo password if necessary"
-		eval "sudo $EXEC" || _abort "sudo $EXEC"
+		_log "sudo $EXEC" sudo
+		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC"
 	fi
 
 	SUDO=$CURR_SUDO
