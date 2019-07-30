@@ -12,13 +12,17 @@ function _build {
 
 	_mkdir "lib"
 
-	echo '#!/bin/bash' > lib/rkscript.sh
+	local LIB_TMP=".rkscript/rkscript.sh"
+
+	echo '#!/bin/bash' > $LIB_TMP
+        _chmod 644 lib/rkscript.sh
+
 	for a in $SCRIPT_SRC/*.sh
 	do
-		tail -n+2 $a >> lib/rkscript.sh
+		tail -n+2 $a >> $LIB_TMP
 	done
 
-        _chmod 644 lib/rkscript.sh
+	_cp $LIB_TMP lib/rkscript md5
 }
 
 
@@ -32,7 +36,7 @@ function _install {
 
 	_confirm "Install lib/rkscript.sh [$INSTALL_DIR] ?"
 	if test "$CONFIRM" = "y"; then
-		_cp "lib/rkscript.sh" "$INSTALL_DIR/"
+		_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
 	fi
 }
 
@@ -56,6 +60,7 @@ SCRIPT_SRC=`dirname "$APP"`"/src"
 . "$SCRIPT_SRC/chmod.sh"
 . "$SCRIPT_SRC/sudo.sh"
 . "$SCRIPT_SRC/confirm.sh"
+. "$SCRIPT_SRC/require_program.sh"
 
 echo
 _build
