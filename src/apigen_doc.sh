@@ -37,3 +37,4 @@ function _apigen_doc {
 
 	vendor/apigen/apigen/bin/apigen generate -s "$SRC_DIR" -d "$DOC_DIR"
 }
+
