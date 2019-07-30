@@ -1,22 +1,40 @@
 #!/bin/bash
 
-
-function test {
-	echo -e "\ntest: \$1=[$1]"
-
-	local ARRAY=( $1 )
-	echo "1:1=[${ARRAY[@]:1:1}] 0:2=[${ARRAY[@]:0:2}] :3=[${ARRAY[@]:3}]"
-	# the space before -3|-2 is IMPORTANT!
-	echo "-3:1=[${ARRAY[@]: -3:1}] -2:2=[${ARRAY[@]: -2:2}]"
-	echo
+function array_set {
+	GLOBAL_ARRAY[$1]="$2"
+	GLOBAL_HASH[$1]="$2"
+	echo -e "\narray_set($1, $2):\nGLOBAL_HASH=[${GLOBAL_HASH[@]}] GLOBAL_ARRAY=[${GLOBAL_ARRAY[@]}]"
 }
 
 
+function hash_test {
+	local A=( $1 )
+	echo -ne "\nhash_test($1):\nA[0]=[${A[0]}] A[1]=[${A[1]}] A=[${A[@]}] "
+	# important: space before -n otherwise is means default value
+	echo "A[1:1]=[${A[@]:1:1}] A[0:2]=[${A[@]:0:2}] A[-2]=[${A[@]:-2}] A[ -2:]=[${A[@]: -2}] A[ -2:1]=[${A[@]: -2:1}]"
+}
+
+
+#
+# M A I N
+#
+
 LIST="xyzuvw aa bb cc dd ee fghi"
+hash_test $LIST
+hash_test "$LIST"
 
-test $LIST
-test "$LIST"
+declare -A GLOBAL_HASH=([test]='hello')
+declare -A GLOBAL_HASH2
+GLOBAL_ARRAY=('a' 'b')
+GLOBAL_ARRAY2=()
 
-STRING="abcdefgh"
+echo -e "\nKeys: GLOBAL_HASH=[${!GLOBAL_HASH[@]}] GLOBAL_HASH2=[${!GLOBAL_HASH2[@]}] \
+GLOBAL_ARRAY=[${!GLOBAL_ARRAY[@]}] GLOBAL_ARRAY2=[${!GLOBAL_ARRAY2[@]}]"
 
-echo "STRING[0]=[${STRING:0}] STRING[0:1]=[${STRING:0:1}] STRING[0:3]=[${STRING:0:3}] STRING[3]=[${STRING:3}] STRING[-2]=[${STRING: -2}]"
+array_set 7 abc
+array_set 8 uvw
+array_set "8" xyz
+
+S="abcdefgh"
+# important: space before -n otherwise it means default value
+echo -e "\nS=[$S] S[0]=[${S:0}] S[0:1]=[${S:0:1}] S[0:3]=[${S:0:3}] S[3]=[${S:3}] S[ -2]=[${S: -2}]\n"
