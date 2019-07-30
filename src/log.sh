@@ -29,7 +29,7 @@ function _log {
 
 	_mkdir ".rkscript/$2"
 
-  local NOW=`date +'%d.%m.%Y %H:%M:%S'`
+	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
 	test -z "$LOG_NO_ECHO" || echo " LOG_CMD[$2]"
