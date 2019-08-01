@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Change mode of file $2 to $1. If chmod failed try sudo.
+# Change mode of entry $2 to $1. If chmod failed try sudo.
 #
 # @param file mode (octal)
 # @param file path
