@@ -14,6 +14,8 @@ SCRIPT_SRC=`dirname "$SCRIPT_NAME"`"/src"
 . "$SCRIPT_SRC/require_global.sh"
 . "$SCRIPT_SRC/required_rkscript.sh"
 . "$SCRIPT_SRC/scan_rkscript_src.sh"
+. "$SCRIPT_SRC/cache.sh"
+. "$SCRIPT_SRC/mkdir.sh"
 . "$SCRIPT_SRC/cd.sh"
 . "$SCRIPT_SRC/rm.sh"
 
@@ -24,19 +26,26 @@ fi
 APP=$0
 OUT=run.sh
 
+echo
+
 if ! test -z "$MERGE2RUN_OUTPUT"; then
 	OUT="$MERGE2RUN_OUTPUT"
+	echo "OUT=$OUT"
 fi
 
 if test -z "$1"; then
 	if test -f sh/run/merge2run.sh; then
+		echo "load sh/run/merge2run.sh"
 		. sh/run/merge2run.sh
 	else
 		_syntax "[func1 func2 ... main]"
 	fi
 else
 	if test -f "sh/run/merge2$1"; then
+		echo "load sh/run/merge2$1" 
 		. sh/run/merge2$1
+
+		echo "OUT=$1"
 		OUT=$1
 
 		if ! test -z "$SCAN_INCLUDE"; then
@@ -45,7 +54,6 @@ else
 
 			for a in $MERGE2RUN; do
 				_required_rkscript "sh/run/$a"".sh" 1
-				echo "scan include sh/run/$a: $REQUIRED_RKSCRIPT"
 				INCLUDE="$REQUIRED_RKSCRIPT $INCLUDE"
 			done
 
@@ -68,8 +76,6 @@ if test -f "$OUT"; then
 	fi
 fi
 
-echo -e "\nCreate $OUT"
-
 # make MERGE2RUN\ entries unique - but main must stay at the end!
 M2R_LIST=( $MERGE2RUN )
 MERGE2RUN=`echo "$MERGE2RUN" | sed -e 's/ /\n/g' | sort -u - | tr '\n' ' '`
@@ -77,6 +83,8 @@ MERGE2RUN=`echo "$MERGE2RUN" | sed -e 's/ /\n/g' | sort -u - | tr '\n' ' '`
 # put main function last
 MAIN_FUNC=${M2R_LIST[-1]}
 MERGE2RUN=`echo "$MERGE2RUN" | sed -e "s/ $MAIN_FUNC//"`" $MAIN_FUNC"
+
+echo "Create $OUT ($MERGE2RUN)"
 
 echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > $OUT
 
@@ -88,7 +96,6 @@ do
 		FUNC="sh/run/$a.sh"
 	fi
 
-	echo "use function _$a ($FUNC)"
 	tail -n +2 "$FUNC" >> $OUT
 done
 
