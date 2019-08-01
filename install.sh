@@ -24,7 +24,7 @@ function _build {
 		tail -n+2 $a >> $LIB_TMP
 	done
 
-	_cp $LIB_TMP lib/rkscript md5
+	_cp $LIB_TMP lib/rkscript.sh md5
 }
 
 
@@ -32,6 +32,19 @@ function _build {
 # Install lib/rkscript.sh in $1 (= /usr/local/lib/rkscript.sh).
 #------------------------------------------------------------------------------
 function _install {
+
+	if test -z "$1"; then
+		_confirm "Install lib/rkscript.sh to [/usr/local/lib/rkscript.sh] ?"
+
+		if test "$CONFIRM" = "y"; then
+			_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
+		else
+			_syntax "install [localhost=ask=/usr/local/lib/rkscript.sh|install/path|dockername|user@domain.tld]"
+		fi
+
+		return
+	fi
+
 	local HAS_DOCKER=`docker ps 2> /dev/null | grep "$1"`
 
 	if test "$1" = "localhost"; then
@@ -41,17 +54,9 @@ function _install {
 		docker cp lib/rkscript.sh $1:/usr/local/lib/
 	elif test -d "$1"; then
 		_cp lib/rkscript.sh "$1/rkscript.sh" md5
-	elif ! test -z "$1"; then
-		echo "copy lib/rkscript.sh to $1:/usr/local/lib/"
+	else
 		echo "scp lib/rkscript.sh '$1:/usr/local/lib/'"
 		scp lib/rkscript.sh "$1:/usr/local/lib/"
-	else
-		_confirm "Install lib/rkscript.sh to [/usr/local/lib/rkscript.sh] ?"
-		if test "$CONFIRM" = "y"; then
-			_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
-		else
-			_syntax "install [localhost=ask=/usr/local/lib/rkscript.sh|install/path|dockername|user@domain.tld]"
-		fi
 	fi
 }
 
