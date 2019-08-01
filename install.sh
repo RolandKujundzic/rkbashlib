@@ -11,14 +11,16 @@ function _build {
 	echo "Build lib/rkscript.sh"
 
 	_mkdir "lib"
+	_mkdir ".rkscript"
 
 	local LIB_TMP=".rkscript/rkscript.sh"
 
 	echo '#!/bin/bash' > $LIB_TMP
-        _chmod 644 lib/rkscript.sh
+	_chmod 644 "$LIB_TMP"
 
 	for a in $SCRIPT_SRC/*.sh
 	do
+		echo "append $a to rkscript.sh"
 		tail -n+2 $a >> $LIB_TMP
 	done
 
