@@ -18,9 +18,9 @@ function _build {
 	echo '#!/bin/bash' > $LIB_TMP
 	_chmod 644 "$LIB_TMP"
 
+	echo "append $SCRIPT_SRC/*.sh to $LIB_TMP"
 	for a in $SCRIPT_SRC/*.sh
 	do
-		echo "append $a to rkscript.sh"
 		tail -n+2 $a >> $LIB_TMP
 	done
 
@@ -37,7 +37,7 @@ function _install {
 		_confirm "Install lib/rkscript.sh to [/usr/local/lib/rkscript.sh] ?"
 
 		if test "$CONFIRM" = "y"; then
-			_cp "lib/rkscript.sh" "$INSTALL_DIR/rkscript.sh" md5
+			_cp "lib/rkscript.sh" "/usr/local/lib/rkscript.sh" md5
 		else
 			_syntax "install [localhost=ask=/usr/local/lib/rkscript.sh|install/path|dockername|user@domain.tld]"
 		fi
@@ -55,8 +55,8 @@ function _install {
 	elif test -d "$1"; then
 		_cp lib/rkscript.sh "$1/rkscript.sh" md5
 	else
-		echo "scp lib/rkscript.sh '$1:/usr/local/lib/'"
-		scp lib/rkscript.sh "$1:/usr/local/lib/"
+		echo "scp lib/rkscript.sh $1:/usr/local/lib/"
+		scp lib/rkscript.sh $1:/usr/local/lib/
 	fi
 }
 
