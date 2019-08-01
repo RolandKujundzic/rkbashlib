@@ -23,16 +23,20 @@ function _scan_rkscript_src {
 
 	_require_global RKSCRIPT_PATH
 
+	echo "scan $RKSCRIPT_PATH/src/*.sh"
+
 	local CURR=$PWD
 	_cd $RKSCRIPT_PATH/src
 
-	local F=; local a=;
+	local F=; local a=; local n=0
 	for a in *.sh; do
 		# negative length doesn't work in OSX bash replace ${a::-3} with ${a:0:${#a}-3}
 		F="_"${a:0:${#a}-3}
 		RKSCRIPT_FUNCTIONS="$F $RKSCRIPT_FUNCTIONS"
+		n=$((n + 1))
 	done
 
+	echo "found $n files"
 	_cd $CURR
 
 	if test "$HAS_CACHE" = "function"; then
