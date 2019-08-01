@@ -10,9 +10,8 @@ LOG_NO_ECHO=
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
-# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
 # @param name (if set use .rkscript/$name/$NAME_COUNT.nfo)
-# @require _mkdir
+# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
 #------------------------------------------------------------------------------
 function _log {
 	test -z "$LOG_NO_ECHO" || echo -n "$1"
@@ -27,7 +26,7 @@ function _log {
 	LOG_FILE[$2]=".rkscript/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>&1"
 
-	_mkdir ".rkscript/$2" 2
+	test -d ".rkscript/$2" || ( mkdir -p ".rkscript/$2" && chmod 777 ".rkscript/$2" )
 
 	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
