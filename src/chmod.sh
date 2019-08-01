@@ -30,6 +30,6 @@ function _chmod {
 		return
 	fi
 
-	_sudo "chmod -R $1 '$2'"
+	_sudo "chmod -R $1 '$2'" 1
 }
 
