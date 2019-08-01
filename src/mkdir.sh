@@ -4,8 +4,8 @@
 # Create directory (including parent directories) if directory does not exists.
 #
 # @param path
+# @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory)
 # @global SUDO
-# @param abort_if_exists (optional - if set abort if directory already exists)
 # @require _abort
 #------------------------------------------------------------------------------
 function _mkdir {
@@ -14,10 +14,13 @@ function _mkdir {
 		_abort "Empty directory path"
 	fi
 
+	local FLAG=$(($2 + 0))
+
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
 		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
-	elif ! test -z "$2"; then
+		test $((FLAG & 2)) = 2 && _chmod 777 "$1"
+	elif test $((FLAG & 1)) = 1; then
 		_abort "directory $1 already exists"
 	fi
 }
