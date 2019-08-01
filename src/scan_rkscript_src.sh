@@ -23,8 +23,6 @@ function _scan_rkscript_src {
 
 	_require_global RKSCRIPT_PATH
 
-	echo "scan $RKSCRIPT_PATH/src/*.sh"
-
 	local CURR=$PWD
 	_cd $RKSCRIPT_PATH/src
 
@@ -36,7 +34,7 @@ function _scan_rkscript_src {
 		n=$((n + 1))
 	done
 
-	echo "found $n files"
+	echo "found $n RKSCRIPT_FUNCTIONS"
 	_cd $CURR
 
 	if test "$HAS_CACHE" = "function"; then
