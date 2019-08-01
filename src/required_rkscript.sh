@@ -6,7 +6,7 @@
 #
 # @param string shell script
 # @param boolean resolve recursive
-# @export REQUIRED_RKSCRIPT
+# @export REQUIRED_RKSCRIPT REQUIRED_RKSCRIPT_INCLUDE
 # @global RKSCRIPT_FUNCTIONS
 # @require _require_global
 #------------------------------------------------------------------------------
@@ -17,9 +17,19 @@ function _required_rkscript {
 
 	_require_global RKSCRIPT_FUNCTIONS
 
-	local LIST=
-	local b=	
-	local a=; for a in $RKSCRIPT_FUNCTIONS; do
+	if [ -z ${REQUIRED_RKSCRIPT+x} ]; then
+		REQUIRED_RKSCRIPT_INCLUDE=
+	fi
+
+	if [[ "$REQUIRED_RKSCRIPT_INCLUDE" =~ " $FUNC" ]]; then
+		# skip already included
+		return
+	fi
+
+	REQUIRED_RKSCRIPT_INCLUDE="$REQUIRED_RKSCRIPT_INCLUDE $FUNC"
+
+	local LIST=; local b=; local a=; local n=0
+	for a in $RKSCRIPT_FUNCTIONS; do
 		b=`cat "$1" | sed -e "s/function .*//" | grep "$a "`
 
 		if test -z "$b"; then
@@ -28,8 +38,11 @@ function _required_rkscript {
 
 		if ! test -z "$b" && test "$FUNC" != "$a"; then
 			LIST="$a $LIST"
+			n=$((n + 1))
 		fi
 	done
+
+	echo "include $FUNC (use $n functions)"
 
 	if ! test -z "$2"; then		
 		local RESULT="$LIST"
