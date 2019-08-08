@@ -41,8 +41,8 @@ function _mysql_split_dsn {
 		PATH_RKPHPLIB=`php -r "$PHP_CODE"`
 	fi
 	
-	if test -z "$PATH_RKPHPLIB" && test -d "/webhome/php/rkphplib/src"; then
-		PATH_RKPHPLIB="/webhome/php/rkphplib/src/"
+	if test -z "$PATH_RKPHPLIB" && test -d "/webhome/.php/rkphplib/src"; then
+		PATH_RKPHPLIB="/webhome/.php/rkphplib/src/"
 	fi
 
 	if test -z "$SETTINGS_DSN" && test -f "settings.php"; then
