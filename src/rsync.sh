@@ -23,8 +23,16 @@ function _rsync {
 		_abort "No such directory [$TARGET]"
 	fi
 
-	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"
+	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"; local error=
 	_log "$RSYNC" rsync
-	eval "$RSYNC ${LOG_CMD[rsync]}" || _abort "$RSYNC"
+	eval "$RSYNC ${LOG_CMD[rsync]}" || error=1
+
+	if test "$error" = "1"; then
+		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
+
+		if test -z "$sync_finished"; then
+			_abort "$RSYNC"
+		fi
+	fi
 }
 
