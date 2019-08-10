@@ -38,7 +38,7 @@ function _has_process {
 	fi
 
 	if test $((flag & 16)) = 16; then
-		if test -f "${PROCESS[log]}"; then
+		if test -s "${PROCESS[log]}"; then
 			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//"`
 
 			if test -z "$logfile_pid"; then
