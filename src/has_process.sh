@@ -15,7 +15,7 @@ declare -A PROCESS
 #
 # @param command
 # @param flag optional 2^n value
-# @option PROCESS[log]=$1.log if empty and flag & 2^1 = 2
+# @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|time|command] 
 # @require _abort
 #------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ function _has_process {
 		rx="/[b]in/bash.+$1.sh"
 	fi
 
-	if test -z "${PROCESS[log]}" && test $((flag & 2)) = 2; then
+	if test -z "${PROCESS[log]}" && (test $((flag & 2)) = 2 || test $((flag & 16)) = 16); then
 		PROCESS[log]="$1.log"
 	fi
 
@@ -37,7 +37,7 @@ function _has_process {
 		_abort "no such logfile ${PROCESS[log]}"
 	fi
 
-	if test $((flag & 16)) = 16; then
+	if test -f "${PROCESS[log]}" && test $((flag & 16)) = 16; then
 		logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//"`
 
 		if test -z "$logfile_pid"; then
