@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Rsync $1 to $2. Apply rsync parameter $3 if set.
+# Rsync $1 to $2. Apply rsync parameter $3 if set (e.g. --delete).
 #
 # @param source path e.g. user@host:/path/to/source
 # @param target path default=[.]
-# @param optional rsync parameter e.g. "--exclude /data"
+# @param optional rsync parameter e.g. "--delete --exclude /data"
 # @require _abort _log
 #------------------------------------------------------------------------------
 function _rsync {
