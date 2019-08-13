@@ -19,9 +19,11 @@ function _mkdir {
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
 		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
-		test $((FLAG & 2)) = 2 && _chmod 777 "$1"
-	elif test $((FLAG & 1)) = 1; then
-		_abort "directory $1 already exists"
+	else
+		test $((FLAG & 1)) = 1 && _abort "directory $1 already exists"
+		echo "directory $1 already exists"
 	fi
+
+	test $((FLAG & 2)) = 2 && _chmod 777 "$1"
 }
 
