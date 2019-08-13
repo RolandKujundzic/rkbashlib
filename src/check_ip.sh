@@ -1,16 +1,19 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Abort if ip_address does not point to IP_ADDRESS.
+# Abort if ip_address is ip4 and points to IP_ADDRESS.
 # Call _ip_address first.
 #
-# @global IP_ADDRESS, PING4
+# @global IP_ADDRESS
 # @param ip_address
-# @require _abort
+# @require _abort _require_program _is_ip4
 #------------------------------------------------------------------------------
 function _check_ip {
-	local IP_OK=`$PING4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS"`
+	_require_program ping
 
+	_is_ip4 "$1"
+
+	local IP_OK=`ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS"`
 	if test -z "$IP_OK"; then
 		_abort "$1 does not point to server ip $IP_ADDRESS"
 	fi
