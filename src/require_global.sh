@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 # Abort if global variable is empty.
 #
-# @param variable name
+# @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
 # @require _abort
 #------------------------------------------------------------------------------
 function _require_global {
