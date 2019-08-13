@@ -1,12 +1,18 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Check if ip_address is ip6.
+# Check if ip_address is ip6. IP can be empty if flag & 1.
 #
 # @param ip_address
+# @param flag
 # @require _abort 
 #------------------------------------------------------------------------------
 function _is_ip6 {
+	local FLAG=$(($2 + 0))
+	if test -z "$1" && test $((FLAG & 1)) = 1; then
+		return;
+	fi
+
 	local is_ip6=`echo "$3" | \
 		grep -E '^[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}$'`
 
