@@ -26,6 +26,8 @@ fi
 APP=$0
 OUT=run.sh
 
+export APP_PID="$APP_PID $$"
+
 echo
 
 if ! test -z "$MERGE2RUN_OUTPUT"; then

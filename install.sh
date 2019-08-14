@@ -70,6 +70,8 @@ APP=$0
 
 command -v realpath > /dev/null 2>&1 && APP=`realpath "$0"`
 
+export APP_PID="$APP_PID $$"
+
 SCRIPT_SRC=`dirname "$APP"`"/src"
 
 . "$SCRIPT_SRC/abort.sh"
