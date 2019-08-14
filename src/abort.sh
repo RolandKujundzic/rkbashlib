@@ -20,6 +20,22 @@ function _abort {
 		kill $(ps aux | grep "$APP" | awk '{print $2}') 2 > /dev/null 1>&2
 	fi
 
+	local other_pid=
+
+	if ! test -z "$APP_PID"; then
+		# make shure APP_PID dies
+		for a in $APP_PID; do
+			other_pid=`ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}'`
+			test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+		done
+	fi
+
+	if ! test -z "$APP"; then
+		# make shure APP dies
+		other_pid=`ps aux | grep "$APP" | awk '{print $2}'`
+		test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+	fi
+
 	exit 1
 }
 
