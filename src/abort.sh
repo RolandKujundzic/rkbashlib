@@ -15,11 +15,6 @@ function _abort {
 
 	echo -e "\nABORT: $1\n\n" 1>&2
 
-	if ! test -z "$APP"; then
-		# make shure APP dies even if _abort is called from subprocess
-		kill $(ps aux | grep "$APP" | awk '{print $2}') 2 > /dev/null 1>&2
-	fi
-
 	local other_pid=
 
 	if ! test -z "$APP_PID"; then
