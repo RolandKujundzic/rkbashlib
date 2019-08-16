@@ -9,6 +9,17 @@
 # @require _abort 
 #------------------------------------------------------------------------------
 function _cd {
+	local has_realpath=`which realpath`
+
+	if ! test -z "$has_realpath" && test -z "$1"; then
+		local curr_dir=`realpath "$PWD"`
+		local goto_dir=`realpath "$1"`
+
+		if test "$curr_dir" = "$goto_dir"; then
+			return
+		fi
+	fi
+
 	echo "cd '$1'"
 
 	if test -z "$1"
