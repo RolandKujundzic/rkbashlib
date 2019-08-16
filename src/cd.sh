@@ -11,7 +11,7 @@
 function _cd {
 	local has_realpath=`which realpath`
 
-	if ! test -z "$has_realpath" && test -z "$1"; then
+	if ! test -z "$has_realpath" && ! test -z "$1"; then
 		local curr_dir=`realpath "$PWD"`
 		local goto_dir=`realpath "$1"`
 
