@@ -95,12 +95,15 @@ function _aws {
 # @require _mkdir
 #------------------------------------------------------------------------------
 function _cache {
-
 	test -z "$CACHE_OFF" || return
 
 	# bash 4.3.* does not support ${2@Q} expression
-	local BASH43=`/bin/bash --version | grep 'Version 4.3.'`
+	local BASH43=`/bin/bash --version | grep 'ersion 4.3.'`
 	test -z "$BASH43" || return
+
+	# bash 3.* does not support ${2@Q} expression
+	local BASH3X=`/bin/bash --version | grep 'ersion 3.'`
+	test -z "$BASH3X" || return
 
 	_mkdir ".rkscript/cache"
 
@@ -565,15 +568,9 @@ function _confirm {
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
-# @require _rm _os_type _patch
+# @require _rm _patch
 #------------------------------------------------------------------------------
 function _cordova_add_android {
-
-  local OS_TYPE=$(_os_type)
-
-  if "$OS_TYPE" != "macos"; then
-		echo "os type = $OS_TYPE != macos - do not add cordova android" 
-  fi
 
 	if test "$1" = "clean" && test -d platforms/android; then
 		_rm platforms/android
@@ -595,12 +592,12 @@ function _cordova_add_android {
 # @require _rm _os_type _patch
 #------------------------------------------------------------------------------
 function _cordova_add_ios {
+	local OS_TYPE=$(_os_type)
 
-  local OS_TYPE=$(_os_type)
-
-  if test "$OS_TYPE" != "macos"; then
+	if test "$OS_TYPE" != "macos"; then
 		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
-  fi
+		return
+	fi
 
 	if test "$1" = "clean" && test -d platforms/ios; then
 		_rm platforms/ios
@@ -1256,9 +1253,9 @@ function _install_app {
 #------------------------------------------------------------------------------
 function _install_node {
 
-  if test -z "$NODE_VERSION"; then
-    NODE_VERSION=v6.11.4
-  fi
+	if test -z "$NODE_VERSION"; then
+		NODE_VERSION=v10.16.3
+	fi
 
 	_require_global "NODE_VERSION"
 
@@ -1270,9 +1267,9 @@ function _install_node {
 		APP_PREFIX="/usr/local"
 
 		local CURR_SUDO=$SUDO
-	  SUDO=sudo
+		SUDO=sudo
 
-		echo -e "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
+		echo "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
 		_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
 
 		SUDO=$CURR_SUDO
@@ -1385,15 +1382,11 @@ function _is_ip6 {
 # @return "$1_running"
 #------------------------------------------------------------------------------
 function _is_running {
+	_os_type linux
 
 	if test -z "$1"; then
 		_abort "no process name"
 	fi
-
-	local OS_TYPE=$(_os_type)
-	if test "$OS_TYPE" != "linux"; then
-		return
-	fi		
 
 	# use [a] = a to ignore "grep process"
 	local APACHE2='[a]pache2.*k start'
@@ -1496,30 +1489,19 @@ function _mb_check {
 # Print md5sum of file.
 #
 # @param file
-# @require _abort _require_program
+# @require _abort
 # @print md5sum
 #------------------------------------------------------------------------------
 function _md5 {
-
 	if test -z "$1" || ! test -f "$1"
 	then
 		_abort "No such file [$1]"
 	fi
 
-	_require_program md5
-	local md5=
+	# use MD5 to drop filename
+	local MD5=$(md5sum "$1")
 
-	if test -z "$HAS_PROGRAM"
-	then
-		# on Linux
-		_require_program md5sum 1		
-		md5=($(md5sum "$1"))
-	else
-		# on OSX
-		md5=`md5 -q "$1"`
-	fi
-
-	echo $md5
+	echo $MD5
 }
 
 
@@ -2071,19 +2053,73 @@ function _npm_module {
 #------------------------------------------------------------------------------
 # Return linux, macos, cygwin.
 #
-# @print string
+# @print string (abort if set and os_type != $1)
 #------------------------------------------------------------------------------
 function _os_type {
+	local os=
+
 	if [ "$(uname)" = "Darwin" ]; then
-		echo "macos"        
+		os="macos"        
 	elif [ "$OSTYPE" = "linux-gnu" ]; then
-		echo "linux"
+		os="linux"
 	elif [ $(expr substr $(uname -s) 1 5) = "Linux" ]; then
-		echo "linux"
+		os="linux"
 	elif [ $(expr substr $(uname -s) 1 5) = "MINGW" ]; then
-		echo "cygwin"
+		os="cygwin"
+	fi
+
+	if ! test -z "$1" && test "$1" != "$os"; then
+		_abort "$os required (this is $os)"
+	fi
+
+	echo $os
+}
+
+if [ "$(uname)" = "Darwin" ]; then
+
+# enable alias expansion
+shopt -s expand_aliases 
+
+# osx has no realpath
+alias realpath="python -c 'import os,sys;print os.path.realpath(sys.argv[1])'"
+
+
+#------------------------------------------------------------------------------
+# OSX has md5 instead of md5sum. Use md5sum function wrapper.
+#
+# @param file
+#------------------------------------------------------------------------------
+function md5sum {
+	md5 -q "$1"
+}
+
+
+#------------------------------------------------------------------------------
+# OSX /usr/bin/stat is incompatible with linux. Use stat function wrapper.
+#
+# @param -c
+# @param -
+# @require _abort 
+#------------------------------------------------------------------------------
+function stat {
+	if test "$1" = "-c"; then
+		if test "$2" = "%Y"; then
+			/usr/bin/stat -f %m "$3"
+			return
+		elif test "$2" = "%U"; then
+			ls -la "$3" | awk '{print $3}'
+		elif test "$2" = "%G"; then
+			ls -la "$3" | awk '{print $3}'
+		elif test "$2" = "%a"; then
+			/usr/bin/stat -f %A "$3"
+		fi
+	else
+		_abort "ToDo: stat $@"
 	fi
 }
+
+fi
+
 
 #-------------------------------------------------------------------------------
 # Install or update npm packages. Create package.json and README.md if missing.
@@ -2688,11 +2724,7 @@ function _ssh_auth {
 # @os linux
 #------------------------------------------------------------------------------
 function _stop_http {
-
-  local OS_TYPE=$(_os_type)
-  if test "$OS_TYPE" != "linux"; then
-    return
-  fi
+  _os_type linux
 
   if test "$(_is_running PORT 80)" != "PORT_running"; then
     echo "no service on port 80"
