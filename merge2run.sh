@@ -9,6 +9,7 @@ command -v realpath > /dev/null 2>&1 && SCRIPT_NAME=`realpath "$0"`
 SCRIPT_SRC=`dirname "$SCRIPT_NAME"`"/src"
 
 . "$SCRIPT_SRC/abort.sh"
+. "$SCRIPT_SRC/osx.sh"
 . "$SCRIPT_SRC/syntax.sh"
 . "$SCRIPT_SRC/confirm.sh"
 . "$SCRIPT_SRC/require_global.sh"

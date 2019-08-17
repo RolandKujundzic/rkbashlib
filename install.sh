@@ -75,6 +75,7 @@ export APP_PID="$APP_PID $$"
 SCRIPT_SRC=`dirname "$APP"`"/src"
 
 . "$SCRIPT_SRC/abort.sh"
+. "$SCRIPT_SRC/osx.sh"
 . "$SCRIPT_SRC/mkdir.sh"
 . "$SCRIPT_SRC/cp.sh"
 . "$SCRIPT_SRC/md5.sh"
