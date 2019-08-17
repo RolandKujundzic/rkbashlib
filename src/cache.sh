@@ -10,12 +10,15 @@
 # @require _mkdir
 #------------------------------------------------------------------------------
 function _cache {
-
 	test -z "$CACHE_OFF" || return
 
 	# bash 4.3.* does not support ${2@Q} expression
-	local BASH43=`/bin/bash --version | grep 'Version 4.3.'`
+	local BASH43=`/bin/bash --version | grep 'ersion 4.3.'`
 	test -z "$BASH43" || return
+
+	# bash 3.* does not support ${2@Q} expression
+	local BASH3X=`/bin/bash --version | grep 'ersion 3.'`
+	test -z "$BASH3X" || return
 
 	_mkdir ".rkscript/cache"
 
