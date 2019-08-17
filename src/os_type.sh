@@ -3,16 +3,24 @@
 #------------------------------------------------------------------------------
 # Return linux, macos, cygwin.
 #
-# @print string
+# @print string (abort if set and os_type != $1)
 #------------------------------------------------------------------------------
 function _os_type {
+	local os=
+
 	if [ "$(uname)" = "Darwin" ]; then
-		echo "macos"        
+		os="macos"        
 	elif [ "$OSTYPE" = "linux-gnu" ]; then
-		echo "linux"
+		os="linux"
 	elif [ $(expr substr $(uname -s) 1 5) = "Linux" ]; then
-		echo "linux"
+		os="linux"
 	elif [ $(expr substr $(uname -s) 1 5) = "MINGW" ]; then
-		echo "cygwin"
+		os="cygwin"
 	fi
+
+	if ! test -z "$1" && test "$1" != "$os"; then
+		_abort "$os required (this is $os)"
+	fi
+
+	echo $os
 }

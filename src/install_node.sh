@@ -8,9 +8,9 @@
 #------------------------------------------------------------------------------
 function _install_node {
 
-  if test -z "$NODE_VERSION"; then
-    NODE_VERSION=v6.11.4
-  fi
+	if test -z "$NODE_VERSION"; then
+		NODE_VERSION=v10.16.3
+	fi
 
 	_require_global "NODE_VERSION"
 
@@ -22,9 +22,9 @@ function _install_node {
 		APP_PREFIX="/usr/local"
 
 		local CURR_SUDO=$SUDO
-	  SUDO=sudo
+		SUDO=sudo
 
-		echo -e "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
+		echo "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
 		_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
 
 		SUDO=$CURR_SUDO

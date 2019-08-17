@@ -5,15 +5,9 @@
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
-# @require _rm _os_type _patch
+# @require _rm _patch
 #------------------------------------------------------------------------------
 function _cordova_add_android {
-
-  local OS_TYPE=$(_os_type)
-
-  if "$OS_TYPE" != "macos"; then
-		echo "os type = $OS_TYPE != macos - do not add cordova android" 
-  fi
 
 	if test "$1" = "clean" && test -d platforms/android; then
 		_rm platforms/android

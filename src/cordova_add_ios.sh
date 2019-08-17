@@ -8,12 +8,12 @@
 # @require _rm _os_type _patch
 #------------------------------------------------------------------------------
 function _cordova_add_ios {
+	local OS_TYPE=$(_os_type)
 
-  local OS_TYPE=$(_os_type)
-
-  if test "$OS_TYPE" != "macos"; then
+	if test "$OS_TYPE" != "macos"; then
 		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
-  fi
+		return
+	fi
 
 	if test "$1" = "clean" && test -d platforms/ios; then
 		_rm platforms/ios

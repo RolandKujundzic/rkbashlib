@@ -8,11 +8,7 @@
 # @os linux
 #------------------------------------------------------------------------------
 function _stop_http {
-
-  local OS_TYPE=$(_os_type)
-  if test "$OS_TYPE" != "linux"; then
-    return
-  fi
+  _os_type linux
 
   if test "$(_is_running PORT 80)" != "PORT_running"; then
     echo "no service on port 80"
