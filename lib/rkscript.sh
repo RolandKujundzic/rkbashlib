@@ -1,5 +1,14 @@
 #!/bin/bash
 
+if test -z "$APP"; then
+  APP="$0"
+fi
+
+if test -z "$APP_PID"; then
+  export APP_PID="$APP_PID $$"
+fi
+
+
 #------------------------------------------------------------------------------
 # Abort with error message. Use NO_ABORT=1 for just warning output.
 #
@@ -184,6 +193,7 @@ function _cdn_dl {
 # change to last directory.
 #
 # @param path
+# @param do_not_echo
 # @export LAST_DIR
 # @require _abort 
 #------------------------------------------------------------------------------
@@ -199,7 +209,9 @@ function _cd {
 		fi
 	fi
 
-	echo "cd '$1'"
+	if test -z "$2"; then
+		echo "cd '$1'"
+	fi
 
 	if test -z "$1"
 	then

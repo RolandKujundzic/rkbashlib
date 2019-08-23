@@ -18,6 +18,16 @@ function _build {
 	echo '#!/bin/bash' > $LIB_TMP
 	_chmod 644 "$LIB_TMP"
 
+	echo >> $LIB_TMP
+	echo 'if test -z "$APP"; then' >> $LIB_TMP
+	echo '  APP="$0"' >> $LIB_TMP
+	echo 'fi' >> $LIB_TMP
+	echo >> $LIB_TMP
+	echo 'if test -z "$APP_PID"; then' >> $LIB_TMP
+	echo '  export APP_PID="$APP_PID $$"' >> $LIB_TMP
+	echo 'fi' >> $LIB_TMP
+	echo >> $LIB_TMP
+
 	echo "append $SCRIPT_SRC/*.sh to $LIB_TMP"
 	for a in $SCRIPT_SRC/*.sh
 	do
