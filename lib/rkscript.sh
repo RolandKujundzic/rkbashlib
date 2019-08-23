@@ -1151,11 +1151,11 @@ declare -A PROCESS
 #  - 2^1 = logfile PROCESS[log] must exists
 #  - 2^2 = abort if process does not exists
 #  - 2^3 = abort if process exists 
-#  - 2^4 = logfile has PID=PROCESS_ID in first three lines
+#  - 2^4 = logfile has PID=PROCESS_ID in first three lines or contains only pid
 #
 # If flag containts 2^1 search for logged process id.
 #
-# @param command
+# @param command (e.g. "convert", "rx:node https.js", "bash:/tmp/test.sh")
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|time|command] 
@@ -1163,9 +1163,18 @@ declare -A PROCESS
 #------------------------------------------------------------------------------
 function _has_process {
 	local flag=$(($2 + 0))
-	local rx=" +[0-9\:]+ +[0-9\:]+ +.+[b]in.*/$1"
 	local logfile_pid=
 	local process=
+	local rx=
+
+	case $1 in
+		bash:*)
+			rx="/[b]in/bash.+${1#*:}";;
+		rx:*)
+			rx="${1#*:}";;
+		*)
+			rx=" +[0-9\:]+ +[0-9\:]+ +.+[b]in.*/$1"
+	esac
 
 	if test $((flag & 1)) = 1; then
 		rx="/[b]in/bash.+$1.sh"
@@ -1181,10 +1190,14 @@ function _has_process {
 
 	if test $((flag & 16)) = 16; then
 		if test -s "${PROCESS[log]}"; then
-			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//"`
+			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-3][0-9]{0,4}$'`
 
 			if test -z "$logfile_pid"; then
-				_abort "missing PID=PROCESS_ID in first 3 lines of $1 logfile ${PROCESS[log]}"
+				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-3][0-9]{0,4}$'`
+			fi
+
+			if test -z "$logfile_pid"; then
+				_abort "missing PID of $1 in logfile ${PROCESS[log]}"
 			fi
 		else
 			logfile_pid=-1

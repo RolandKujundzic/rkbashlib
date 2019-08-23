@@ -13,7 +13,7 @@ declare -A PROCESS
 #
 # If flag containts 2^1 search for logged process id.
 #
-# @param command
+# @param command (e.g. "convert", "rx:node https.js", "bash:/tmp/test.sh")
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|time|command] 
@@ -21,9 +21,18 @@ declare -A PROCESS
 #------------------------------------------------------------------------------
 function _has_process {
 	local flag=$(($2 + 0))
-	local rx=" +[0-9\:]+ +[0-9\:]+ +.+[b]in.*/$1"
 	local logfile_pid=
 	local process=
+	local rx=
+
+	case $1 in
+		bash:*)
+			rx="/[b]in/bash.+${1#*:}";;
+		rx:*)
+			rx="${1#*:}";;
+		*)
+			rx=" +[0-9\:]+ +[0-9\:]+ +.+[b]in.*/$1"
+	esac
 
 	if test $((flag & 1)) = 1; then
 		rx="/[b]in/bash.+$1.sh"
