@@ -1915,6 +1915,11 @@ function _mysql_split_dsn {
 		DOCROOT="$PWD"
 	fi
 
+	if ! test -z "$DOCROOT" && ! test -z "$PATH_RKPHPLIB" && ! test -f "$PATH_RKPHPLIB/Exception.class.php" && \
+			test -f "$DOCROOT/$PATH_RKPHPLIB/Exception.class.php"; then
+		PATH_RKPHPLIB="$DOCROOT/$PATH_RKPHPLIB"
+	fi
+
 	if test -z "$SETTINGS_DSN"; then
 		_abort "autodetect SETTINGS_DSN failed"
 	fi
