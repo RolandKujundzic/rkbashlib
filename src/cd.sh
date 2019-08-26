@@ -5,6 +5,7 @@
 # change to last directory.
 #
 # @param path
+# @param do_not_echo
 # @export LAST_DIR
 # @require _abort 
 #------------------------------------------------------------------------------
@@ -20,7 +21,9 @@ function _cd {
 		fi
 	fi
 
-	echo "cd '$1'"
+	if test -z "$2"; then
+		echo "cd '$1'"
+	fi
 
 	if test -z "$1"
 	then
