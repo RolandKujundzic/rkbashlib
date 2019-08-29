@@ -1096,7 +1096,7 @@ function _git_update {
 	_mkdir php
 	cd php
 	_git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
-	_git_checkout "rk@s1.dyn4.com:/data/git/phplib.git" phplib
+	_git_checkout "rk@s1.dyn4.com:/data/git/php/phplib.git" phplib
 	cd ..
 }
 
@@ -2297,6 +2297,16 @@ function _patch {
       patch $SRC $1/$a.patch || _abort "patch failed"
     fi
   done
+}
+
+
+#------------------------------------------------------------------------------
+# Export PHP_VERSION=MAJOR.MINOR
+# 
+# @export PHP_VERSION
+#------------------------------------------------------------------------------
+function _php_version {
+	PHP_VERSION=`php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/'`
 }
 
 
