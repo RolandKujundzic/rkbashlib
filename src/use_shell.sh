@@ -4,7 +4,7 @@
 # Link /bin/sh to /bin/shell.
 #
 # @abort
-# @require _abort
+# @require _abort _ln _cd _rm
 # @param abort message
 #------------------------------------------------------------------------------
 function _use_shell {
@@ -15,10 +15,10 @@ function _use_shell {
 	local CURR="$PWD"
 
 	if ! test -z "$USE_SHELL"; then
-		rm -f /bin/sh
-		cd /bin
-		ln -s $1 sh
-		cd "$CURR" 
+		_rm /bin/sh
+		_cd /bin
+		_ln "$1" sh
+		_cd "$CURR" 
 	fi
 }
 

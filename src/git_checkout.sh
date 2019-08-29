@@ -12,7 +12,7 @@
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
-# @require _abort _confirm _cd
+# @require _abort _confirm _cd _ln
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
@@ -35,9 +35,7 @@ function _git_checkout {
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
 		_cd "$CURR"
-	elif test -d "../../$2"
-	then
-		echo "link to ../../$2"
+	elif test -d "../../$2" && ! test -L "../../$2"; then
 		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
