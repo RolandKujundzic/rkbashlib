@@ -1057,7 +1057,7 @@ function _find_docroot {
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
-# @require _abort _confirm _cd
+# @require _abort _confirm _cd _ln
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
@@ -1080,9 +1080,7 @@ function _git_checkout {
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
 		_cd "$CURR"
-	elif test -d "../../$2"
-	then
-		echo "link to ../../$2"
+	elif test -d "../../$2" && ! test -L "../../$2"; then
 		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
@@ -1538,36 +1536,36 @@ function _label {
 #
 # @param source path
 # @param link path
-# @require _abort _rm _mkdir
+# @require _abort _rm _mkdir _require_program
 #------------------------------------------------------------------------------
 function _ln {
+	_require_program realpath
+
+	local target=`realpath "$1"`
+
+	if test "$PWD" = "$target"; then
+		_abort "ln -s '$taget' '$2' # in $PWD"
+	fi
 
 	if test -L "$2"; then
-		local has_realpath=`which realpath`
+		local old_target=`realpath "$2"`
 
-		if ! test -z "$has_realpath"; then
-  	  local link_path=`realpath "$2"`
-    	local source_path=`realpath "$1"`
+		if test "$target" = "$old_target"; then
+			echo "Link $2 to $target already exists"
+			return
+		fi
 
-    	if test "$link_path" = "$source_path"; then
-				echo "Link $2 to $1 already exists"
-      	return
-    	fi
-
-			_rm "$2"
-		else
-			_rm "$2"
-  	fi
+		_rm "$2"
 	fi
 
 	local link_dir=`dirname "$2"`
 	_mkdir "$link_dir"
 
-	echo "Link $2 to $1"
-	ln -s "$1" "$2"
+	echo "Link $2 to $target"
+	ln -s "$target" "$2"
 
 	if ! test -L "$2"; then
-		_abort "ln -s '$1' '$2'"
+		_abort "ln -s '$target' '$2'"
 	fi
 }
 
@@ -3007,7 +3005,7 @@ function _trim {
 # Link /bin/sh to /bin/shell.
 #
 # @abort
-# @require _abort
+# @require _abort _ln _cd _rm
 # @param abort message
 #------------------------------------------------------------------------------
 function _use_shell {
@@ -3018,10 +3016,10 @@ function _use_shell {
 	local CURR="$PWD"
 
 	if ! test -z "$USE_SHELL"; then
-		rm -f /bin/sh
-		cd /bin
-		ln -s $1 sh
-		cd "$CURR" 
+		_rm /bin/sh
+		_cd /bin
+		_ln "$1" sh
+		_cd "$CURR" 
 	fi
 }
 
