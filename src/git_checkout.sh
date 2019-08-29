@@ -11,24 +11,34 @@
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @require _abort
+# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
+# @require _abort _confirm _cd
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
 
-	if test -d "$2"
-	then
-		cd "$2"
+	if test -d "$2"; then
+		_confirm "Update $2 (git pull)?" 1
+	elif ! test -z "$CONFIRM_CHECKOUT"; then
+		_confirm "Checkout $1 to $2 (git clone)?" 1
+	fi
+
+	if test "$CONFIRM" = "n"; then
+		echo "Skip $1"
+		return
+	fi
+
+	if test -d "$2"; then
+		_cd "$2"
 		echo "git pull $2"
 		git pull
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-		cd "$CURR"
+		_cd "$CURR"
 	elif test -d "../../$2"
 	then
 		echo "link to ../../$2"
-		ln -s "../../$2" "$2"
-		cd "$CURR"
+		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
 		echo -e "git clone $2\nEnter password if necessary"
@@ -39,17 +49,17 @@ function _git_checkout {
 		fi
 
 		if test -s "$2/.gitmodules"; then
-			cd "$2"
+			_cd "$2"
 			test -s .gitmodules && git submodule update --init --recursive --remote
 			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-			cd ..
+			_cd ..
 		fi
 
 		if ! test -z "$3"; then
-			cd "$2"
+			_cd "$2"
 			echo "run [$3] in $2"
 			$3
-			cd ..
+			_cd ..
 		fi
 	fi
 }

@@ -532,6 +532,7 @@ function _composer {
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
 #
 # @param string message
+# @param bool switch y and n (y = default, wait 3 sec)
 # @export CONFIRM CONFIRM_TEXT
 #------------------------------------------------------------------------------
 function _confirm {
@@ -561,11 +562,23 @@ function _confirm {
 		return
 	fi
 
-	CONFIRM=n
+	local DEFAULT=
 
-	echo -n "$1  y [n]  "
-	read -n1 -t 10 CONFIRM
-	echo
+	if test -z "$2"; then
+		DEFAULT=n
+		echo -n "$1  y [n]  "
+		read -n1 -t 10 CONFIRM
+		echo
+	else
+		DEFAULT=y
+		echo -n "$1  [y] n  "
+		read -n1 -t 3 CONFIRM
+		echo
+	fi
+
+	if test -z "$CONFIRM"; then
+		CONFIRM=$DEFAULT
+	fi
 
 	CONFIRM_TEXT="$CONFIRM"
 
@@ -1043,24 +1056,34 @@ function _find_docroot {
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @require _abort
+# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
+# @require _abort _confirm _cd
 #------------------------------------------------------------------------------
 function _git_checkout {
 	local CURR="$PWD"
 
-	if test -d "$2"
-	then
-		cd "$2"
+	if test -d "$2"; then
+		_confirm "Update $2 (git pull)?" 1
+	elif ! test -z "$CONFIRM_CHECKOUT"; then
+		_confirm "Checkout $1 to $2 (git clone)?" 1
+	fi
+
+	if test "$CONFIRM" = "n"; then
+		echo "Skip $1"
+		return
+	fi
+
+	if test -d "$2"; then
+		_cd "$2"
 		echo "git pull $2"
 		git pull
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-		cd "$CURR"
+		_cd "$CURR"
 	elif test -d "../../$2"
 	then
 		echo "link to ../../$2"
-		ln -s "../../$2" "$2"
-		cd "$CURR"
+		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
 		echo -e "git clone $2\nEnter password if necessary"
@@ -1071,17 +1094,17 @@ function _git_checkout {
 		fi
 
 		if test -s "$2/.gitmodules"; then
-			cd "$2"
+			_cd "$2"
 			test -s .gitmodules && git submodule update --init --recursive --remote
 			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-			cd ..
+			_cd ..
 		fi
 
 		if ! test -z "$3"; then
-			cd "$2"
+			_cd "$2"
 			echo "run [$3] in $2"
 			$3
-			cd ..
+			_cd ..
 		fi
 	fi
 }
@@ -1507,6 +1530,45 @@ function _kill_process {
 function _label {
 	echo "$1"
 	echo "-------------------------------------------------------------------------------"
+}
+
+
+#------------------------------------------------------------------------------
+# Link $2 to $1
+#
+# @param source path
+# @param link path
+# @require _abort _rm _mkdir
+#------------------------------------------------------------------------------
+function _ln {
+
+	if test -L "$2"; then
+		local has_realpath=`which realpath`
+
+		if ! test -z "$has_realpath"; then
+  	  local link_path=`realpath "$2"`
+    	local source_path=`realpath "$1"`
+
+    	if test "$link_path" = "$source_path"; then
+				echo "Link $2 to $1 already exists"
+      	return
+    	fi
+
+			_rm "$2"
+		else
+			_rm "$2"
+  	fi
+	fi
+
+	local link_dir=`dirname "$2"`
+	_mkdir "$link_dir"
+
+	echo "Link $2 to $1"
+	ln -s "$1" "$2"
+
+	if ! test -L "$2"; then
+		_abort "ln -s '$1' '$2'"
+	fi
 }
 
 
