@@ -497,6 +497,7 @@ function _composer {
 
 				echo "[i] = install packages from composer.json"
 				echo "[u] = update packages from composer.json"
+				echo "[a] = update vendor/composer/autoload*"
 			fi
 
 			if ! test -z "$LOCAL_COMPOSER"; then
@@ -546,6 +547,8 @@ function _composer {
 			$COMPOSER install
 		elif test "$DO" = "update" || test "$DO" = "u"; then
 			$COMPOSER update
+		elif test "$DO" = "a"; then
+			$COMPOSER dump-autoload -o
 		fi
 	fi
 }
