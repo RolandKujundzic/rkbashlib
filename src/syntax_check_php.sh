@@ -10,6 +10,7 @@
 #------------------------------------------------------------------------------
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
+	local PHP_BIN=`grep -R '#\!/usr/bin/php' "bin" | sed -E 's/\:#\!.+//'`
 
 	_require_global PATH_RKPHPLIB
 
@@ -18,7 +19,7 @@ function _syntax_check_php {
 	echo -n '  print "ok\n";' >> "$2"
 	echo -e "\n}\n" >> "$2"
 
-	for a in $PHP_FILES
+	for a in $PHP_FILES $PHP_BIN
 	do
 		echo "_syntax_test('$a');" >> "$2"
 	done

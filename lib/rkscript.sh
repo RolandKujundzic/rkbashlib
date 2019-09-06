@@ -409,6 +409,41 @@ function _cmd {
 
 
 #------------------------------------------------------------------------------
+# Install composer.phar in current directory
+#
+# @param install_as (default = './composer.phar')
+# @require _abort _rm
+#------------------------------------------------------------------------------
+function _composer_phar {
+  local EXPECTED_SIGNATURE="$(wget -q -O - https://composer.github.io/installer.sig)"
+  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+  local ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+  if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]; then
+    _rm composer-setup.php
+    _abort 'Invalid installer signature'
+  fi
+
+	local INSTALL_AS="$1"
+	local SUDO=sudo
+
+	if test -z "$INSTALL_AS"; then
+		INSTALL_AS="./composer.phar"
+		SUDO=
+	fi
+
+  $SUDO php composer-setup.php --quiet --install-dir=`dirname "$INSTALL_AS"` --filename=`basename "$INSTALL_AS"`
+  local RESULT=$?
+
+	if ! test "$RESULT" = "0" || ! test -s "$INSTALL_AS"; then
+		_abort "composer installation failed"
+	fi
+
+	_rm composer-setup.php
+}
+
+
+#------------------------------------------------------------------------------
 # Install php package with composer. Target directory is vendor/$1
 #
 # @param composer-vendor-directory
@@ -435,7 +470,7 @@ function _composer_pkg {
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# @require _abort _rm
+# @require _composer_phar _abort _rm
 #------------------------------------------------------------------------------
 function _composer {
 	local DO="$1"
@@ -489,23 +524,14 @@ function _composer {
 	fi
 
 	if test "$DO" = "g" || test "$DO" = "l"; then
-		php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-		php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-
-		test -f composer-setup.php || _abort "composer-setup.php missing"
-
 		echo -n "install composer as "
 		if test "$DO" = "g"; then
 			echo "/usr/local/bin/composer - Enter root password if asked"
-			sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+			_composer_phar /usr/local/bin/composer
 		else
 			echo "composer.phar"
-			php composer-setup.php
+			_composer_phar
 		fi
-
-		php -r "unlink('composer-setup.php');"
-
-		# curl -sS https://getcomposer.org/installer | php
 	fi
 
 	local COMPOSER=
@@ -2950,6 +2976,7 @@ function _sudo {
 #------------------------------------------------------------------------------
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
+	local PHP_BIN=`grep -R '#\!/usr/bin/php' "bin" | sed -E 's/\:#\!.+//'`
 
 	_require_global PATH_RKPHPLIB
 
@@ -2958,7 +2985,7 @@ function _syntax_check_php {
 	echo -n '  print "ok\n";' >> "$2"
 	echo -e "\n}\n" >> "$2"
 
-	for a in $PHP_FILES
+	for a in $PHP_FILES $PHP_BIN
 	do
 		echo "_syntax_test('$a');" >> "$2"
 	done

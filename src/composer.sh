@@ -6,7 +6,7 @@
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# @require _abort _rm
+# @require _composer_phar _abort _rm
 #------------------------------------------------------------------------------
 function _composer {
 	local DO="$1"
@@ -33,6 +33,7 @@ function _composer {
 
 				echo "[i] = install packages from composer.json"
 				echo "[u] = update packages from composer.json"
+				echo "[a] = update vendor/composer/autoload*"
 			fi
 
 			if ! test -z "$LOCAL_COMPOSER"; then
@@ -60,23 +61,14 @@ function _composer {
 	fi
 
 	if test "$DO" = "g" || test "$DO" = "l"; then
-		php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-		php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-
-		test -f composer-setup.php || _abort "composer-setup.php missing"
-
 		echo -n "install composer as "
 		if test "$DO" = "g"; then
 			echo "/usr/local/bin/composer - Enter root password if asked"
-			sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+			_composer_phar /usr/local/bin/composer
 		else
 			echo "composer.phar"
-			php composer-setup.php
+			_composer_phar
 		fi
-
-		php -r "unlink('composer-setup.php');"
-
-		# curl -sS https://getcomposer.org/installer | php
 	fi
 
 	local COMPOSER=
@@ -91,6 +83,8 @@ function _composer {
 			$COMPOSER install
 		elif test "$DO" = "update" || test "$DO" = "u"; then
 			$COMPOSER update
+		elif test "$DO" = "a"; then
+			$COMPOSER dump-autoload -o
 		fi
 	fi
 }
