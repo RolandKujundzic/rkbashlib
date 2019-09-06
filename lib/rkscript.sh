@@ -2983,7 +2983,7 @@ function _syntax_check_php {
 
 	_require_global PATH_RKPHPLIB
 
-	echo -e "<?php\n\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');\n" > "$2"
+	echo -e "<?php\n\ndefine('APP_HELP', 'quiet');\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');\n" > "$2"
 	echo -e "function _syntax_test(\$php_file) {\n  print \"\$php_file ... \";\n  include_once \$php_file;" >> "$2"
 	echo -n '  print "ok\n";' >> "$2"
 	echo -e "\n}\n" >> "$2"
