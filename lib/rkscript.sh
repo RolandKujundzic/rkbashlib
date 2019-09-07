@@ -2050,6 +2050,21 @@ function _mysql_restore {
 }
 
 
+function _my_cnf {
+  if test -s ".my.cnf"; then
+    MYSQL="mysql --defaults-file=.my.cnf"
+  fi
+
+  local I_AM_ROOT=`ps aux | grep -E "^[r]oot\s+$$\s+"`
+  if test "$UID" = 0 && ! test -z "$I_AM_ROOT"; then
+    cat ".my.cnf" | grep -E
+    echo "I am root ..."
+    DB_PASS=`grep password .my.cnf | sed -E 's/.*=\s*//g'`
+    DB_NAME=`grep user .my.cnf | sed -E 's/.*=\s*//g'`
+  fi
+}
+
+
 #------------------------------------------------------------------------------
 # Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
 # do nothing.
@@ -2070,6 +2085,15 @@ function _mysql_split_dsn {
 	fi
 
 	if ! test -f "$1"; then
+		if test "$UID" = "0" && test -s ".my.cnf"; then	
+			DB_PASS=`grep password ".my.cnf" | sed -E 's/.*=\s*//g'`
+			DB_NAME=`grep user ".my.cnf" | sed -E 's/.*=\s*//g'`
+
+			if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
+				return
+			fi
+		fi
+
 		test -z "$DOCROOT" && _find_docroot "$PWD"
 
 		if test -f "$DOCROOT/settings.php"; then
