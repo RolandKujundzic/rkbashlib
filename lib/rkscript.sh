@@ -1765,6 +1765,25 @@ function _mv {
 
 
 #------------------------------------------------------------------------------
+# Check if .my.cnf exists. 
+#
+# @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
+#------------------------------------------------------------------------------
+function _my_cnf {
+	if ! test -s ".my.cnf"; then
+		return
+	fi
+
+	DB_PASS=`grep password .my.cnf | sed -E 's/.*=\s*//g'`
+	DB_NAME=`grep user .my.cnf | sed -E 's/.*=\s*//g'`
+
+	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME"; then
+		MYSQL="mysql --defaults-file=.my.cnf"
+	fi
+}
+
+
+#------------------------------------------------------------------------------
 # Backup mysql database. Run as cron job. Create daily backup.
 # Run as cron job, e.g. daily every 1/2 hour
 #
@@ -2050,33 +2069,20 @@ function _mysql_restore {
 }
 
 
-function _my_cnf {
-  if test -s ".my.cnf"; then
-    MYSQL="mysql --defaults-file=.my.cnf"
-  fi
-
-  local I_AM_ROOT=`ps aux | grep -E "^[r]oot\s+$$\s+"`
-  if test "$UID" = 0 && ! test -z "$I_AM_ROOT"; then
-    cat ".my.cnf" | grep -E
-    echo "I am root ..."
-    DB_PASS=`grep password .my.cnf | sed -E 's/.*=\s*//g'`
-    DB_NAME=`grep user .my.cnf | sed -E 's/.*=\s*//g'`
-  fi
-}
-
-
 #------------------------------------------------------------------------------
 # Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
 # do nothing.
 #
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
-# @export DB_NAME, DB_PASS
-# @require _abort _find_docroot 
+# @export DB_NAME DB_PASS MYSQL
+# @require _abort _find_docroot _my_cnf 
 #------------------------------------------------------------------------------
 function _mysql_split_dsn {
 	local SETTINGS_DSN=
 	local PATH_RKPHPLIB=$PATH_RKPHPLIB
 	local PHP_CODE=
+
+	_my_cnf
 
 	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"
 	then
@@ -2085,15 +2091,6 @@ function _mysql_split_dsn {
 	fi
 
 	if ! test -f "$1"; then
-		if test "$UID" = "0" && test -s ".my.cnf"; then	
-			DB_PASS=`grep password ".my.cnf" | sed -E 's/.*=\s*//g'`
-			DB_NAME=`grep user ".my.cnf" | sed -E 's/.*=\s*//g'`
-
-			if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-				return
-			fi
-		fi
-
 		test -z "$DOCROOT" && _find_docroot "$PWD"
 
 		if test -f "$DOCROOT/settings.php"; then
