@@ -5,14 +5,10 @@
 #
 # @param url
 # @param keystroke file (optional)
-# @require _abort 
+# @require _abort _require_program
 #------------------------------------------------------------------------------
 function _lynx {
-	local HAS_LYNX=`which lynx`
-
-	if test -z "$HAS_LYNX"; then
-		_abort "lynx is not installed"
-	fi
+	_require_program lynx
 
 	if test -z "$1"; then
 		_abort "url parameter missing"
