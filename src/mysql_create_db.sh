@@ -10,21 +10,14 @@
 # @param password
 # @global MYSQL, DB_CHARSET
 # @export DB_NAME, DB_PASS
-# @require _abort _mysql_split_dsn
+# @require _abort _mysql_split_dsn _mysql_conn
 #------------------------------------------------------------------------------
 function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
 	_mysql_split_dsn
-
-	if test -z "$MYSQL"; then
-		if test "$UID" = "0"; then
-			MYSQL="mysql -u root"
-		else
-			_abort "you must be root to run [mysql -u root]"
-		fi
-	fi
+	_mysql_conn 1
 
 	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
 	if ! test -z "$HAS_DB"; then
