@@ -1765,13 +1765,19 @@ function _mv {
 
 
 #------------------------------------------------------------------------------
-# Check if .my.cnf exists. 
+# Check if .my.cnf exists. If $SQL_PASS and $MYSQL are set keep and export
+# MYSQL_CONN=[mysql --defaults-file=.my.cnf] instead. 
 #
+# @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
 # @param path to .my.cnf (default = .my.cnf)
 #------------------------------------------------------------------------------
 function _my_cnf {
 	local MY_CNF="$1"
+
+	if ! test -z "$SQL_PASS" && ! test -z "$MYSQL"; then
+		local MYSQL_SQL="$MYSQL"
+	fi
 
 	if test -z "$MY_CNF"; then
 		MY_CNF=".my.cnf"
@@ -1790,7 +1796,12 @@ function _my_cnf {
 	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`
 
 	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME"; then
-		MYSQL="mysql --defaults-file=.my.cnf"
+		if test -z "$MYSQL_SQL"; then
+			MYSQL="mysql --defaults-file=.my.cnf"
+		else
+			MYSQL_CONN="mysql --defaults-file=.my.cnf"
+			MYSQL="$MYSQL_SQL"
+		fi
 	fi
 }
 
@@ -1864,7 +1875,7 @@ function _mysql_conn {
 	local TRY_MYSQL=
 
 	if test -z "$1"; then
-    TRY_MYSQL=`echo "USE $DB_NAME" | $MYSQL_CONN 2>&1 | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE $DB_NAME" | $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
 
 		if test -z "$TRY_MYSQL"; then
 			# MYSQL_CONN works
@@ -1883,7 +1894,7 @@ function _mysql_conn {
 	fi
 
 	if ! test -z "$MYSQL"; then
-    TRY_MYSQL=`echo "USE mysql" | $MYSQL 2>&1 | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
     if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
       MYSQL=
     fi
@@ -1897,7 +1908,7 @@ function _mysql_conn {
     fi
   fi
 
-  TRY_MYSQL=`echo "USE mysql" | $MYSQL 2>&1 | grep 'ERROR 1045'`
+  TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
   if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
     echo "admin access to mysql database failed: $MYSQL"
   fi

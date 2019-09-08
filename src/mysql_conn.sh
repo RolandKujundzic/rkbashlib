@@ -24,7 +24,7 @@ function _mysql_conn {
 	local TRY_MYSQL=
 
 	if test -z "$1"; then
-    TRY_MYSQL=`echo "USE $DB_NAME" | $MYSQL_CONN 2>&1 | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE $DB_NAME" | $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
 
 		if test -z "$TRY_MYSQL"; then
 			# MYSQL_CONN works
@@ -43,7 +43,7 @@ function _mysql_conn {
 	fi
 
 	if ! test -z "$MYSQL"; then
-    TRY_MYSQL=`echo "USE mysql" | $MYSQL 2>&1 | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
     if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
       MYSQL=
     fi
@@ -57,7 +57,7 @@ function _mysql_conn {
     fi
   fi
 
-  TRY_MYSQL=`echo "USE mysql" | $MYSQL 2>&1 | grep 'ERROR 1045'`
+  TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
   if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
     echo "admin access to mysql database failed: $MYSQL"
   fi
