@@ -1,15 +1,15 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Abort if file does not exists or owner or privileges don't match.
+# Abort if directory does not exists or owner or privileges don't match.
 #
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
-# @require _abort _require_owner _require_priv
+# @require _abort _require_priv _require_owner
 #------------------------------------------------------------------------------
-function _require_file {
-	test -f "$1" || _abort "no such file '$1'"
+function _require_dir {
+	test -d "$1" || _abort "no such directory '$1'"
 
 	if ! test -z "$2"; then
 		_require_owner "$1" "$2"
