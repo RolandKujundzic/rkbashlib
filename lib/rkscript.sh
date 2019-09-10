@@ -1076,6 +1076,8 @@ function _find_docroot {
 
 #------------------------------------------------------------------------------
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
+# For git parameter (e.g. [-b stable --single-branch]) use either third parameter or 
+# global variable GIT_PARAMETER.
 #
 # Example: git_checkout rk@git.tld:/path/to/repo test
 # - if test/ exists: cd test; git pull; cd ..
@@ -1085,7 +1087,8 @@ function _find_docroot {
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
+# @param git parameter (optional)
+# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
 #------------------------------------------------------------------------------
 function _git_checkout {
@@ -1113,8 +1116,13 @@ function _git_checkout {
 		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
-		echo -e "git clone $2\nEnter password if necessary"
-		git clone "$1" "$2"
+		local GIT_PARAM="$GIT_PARAMETER"
+		if ! test -z "$3"; then
+			GIT_PARAM="$3"
+		fi
+
+		echo -e "git clone $GIT_PARAM '$1' '$2'\nEnter password if necessary"
+		git clone $GIT_PARAM "$1" "$2"
 
 		if ! test -d "$2/.git"; then
 			_abort "git clone failed - no $2/.git directory"
@@ -1134,6 +1142,8 @@ function _git_checkout {
 			_cd ..
 		fi
 	fi
+
+	GIT_PARAMETER=
 }
 
 
@@ -1276,6 +1286,28 @@ function _has_process {
 
 
 #------------------------------------------------------------------------------
+# Create .htaccess file in directory $1 if missing. Options $2:
+#
+# - deny
+# - auth
+#
+# @param path to directory
+# @param option (e.g. deny, auth)
+# @require _mkdir _abort
+#------------------------------------------------------------------------------
+function _htaccess {
+	
+	if test "$2" = "deny"; then
+		if ! test -s "$1/.htaccess" || test -z `cat "$1/.htaccess" | grep 'Require all denied'`; then
+			_mkdir "$1"
+			echo "Require all denied" > "$1/.htaccess"
+		fi
+	elif test "$2" = "auth"; then
+		_abort "ToDo ..."
+	fi
+}
+
+#------------------------------------------------------------------------------
 # Install files from APP_FILE_LIST and APP_DIR_LIST to APP_PREFIX.
 #
 # @param string app dir 
@@ -1385,6 +1417,21 @@ function _ip_address {
 			_abort "failed to detect IP_ADDRESS (ping -4 -c 1 $host != $IP_ADDRESS)"
 		fi
 	fi
+}
+
+
+#------------------------------------------------------------------------------
+# Print module name if $module is git module.
+#
+# @param module name
+#------------------------------------------------------------------------------
+function _is_gitmodule {
+
+	if test -z "$1" || ! test -s ".gitmodule"; then
+		return
+	fi
+
+	cat .gitmodules | grep -E "\[submodule \".*$1\"\]" | sed -E "s/\[submodule \"(.*$1)\"\]/\1/"
 }
 
 
