@@ -8,6 +8,7 @@
 #
 # @param path to directory
 # @param option (e.g. deny, auth)
+# @require _mkdir _abort
 #------------------------------------------------------------------------------
 function _htaccess {
 	
