@@ -2,6 +2,8 @@
 
 #------------------------------------------------------------------------------
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
+# For git parameter (e.g. [-b stable --single-branch]) use either third parameter or 
+# global variable GIT_PARAMETER.
 #
 # Example: git_checkout rk@git.tld:/path/to/repo test
 # - if test/ exists: cd test; git pull; cd ..
@@ -11,7 +13,8 @@
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
+# @param git parameter (optional)
+# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
 #------------------------------------------------------------------------------
 function _git_checkout {
@@ -39,8 +42,13 @@ function _git_checkout {
 		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
-		echo -e "git clone $2\nEnter password if necessary"
-		git clone "$1" "$2"
+		local GIT_PARAM="$GIT_PARAMETER"
+		if ! test -z "$3"; then
+			GIT_PARAM="$3"
+		fi
+
+		echo -e "git clone $GIT_PARAM '$1' '$2'\nEnter password if necessary"
+		git clone $GIT_PARAM "$1" "$2"
 
 		if ! test -d "$2/.git"; then
 			_abort "git clone failed - no $2/.git directory"
@@ -60,5 +68,7 @@ function _git_checkout {
 			_cd ..
 		fi
 	fi
+
+	GIT_PARAMETER=
 }
 
