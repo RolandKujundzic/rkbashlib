@@ -1608,11 +1608,11 @@ function _label {
 
 
 #------------------------------------------------------------------------------
-# Link $2 to $1
+# Link $2 to $1.
 #
 # @param source path
 # @param link path
-# @require _abort _rm _mkdir _require_program
+# @require _abort _rm _mkdir _require_program _cd
 #------------------------------------------------------------------------------
 function _ln {
 	_require_program realpath
@@ -1635,10 +1635,22 @@ function _ln {
 	fi
 
 	local link_dir=`dirname "$2"`
-	_mkdir "$link_dir"
+	link_dir=`realpath "$link_dir"`
+	local target_dir=`dirname "$target"`
 
-	echo "Link $2 to $target"
-	ln -s "$target" "$2"
+	if test "$target_dir" = "$link_dir"; then
+		local cwd="$PWD"
+		_cd "$target_dir"
+		local tname=`basename "$1"`
+		local lname=`basename "$2"`
+		echo "ln -s '$tname' '$lname' # in $PWD"
+		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
+		_cd "$cwd"
+	else
+		_mkdir "$link_dir"
+		echo "Link $2 to $target"
+		ln -s "$target" "$2"
+	fi
 
 	if ! test -L "$2"; then
 		_abort "ln -s '$target' '$2'"
