@@ -7,7 +7,8 @@
 # MYSQL is "mysql -u root".
 #
 # @abort
-# @global MYSQL_CONN 
+# @global MYSQL_CONN DB_NAME DB_PASS
+# @export MYSQL_CONN MYSQL 
 # @require _abort
 # @param require root access
 #------------------------------------------------------------------------------
@@ -21,10 +22,14 @@ function _mysql_conn {
 		fi
 	fi
 
+	if test -z "$MYSQL_CONN" && ! test -z "$1" && test "$UID" = "0"; then
+		MYSQL_CONN="-u root"
+	fi
+
 	local TRY_MYSQL=
 
 	if test -z "$1"; then
-    TRY_MYSQL=`(echo "USE $DB_NAME" | $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
 
 		if test -z "$TRY_MYSQL"; then
 			# MYSQL_CONN works
@@ -36,9 +41,10 @@ function _mysql_conn {
 
 	if test -z "$MYSQL"; then
 		if ! test -z "$MYSQL_CONN"; then
-			MYSQL="$MYSQL_CONN"
+			MYSQL="mysql $MYSQL_CONN"
 		elif ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+			MYSQL="mysql -h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
 	fi
 

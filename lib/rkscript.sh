@@ -1817,8 +1817,8 @@ function _mv {
 
 
 #------------------------------------------------------------------------------
-# Check if .my.cnf exists. If $SQL_PASS and $MYSQL are set keep and export
-# MYSQL_CONN=[mysql --defaults-file=.my.cnf] instead. 
+# Check if .my.cnf exists. If found export DB_PASS and DB_NAME. If $SQL_PASS 
+# and $MYSQL are set save $MYSQL as $MYSQL_SQL. Otherwise set MYSQL=[mysql --defaults-file=.my.cnf].
 #
 # @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
@@ -1847,13 +1847,8 @@ function _my_cnf {
 	DB_PASS=`grep password "$MY_CNF" | sed -E 's/.*=\s*//g'`
 	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`
 
-	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME"; then
-		if test -z "$MYSQL_SQL"; then
-			MYSQL="mysql --defaults-file=.my.cnf"
-		else
-			MYSQL_CONN="mysql --defaults-file=.my.cnf"
-			MYSQL="$MYSQL_SQL"
-		fi
+	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$MYSQL_SQL"; then
+		MYSQL="mysql --defaults-file=.my.cnf"
 	fi
 }
 
@@ -1910,7 +1905,8 @@ function _mysql_backup {
 # MYSQL is "mysql -u root".
 #
 # @abort
-# @global MYSQL_CONN 
+# @global MYSQL_CONN DB_NAME DB_PASS
+# @export MYSQL_CONN MYSQL 
 # @require _abort
 # @param require root access
 #------------------------------------------------------------------------------
@@ -1924,10 +1920,14 @@ function _mysql_conn {
 		fi
 	fi
 
+	if test -z "$MYSQL_CONN" && ! test -z "$1" && test "$UID" = "0"; then
+		MYSQL_CONN="-u root"
+	fi
+
 	local TRY_MYSQL=
 
 	if test -z "$1"; then
-    TRY_MYSQL=`(echo "USE $DB_NAME" | $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
+    TRY_MYSQL=`(echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
 
 		if test -z "$TRY_MYSQL"; then
 			# MYSQL_CONN works
@@ -1939,9 +1939,10 @@ function _mysql_conn {
 
 	if test -z "$MYSQL"; then
 		if ! test -z "$MYSQL_CONN"; then
-			MYSQL="$MYSQL_CONN"
+			MYSQL="mysql $MYSQL_CONN"
 		elif ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+			MYSQL="mysql -h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
 	fi
 
