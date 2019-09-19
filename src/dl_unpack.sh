@@ -5,7 +5,7 @@
 #
 # @param string directory name
 # @param string download url
-# @require _abort _mv _mkdir
+# @require _abort _mv _mkdir _wget
 #------------------------------------------------------------------------------
 function _dl_unpack {
 
@@ -18,7 +18,7 @@ function _dl_unpack {
 
 	if ! test -f "$ARCHIVE"; then
 		echo "Download $2"
-		wget "$2"
+		_wget "$2"
 	fi
 
 	if ! test -f "$ARCHIVE"; then

@@ -6,7 +6,7 @@
 # @param string url
 # @param string file
 # @param bool allow_fail
-# @require _abort _mkdir
+# @require _abort _mkdir _wget
 #------------------------------------------------------------------------------
 function _download {
 	if test -z "$2"; then
@@ -24,7 +24,7 @@ function _download {
 		echo "Download $1 as $2"
 	fi
 
-	wget -q -O "$2" "$1" > /dev/null 2> /dev/null
+	_wget "$1" "$2"
 
 	if test -z "$3" && ! test -s "$2"; then
 		_abort "Download of $2 as $1 failed"
