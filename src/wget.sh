@@ -40,7 +40,7 @@ function _wget {
 			if ! test -s "$SAVE_AS" && test -z "$NEW_FILES"; then
 				_abort "Download from $1 failed"
 			fi
-		else
+		elif ! test -s "$2"; then
 			_abort "Download of $2 from $1 failed"
 		fi
   fi

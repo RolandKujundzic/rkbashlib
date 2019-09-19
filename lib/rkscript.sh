@@ -412,10 +412,10 @@ function _cmd {
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
-# @require _abort _rm
+# @require _abort _rm _wget
 #------------------------------------------------------------------------------
 function _composer_phar {
-  local EXPECTED_SIGNATURE="$(wget -q -O - https://composer.github.io/installer.sig)"
+  local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
   php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
   local ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
 
@@ -806,7 +806,7 @@ function _dir_priv {
 #
 # @param string directory name
 # @param string download url
-# @require _abort _mv _mkdir
+# @require _abort _mv _mkdir _wget
 #------------------------------------------------------------------------------
 function _dl_unpack {
 
@@ -819,7 +819,7 @@ function _dl_unpack {
 
 	if ! test -f "$ARCHIVE"; then
 		echo "Download $2"
-		wget "$2"
+		_wget "$2"
 	fi
 
 	if ! test -f "$ARCHIVE"; then
@@ -932,7 +932,7 @@ function _docker_stop {
 # @param string url
 # @param string file
 # @param bool allow_fail
-# @require _abort _mkdir
+# @require _abort _mkdir _wget
 #------------------------------------------------------------------------------
 function _download {
 	if test -z "$2"; then
@@ -950,7 +950,7 @@ function _download {
 		echo "Download $1 as $2"
 	fi
 
-	wget -q -O "$2" "$1" > /dev/null 2> /dev/null
+	_wget "$1" "$2"
 
 	if test -z "$3" && ! test -s "$2"; then
 		_abort "Download of $2 as $1 failed"
@@ -1603,6 +1603,44 @@ function _label {
 	echo "-------------------------------------------------------------------------------"
 }
 
+
+#------------------------------------------------------------------------------
+# Create LICENCSE file for "gpl-3.0" (keep existing).
+#
+# @see https://help.github.com/en/articles/licensing-a-repository 
+# @param license name (default "gpl-3.0")
+# @export LICENSE
+# @require _abort _wget _confirm
+#------------------------------------------------------------------------------
+function _license {
+	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
+		_abort "unknown license [$1] use [gpl-3.0]"
+	fi
+
+	LICENSE=$1
+	if test -z "$LICENSE"; then
+		LICENSE="gpl-3.0"
+	fi
+
+	local LFILE="./LICENSE"
+
+	if test -s "$LFILE"; then
+		local IS_GPL3=`head -n 2 "$LFILE" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3'`
+
+		if ! test -z "$IS_GPL3"; then
+			echo "keep existing gpl-3.0 LICENSE ($LFILE)"
+			return
+		fi
+
+		_confirm "overwrite existing $LFILE file with $LICENSE"
+		if test "$CONFIRM" != "y"; then
+			echo "keep existing $LFILE file"
+			return
+		fi
+	fi
+
+	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$LFILE"
+}
 
 #------------------------------------------------------------------------------
 # Link $2 to $1.
@@ -3272,5 +3310,52 @@ function _use_shell {
 #------------------------------------------------------------------------------
 function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
+}
+
+
+#------------------------------------------------------------------------------
+# Download URL with wget. 
+#
+# @param url
+# @param save as default = autodect, use "-" for stdout
+# @require _abort _require_program _confirm
+#------------------------------------------------------------------------------
+function _wget {
+	if test -z "$1"; then
+		_abort "empty url"
+	fi
+
+	_require_program wget
+
+	if ! test -z "$2" && test "$2" != "-" && test -f "$2"; then
+		_confirm "Overwrite $2" 1
+		if test "$CONFIRM" != "y"; then
+			echo "keep $2 - skip wget '$1'"
+			return
+		fi
+	fi
+
+	if test -z "$2"; then
+		echo "download $1"
+		wget -q "$1"
+	elif test "$2" = "-"; then
+		wget -q -O "$2" "$1"
+	else
+		echo "download $1 as $2"
+		wget -q -O "$2" "$1"
+	fi
+
+  if test "$2" != "-"; then
+		if test -z "$2"; then
+			local SAVE_AS=`basename "$1"`
+			local NEW_FILES=`find . -amin 1 -type f`
+
+			if ! test -s "$SAVE_AS" && test -z "$NEW_FILES"; then
+				_abort "Download from $1 failed"
+			fi
+		elif ! test -s "$2"; then
+			_abort "Download of $2 from $1 failed"
+		fi
+  fi
 }
 
