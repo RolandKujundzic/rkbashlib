@@ -14,10 +14,10 @@ LOG_NO_ECHO=
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
 #------------------------------------------------------------------------------
 function _log {
-	test -z "$LOG_NO_ECHO" || echo -n "$1"
+	test -z "$LOG_NO_ECHO" && echo -n "$1"
 	
 	if test -z "$2"; then
-		test -z "$LOG_NO_ECHO" || echo
+		test -z "$LOG_NO_ECHO" && echo
 		return
 	fi
 
@@ -31,6 +31,6 @@ function _log {
 	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
-	test -z "$LOG_NO_ECHO" || echo " LOG_CMD[$2]"
+	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
 }
 
