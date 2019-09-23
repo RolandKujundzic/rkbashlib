@@ -777,8 +777,10 @@ function _cordova_create {
 # @require _abort _md5 _sudo
 #------------------------------------------------------------------------------
 function _cp {
-
 	local TARGET=`dirname "$2"`
+
+  local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+  LOG_NO_ECHO=1
 
 	if ! test -d "$TARGET"; then
 		_abort "no such directory [$TARGET]"
@@ -813,6 +815,8 @@ function _cp {
 	else
 		_abort "No such file or directory [$1]"
   fi
+
+	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
 }
 
 
@@ -3293,8 +3297,6 @@ function _stop_http {
 #------------------------------------------------------------------------------
 function _sudo {
 	local CURR_SUDO=$SUDO
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
-	LOG_NO_ECHO=1
 
 	# ToDo: unescape $1 to avoid eval. Example: use [$EXEC] instead of [eval "$EXEC"]
 	# and [_sudo "cp 'a' 'b'"] will execute [cp "'a'" "'b'"].
@@ -3313,8 +3315,6 @@ function _sudo {
 		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC"
 		SUDO=$CURR_SUDO
 	fi
-
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
 }
 
 

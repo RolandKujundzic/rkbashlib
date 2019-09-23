@@ -9,8 +9,6 @@
 #------------------------------------------------------------------------------
 function _sudo {
 	local CURR_SUDO=$SUDO
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
-	LOG_NO_ECHO=1
 
 	# ToDo: unescape $1 to avoid eval. Example: use [$EXEC] instead of [eval "$EXEC"]
 	# and [_sudo "cp 'a' 'b'"] will execute [cp "'a'" "'b'"].
@@ -29,7 +27,5 @@ function _sudo {
 		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC"
 		SUDO=$CURR_SUDO
 	fi
-
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
 }
 
