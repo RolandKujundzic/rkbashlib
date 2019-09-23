@@ -7,7 +7,7 @@
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
 #
 # @param string message
-# @param bool switch y and n (y = default, wait 3 sec)
+# @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @export CONFIRM CONFIRM_TEXT
 #------------------------------------------------------------------------------
 function _confirm {
@@ -17,6 +17,18 @@ function _confirm {
 		CONFIRM_COUNT=1
 	else
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
+	fi
+
+	local FLAG=$(($2 + 0))
+
+	if test $((FLAG & 2)) = 2; then
+		if test $((FLAG & 1)) = 1; then
+			CONFIRM=n
+		else
+			CONFIRM=y
+		fi
+
+		return
 	fi
 
 	while read -d $'\0' 
@@ -39,7 +51,7 @@ function _confirm {
 
 	local DEFAULT=
 
-	if test -z "$2"; then
+	if test $((FLAG & 1)) = 1; then
 		DEFAULT=n
 		echo -n "$1  y [n]  "
 		read -n1 -t 10 CONFIRM
