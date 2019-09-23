@@ -11,7 +11,7 @@ function _require_global {
 	local BASH_VERSION=`bash --version | grep -E '.+bash.+Version [0-9\.]+' | sed -E 's/^.+Version ([0-9]+)\.([0-9]+)\..+$/\1.\2/'`
 
 	local a=; for a in $1; do
-		if (( $(echo "$BASH_VERSION >= 4.5" | bc -l) )); then
+		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
