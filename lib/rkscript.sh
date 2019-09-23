@@ -3328,7 +3328,7 @@ function _sudo {
 #------------------------------------------------------------------------------
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
-	local PHP_BIN=`grep -R '#\!/usr/bin/php' "bin" | sed -E 's/\:#\!.+//'`
+	local PHP_BIN=`grep -R -E '^#\!/usr/bin/php' "bin" | sed -E 's/\:#\!.+//'`
 
 	_require_global PATH_RKPHPLIB
 
