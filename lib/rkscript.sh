@@ -3339,7 +3339,11 @@ function _syntax_check_php {
 
 	for a in $PHP_FILES $PHP_BIN
 	do
-		echo "_syntax_test('$a');" >> "$2"
+		local SKIP=`head -1 "$a" | grep 'php -c skip_syntax_check'`
+	
+		if test -z "$SKIP"; then
+			echo "_syntax_test('$a');" >> "$2"
+		fi
 	done
 }
 
