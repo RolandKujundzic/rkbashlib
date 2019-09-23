@@ -28,7 +28,7 @@ declare -A GLOBAL_HASH2
 GLOBAL_ARRAY=('a' 'b')
 GLOBAL_ARRAY2=()
 
-echo -e "\nKeys: GLOBAL_HASH=[${!GLOBAL_HASH[@]}] GLOBAL_HASH2=[${!GLOBAL_HASH2[@]}] \
+echo -e "\nCount(GLOBAL_HASH)=[${#GLOBAL_HASH[@]}] Keys: GLOBAL_HASH=[${!GLOBAL_HASH[@]}] GLOBAL_HASH2=[${!GLOBAL_HASH2[@]}] \
 GLOBAL_ARRAY=[${!GLOBAL_ARRAY[@]}] GLOBAL_ARRAY2=[${!GLOBAL_ARRAY2[@]}]"
 
 array_set 7 abc
