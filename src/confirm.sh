@@ -51,7 +51,7 @@ function _confirm {
 
 	local DEFAULT=
 
-	if test $((FLAG & 1)) = 1; then
+	if test $((FLAG & 1)) -ne 1; then
 		DEFAULT=n
 		echo -n "$1  y [n]  "
 		read -n1 -t 10 CONFIRM
