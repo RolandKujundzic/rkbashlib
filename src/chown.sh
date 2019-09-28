@@ -31,8 +31,6 @@ function _chown {
 
 	if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"
 	then
-		echo "sudo chown -R '$2.$3' '$1'"
-		echo "sudo might ask for root password"
 		_sudo "chown -R '$2.$3' '$1'"
 	else
 		echo "keep owner '$2.$3' of '$1'"

@@ -17,7 +17,10 @@ function _sudo {
 	# change $2 into number
 	local FLAG=$(($2 + 0))
 
-	if test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
+	if test "$USER" = "root"; then
+		_log "$EXEC" sudo
+		eval "$EXEC ${LOG_CMD[sudo]}" || _abort "$EXEC"
+	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
 		_log "$EXEC" sudo
 		eval "$EXEC ${LOG_CMD[sudo]}" || \
 			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC" )
