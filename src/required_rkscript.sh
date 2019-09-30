@@ -28,12 +28,17 @@ function _required_rkscript {
 
 	REQUIRED_RKSCRIPT_INCLUDE="$REQUIRED_RKSCRIPT_INCLUDE $FUNC"
 
-	local LIST=; local b=; local a=; local n=0
+	local LIST=; local b=; local a=; local sh_run=; local n=0
 	for a in $RKSCRIPT_FUNCTIONS; do
 		b=`cat "$1" | sed -e "s/function .*//" | grep "$a "`
 
 		if test -z "$b"; then
 			b=`cat "$1" | sed -e "s/function .*//" | grep "^\s*$a\s*$"`
+		fi
+
+		sh_run=`echo "$1" | grep 'sh/run/'`
+		if test -z "$b" && ! test -z "$sh_run"; then
+			b=`cat "$1" | grep -E "^\s*$a(\s|$)" | sed -E "s/^\s*($a)(\s.*$|$)/\1/"`
 		fi
 
 		if ! test -z "$b" && test "$FUNC" != "$a"; then
