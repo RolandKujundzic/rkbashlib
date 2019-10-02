@@ -2873,7 +2873,7 @@ function _required_rkscript {
 
 		sh_run=`echo "$1" | grep 'sh/run/'`
 		if test -z "$b" && ! test -z "$sh_run"; then
-			b=`cat "$1" | grep -E "^\s*$a(\s|$)" | sed -E "s/^\s*($a)(\s.*$|$)/\1/'`
+			b=`cat "$1" | grep -E "^\s*$a(\s|$)" | sed -E "s/^\s*($a)(\s.*$|$)/\1/"`
 		fi
 
 		if ! test -z "$b" && test "$FUNC" != "$a"; then
@@ -3443,12 +3443,12 @@ function _toupper {
 }
 
 #------------------------------------------------------------------------------
-# Return trimmed string. 
+# Print trimmed string. 
 #
 # @param string name
 #------------------------------------------------------------------------------
 function _trim {
-	echo `echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'`
+	echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
 }
 
 #------------------------------------------------------------------------------

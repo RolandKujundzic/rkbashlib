@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Return trimmed string. 
+# Print trimmed string. 
 #
 # @param string name
 #------------------------------------------------------------------------------
 function _trim {
-	echo `echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'`
+	echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
 }
