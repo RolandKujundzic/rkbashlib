@@ -8,7 +8,7 @@
 # @require _abort
 #------------------------------------------------------------------------------
 function _require_global {
-	local BASH_VERSION=`bash --version | grep -E '.+bash.+Version [0-9\.]+' | sed -E 's/^.+Version ([0-9]+)\.([0-9]+)\..+$/\1.\2/'`
+	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 
 	local a=; local has_hash=; for a in $1; do
 		has_hash="HAS_HASH_$a"
