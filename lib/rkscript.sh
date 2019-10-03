@@ -101,6 +101,64 @@ function _apigen_doc {
 
 
 #------------------------------------------------------------------------------
+# Clean apt installation.
+#
+# @require _abort _run_as_root
+#------------------------------------------------------------------------------
+function _apt_clean {
+	_run_as_root
+	apt -y clean || _abort "apt -y clean"
+	apt -y autoclean || _abort "apt -y autoclean"
+	apt -y install -f || _abort "apt -y install -f"
+	apt -y autoremove || _abort "apt -y autoremove"
+}
+
+
+#------------------------------------------------------------------------------
+# Install apt packages.
+#
+# @require _abort _run_as_root
+#------------------------------------------------------------------------------
+function _apt_install {
+	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+	LOG_NO_ECHO=1
+
+	for a in $1
+	do
+		if test -d ".rkscript/apt/$a"; then
+			echo "already installed, skip: apt -y install $a"
+		else
+			apt -y install $a || _abort "apt -y install $a"
+			_log "apt -y install $a" apt/$a
+		fi
+	done
+
+	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+}
+
+
+#------------------------------------------------------------------------------
+# Remove (purge) apt packages.
+#
+# @param package list
+# @require _apt_clean _abort _run_as_root _confirm _rm
+#------------------------------------------------------------------------------
+function _apt_remove {
+	_run_as_root
+
+	for a in $1; do
+		_confirm "Run apt -y remove --purge $a" 1
+		if test "$CONFIRM" = "y"; then
+			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
+			_rm ".rkscript/apt/$a"
+		fi
+	done
+
+	_apt_clean
+}
+
+
+#------------------------------------------------------------------------------
 # Install Amazon AWS PHP SDK
 #
 # @require _composer _composer_pkg 
