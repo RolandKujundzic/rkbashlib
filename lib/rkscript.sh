@@ -1216,6 +1216,20 @@ function _find_docroot {
 
 
 #------------------------------------------------------------------------------
+# Return saved value ($HOME/.rkscript/$APP/name.nfo).
+#
+# @param string name
+#------------------------------------------------------------------------------
+function _get {
+	local DIR="$HOME/.rkscript/"`basename "$APP"`
+
+	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
+
+	cat "$DIR/$1.nfo"
+}
+
+
+#------------------------------------------------------------------------------
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
 # For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
 #
@@ -3233,6 +3247,22 @@ function _scan_rkscript_src {
 	if test "$HAS_CACHE" = "function"; then
 		_cache RKSCRIPT_FUNCTIONS "$RKSCRIPT_FUNCTIONS"
 	fi
+}
+
+
+#------------------------------------------------------------------------------
+# Save value as $name.nfo (in $HOME/.rkscript/$APP).
+#
+# @param string name (required)
+# @param string value
+#------------------------------------------------------------------------------
+function _set {
+  local DIR="$HOME/.rkscript/"`basename "$APP"`
+
+  test -d "$DIR" || _mkdir "$DIR"
+  test -z "$1" && _abort "empty name"
+
+  echo -e "$2" > "$DIR/$1.nfo"
 }
 
 
