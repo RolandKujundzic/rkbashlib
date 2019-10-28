@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RKSCRIPT_DIR=".rkscript"
+test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
 #------------------------------------------------------------------------------
 # Abort with error message. Use NO_ABORT=1 for just warning output.
