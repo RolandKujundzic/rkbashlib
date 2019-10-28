@@ -11,7 +11,7 @@ function _apt_install {
 
 	for a in $1
 	do
-		if test -d ".rkscript/apt/$a"; then
+		if test -d "$RKSCRIPT_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
 			apt -y install $a || _abort "apt -y install $a"

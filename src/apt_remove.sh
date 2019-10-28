@@ -13,7 +13,7 @@ function _apt_remove {
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
 			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
-			_rm ".rkscript/apt/$a"
+			_rm "$RKSCRIPT_DIR/apt/$a"
 		fi
 	done
 
