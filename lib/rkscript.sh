@@ -9,6 +9,8 @@ if test -z "$APP_PID"; then
 fi
 
 
+test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
+
 #------------------------------------------------------------------------------
 # Abort with error message. Use NO_ABORT=1 for just warning output.
 #
@@ -125,7 +127,7 @@ function _apt_install {
 
 	for a in $1
 	do
-		if test -d ".rkscript/apt/$a"; then
+		if test -d "$RKSCRIPT_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
 			apt -y install $a || _abort "apt -y install $a"
@@ -150,7 +152,7 @@ function _apt_remove {
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
 			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
-			_rm ".rkscript/apt/$a"
+			_rm "$RKSCRIPT_DIR/apt/$a"
 		fi
 	done
 
@@ -1216,12 +1218,12 @@ function _find_docroot {
 
 
 #------------------------------------------------------------------------------
-# Return saved value ($HOME/.rkscript/$APP/name.nfo).
+# Return saved value ($RKSCRIPT_DIR/$APP/name.nfo).
 #
 # @param string name
 #------------------------------------------------------------------------------
 function _get {
-	local DIR="$HOME/.rkscript/"`basename "$APP"`
+	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
 
 	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
 
@@ -1858,7 +1860,7 @@ LOG_NO_ECHO=
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
-# @param name (if set use .rkscript/$name/$NAME_COUNT.nfo)
+# @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
 #------------------------------------------------------------------------------
 function _log {
@@ -1871,10 +1873,10 @@ function _log {
 
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
-	LOG_FILE[$2]=".rkscript/$2/${LOG_COUNT[$2]}.nfo"
+	LOG_FILE[$2]="$RKSCRIPT_DIR/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>&1"
 
-	test -d ".rkscript/$2" || ( mkdir -p ".rkscript/$2" && chmod 777 ".rkscript/$2" )
+	test -d "$RKSCRIPT_DIR/$2" || ( mkdir -p "$RKSCRIPT_DIR/$2" && chmod 777 "$RKSCRIPT_DIR/$2" )
 
 	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
@@ -3251,13 +3253,13 @@ function _scan_rkscript_src {
 
 
 #------------------------------------------------------------------------------
-# Save value as $name.nfo (in $HOME/.rkscript/$APP).
+# Save value as $name.nfo (in $RKSCRIPT_DIR/$APP).
 #
 # @param string name (required)
 # @param string value
 #------------------------------------------------------------------------------
 function _set {
-	local DIR="$HOME/.rkscript/"`basename "$APP"`
+	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
 
 	test -d "$DIR" || _mkdir "$DIR"
 	test -z "$1" && _abort "empty name"
