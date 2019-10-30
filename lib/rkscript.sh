@@ -339,17 +339,15 @@ function _cert_domain {
 
 
 #------------------------------------------------------------------------------
-# Abort if ip_address is ip4 and points to IP_ADDRESS.
+# Abort if ip_address of domain does not point to IP_ADDRESS.
 # Call _ip_address first.
 #
 # @global IP_ADDRESS
-# @param ip_address
+# @param domain
 # @require _abort _require_program _is_ip4
 #------------------------------------------------------------------------------
 function _check_ip {
 	_require_program ping
-
-	_is_ip4 "$1"
 
 	local IP_OK=`ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS"`
 	if test -z "$IP_OK"; then
@@ -1651,11 +1649,11 @@ function _is_ip4 {
 		return;
 	fi
 
-  local is_ip4=`echo "$1" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'`
+	local is_ip4=`echo "$1" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'`
 
-  if test -z "$is_ip4"; then
-    _abort "Invalid ip4 address [$1] use e.g. 32.123.7.38"
-  fi
+	if test -z "$is_ip4"; then
+		_abort "Invalid ip4 address [$1] use e.g. 32.123.7.38"
+	fi
 }
 
 
