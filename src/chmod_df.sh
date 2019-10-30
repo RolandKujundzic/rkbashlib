@@ -7,6 +7,7 @@
 # @param file privileges (default = 644)
 # @param dir privileges (default = 755)
 # @param main dir privileges (default = dir privleges)
+# @global CHMOD_DF_NO_CONFIRM=1 (disable confirm)
 # @require _abort _confirm
 #------------------------------------------------------------------------------
 function _chmod_df {
@@ -23,13 +24,19 @@ function _chmod_df {
 	test -z "$DPRIV" && DPRIV=755
 	test -z "$MDPRIV" && MDPRIV=$DPRIV
 
-	_confirm "chmod $MDPRIV '$CHMOD_PATH'" 1
-	test "$CONFIRM" = "y" && chmod $MDPRIV "$CHMOD_PATH"
+	if test "$CHMOD_DF_NO_CONFIRM" = "1"; then
+		chmod $MDPRIV "$CHMOD_PATH"
+		find "$CHMOD_PATH" -type d -exec chmod $DPRIV {} \;
+		find "$CHMOD_PATH" -type f -exec chmod $FPRIV {} \;
+	else
+		_confirm "chmod $MDPRIV '$CHMOD_PATH'" 1
+		test "$CONFIRM" = "y" && chmod $MDPRIV "$CHMOD_PATH"
 
-	_confirm "chmod $DPRIV all directories in '$CHMOD_PATH'" 1
-	test "$CONFIRM" = "y" && find "$CHMOD_PATH" -type d -exec chmod $DPRIV {} \;
+		_confirm "chmod $DPRIV all directories in '$CHMOD_PATH'" 1
+		test "$CONFIRM" = "y" && find "$CHMOD_PATH" -type d -exec chmod $DPRIV {} \;
 
-	_confirm "chmod $FPRIV all files in '$CHMOD_PATH'" 1
-	test "$CONFIRM" = "y" && find "$CHMOD_PATH" -type f -exec chmod $FPRIV {} \;
+		_confirm "chmod $FPRIV all files in '$CHMOD_PATH'" 1
+		test "$CONFIRM" = "y" && find "$CHMOD_PATH" -type f -exec chmod $FPRIV {} \;
+	fi
 }
 
