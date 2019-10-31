@@ -453,26 +453,24 @@ function _chmod {
 #------------------------------------------------------------------------------
 function _chown {
 
-	if ! test -d "$1" && ! test -f "$1"
-	then
+	if ! test -d "$1" && ! test -f "$1"; then
 		_abort "no such file or directory [$1]"
 	fi
 
-	if test -z "$2" || test -z "$3"
-	then
+	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
 	local CURR_OWNER=$(stat -c '%U' "$1")
 	local CURR_GROUP=$(stat -c '%G' "$1")
 
-	if test -z "$CURR_OWNER" || test -z "$CURR_GROUP"
-	then
+	if test -z "$CURR_OWNER" || test -z "$CURR_GROUP"; then
 		_abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
 	fi
 
-	if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"
-	then
+	local FIND=`find "$1"`
+
+	if test "$1" != "$FIND" || test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
 		_sudo "chown -R '$2.$3' '$1'"
 	else
 		echo "keep owner '$2.$3' of '$1'"
