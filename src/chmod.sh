@@ -10,12 +10,12 @@
 function _chmod {
 	test -z "$2" && _abort "empty path"
 
-	local ENTRY=( $2 )
+	local ENTRY=("$2")
 	local a=; local i=;
 
 	if ! test -f "$2" && ! test -d "$2"; then
 		while read a; do
-			ENTRY+=( $a )
+			ENTRY+=("$a")
 		done <<< `find "$2" 2>/dev/null`
 	fi
 
@@ -34,9 +34,7 @@ function _chmod {
 	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
 		local PRIV=`stat -c "%a" "${ENTRY[$i]}"`
 
-		if test "$1" = "$PRIV" || test "$1" = "0$PRIV"; then
-			echo "keep existing mode $1 of ${ENTRY[$i]}"
-		else
+		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
 			_sudo "chmod -R $1 '${ENTRY[$i]}'" 1
 		fi
 	done

@@ -10,24 +10,24 @@
 # @require _abort
 #------------------------------------------------------------------------------
 function _chown {
-        test -z "$1" && _abort "empty path"
+	test -z "$1" && _abort "empty path"
 
-        local ENTRY=( $1 )
-        local a=; local i=;
+	local ENTRY=("$1")
+	local a=; local i=;
 
-        if ! test -f "$1" && ! test -d "$1"; then
-                while read a; do
-                        ENTRY+=( $a )
-                done <<< `find "$1" 2>/dev/null`
-        fi
+	if ! test -f "$1" && ! test -d "$1"; then
+		while read a; do
+			ENTRY+=("$a")
+		done <<< `find "$1" 2>/dev/null`
+	fi
 
-        test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
+	test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
 
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
-        for ((i = 0; i < ${#ENTRY[@]}; i++)); do
+	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
 		local CURR_OWNER=$(stat -c '%U' "${ENTRY[$i]}")
 		local CURR_GROUP=$(stat -c '%G' "${ENTRY[$i]}")
 
@@ -37,8 +37,7 @@ function _chown {
 
 		if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
 			_sudo "chown -R '$2.$3' '${ENTRY[$i]}'"
-		else
-			echo "keep owner '$2.$3' of '${ENTRY[$i]}'"
 		fi
 	done
 }
+

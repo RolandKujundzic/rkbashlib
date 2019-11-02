@@ -418,12 +418,12 @@ function _chmod_df {
 function _chmod {
 	test -z "$2" && _abort "empty path"
 
-	local ENTRY=( $2 )
+	local ENTRY=("$2")
 	local a=; local i=;
 
 	if ! test -f "$2" && ! test -d "$2"; then
 		while read a; do
-			ENTRY+=( $a )
+			ENTRY+=("$a")
 		done <<< `find "$2" 2>/dev/null`
 	fi
 
@@ -442,9 +442,7 @@ function _chmod {
 	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
 		local PRIV=`stat -c "%a" "${ENTRY[$i]}"`
 
-		if test "$1" = "$PRIV" || test "$1" = "0$PRIV"; then
-			echo "keep existing mode $1 of ${ENTRY[$i]}"
-		else
+		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
 			_sudo "chmod -R $1 '${ENTRY[$i]}'" 1
 		fi
 	done
@@ -461,24 +459,24 @@ function _chmod {
 # @require _abort
 #------------------------------------------------------------------------------
 function _chown {
-        test -z "$1" && _abort "empty path"
+	test -z "$1" && _abort "empty path"
 
-        local ENTRY=( $1 )
-        local a=; local i=;
+	local ENTRY=("$1")
+	local a=; local i=;
 
-        if ! test -f "$1" && ! test -d "$1"; then
-                while read a; do
-                        ENTRY+=( $a )
-                done <<< `find "$1" 2>/dev/null`
-        fi
+	if ! test -f "$1" && ! test -d "$1"; then
+		while read a; do
+			ENTRY+=("$a")
+		done <<< `find "$1" 2>/dev/null`
+	fi
 
-        test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
+	test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
 
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
-        for ((i = 0; i < ${#ENTRY[@]}; i++)); do
+	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
 		local CURR_OWNER=$(stat -c '%U' "${ENTRY[$i]}")
 		local CURR_GROUP=$(stat -c '%G' "${ENTRY[$i]}")
 
@@ -488,11 +486,10 @@ function _chown {
 
 		if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
 			_sudo "chown -R '$2.$3' '${ENTRY[$i]}'"
-		else
-			echo "keep owner '$2.$3' of '${ENTRY[$i]}'"
 		fi
 	done
 }
+
 
 #------------------------------------------------------------------------------
 # Execute command $1.
@@ -1188,10 +1185,10 @@ function _extract_tgz {
 #
 # @param directory
 # @param privileges
+# @global FILE_PRIV_EXCLUDE (if empty use ! -name '.*' ! -name '*.sh')
 # @require _abort
 #------------------------------------------------------------------------------
 function _file_priv {
-
 	if ! test -d "$1"; then
 		_abort "no such directory [$1]"
 	fi
@@ -1204,7 +1201,16 @@ function _file_priv {
 		_is_integer "$PRIV"
 	fi
 
-	find "$1" -type f ! -name '.*' ! -name '*.sh' -exec chmod $PRIV {} \;
+	test -z "$FILE_PRIV_EXCLUDE" && FILE_PRIV_EXCLUDE="! -name '.*' ! -name '*.sh'"
+
+	local i=; local a=; local LIST=()
+	while read a; do
+		LIST+=("$a")
+	done <<< `find "$1" -type f $FILE_PRIV_EXCLUDE 2>/dev/null`
+
+	for ((i = 0; i < ${#LIST[@]}; i++)); do
+		_chmod $PRIV "${LIST[$i]}"
+	done
 }
 
 
