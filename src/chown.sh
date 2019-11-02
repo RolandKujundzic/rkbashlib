@@ -12,13 +12,15 @@
 function _chown {
 	test -z "$1" && _abort "empty path"
 
-	local ENTRY=("$1")
+	local ENTRY=()
 	local a=; local i=;
 
 	if ! test -f "$1" && ! test -d "$1"; then
 		while read a; do
 			ENTRY+=("$a")
 		done <<< `find "$1" 2>/dev/null`
+	else
+		ENTRY+=("$1")
 	fi
 
 	test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
