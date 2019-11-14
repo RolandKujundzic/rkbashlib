@@ -2,6 +2,10 @@
 
 declare -A TEST_OUT
 
+test -z "$TEST_HELPER_SH" || return
+TEST_HELPER_SH=1
+
+
 #------------------------------------------------------------------------------
 # Add [find out -type f -printf "%u %g '%f'\n"] output to TEST_OUT
 #------------------------------------------------------------------------------
