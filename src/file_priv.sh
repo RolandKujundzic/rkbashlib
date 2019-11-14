@@ -1,19 +1,17 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Change file privileges in directory (ignore .dot_directories, recursive)
+# Change file privileges. Last parameter is privileges (default = 644). 
+# If $1 is directory and FIND_OPT empty ignore .dot_directories and *.sh.
+# Use "_find ..." or "find ..." to find files.
 #
 # @param directory
 # @param privileges
-# @global FILE_PRIV_EXCLUDE (if empty use ! -name '.*' ! -name '*.sh')
+# @global FIND_OPT (_find|find options, e.g. "! -name '.*' ! -name '*.sh'")
 # @require _abort
 #------------------------------------------------------------------------------
 function _file_priv {
-	if ! test -d "$1"; then
-		_abort "no such directory [$1]"
-	fi
-
-	local PRIV="$2"
+	local PRIV="${@: -1}"	# ${!#}
 
 	if test -z "$PRIV"; then
 		PRIV=644
@@ -21,15 +19,22 @@ function _file_priv {
 		_is_integer "$PRIV"
 	fi
 
-	test -z "$FILE_PRIV_EXCLUDE" && FILE_PRIV_EXCLUDE="! -name '.*' ! -name '*.sh'"
+	local _FIND=`echo "$@" | grep -E '^_find ' | sed -E 's/^_find //g' | sed -E "s/ $PRIV\$//"`
+	local FIND=`echo "$@" | grep -E '^find ' | sed -E 's/^find //g' | sed -E "s/ $PRIV\$//"`
 
-	local i=; local a=; local LIST=()
-	while read a; do
-		LIST+=("$a")
-	done <<< `find "$1" -type f $FILE_PRIV_EXCLUDE 2>/dev/null`
-
-	for ((i = 0; i < ${#LIST[@]}; i++)); do
-		_chmod $PRIV "${LIST[$i]}"
-	done
+	if ! test -z "$_FIND"; then
+		_find $_FIND $FIND_OPT -type f
+		_chmod $PRIV
+	elif ! test -z "$FIND"; then
+		find $FIND $FIND_OPT -type f -exec chmod $PRIV {} \;
+	elif test -d "$1"; then
+		if test -z "$FIND_OPT"; then
+			find "$1" ! -name '.*' ! -name '*.sh' -type f -exec chmod $PRIV {} \;
+		else
+			find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \;
+		fi
+	else
+		_abort "invalid: _file_priv $@"
+	fi
 }
 
