@@ -11,7 +11,7 @@ TEST_HELPER_SH=1
 #------------------------------------------------------------------------------
 function _ls_out {
 	_require_dir out
-	TEST_OUT[${#TEST_OUT[@]}]=`find out -type f -printf "%u %g '%f'\n"`
+	TEST_OUT[${#TEST_OUT[@]}]=`find out -type f -printf "%u %g %M '%p'\n"`
 }
 
 
