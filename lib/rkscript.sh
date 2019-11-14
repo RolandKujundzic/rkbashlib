@@ -1,5 +1,8 @@
 #!/bin/bash
 
+test -z "$RKSCRIPT_SH" || return
+RKSCRIPT_SH=1
+
 if test -z "$APP"; then
   APP="$0"
 fi

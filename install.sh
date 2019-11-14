@@ -18,7 +18,7 @@ function _build {
 	echo '#!/bin/bash' > $LIB_TMP
 	_chmod 644 "$LIB_TMP"
 
-	echo >> $LIB_TMP
+	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n" >> $LIB_TMP
 	echo 'if test -z "$APP"; then' >> $LIB_TMP
 	echo '  APP="$0"' >> $LIB_TMP
 	echo 'fi' >> $LIB_TMP
