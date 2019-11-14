@@ -1,19 +1,17 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Change directory privileges in directory to 755 (ignore .dot_dir, recursive)
+# Change directory privileges. Last parameter is privileges (default = 755).
+# If $1 is directory and FIND_OPT empy ignore .dot_directories and *.sh suffix.
+# Use "_find ..." or "find ..." to find files.
 #
 # @param directory
-# @param privileges 755
-# @require _abort _is_integer
+# @param privileges
+# @global FIND_OPT (_find|find options, e.g. "! -name '.*' ! -name '*.sh'")
+# @require _abort
 #------------------------------------------------------------------------------
 function _dir_priv {
-
-	if ! test -d "$1"; then
-		_abort "no such directory [$1]"
-	fi
-
-	local PRIV="$2"
+	local PRIV="${@: -1}"	# ${!#}
 
 	if test -z "$PRIV"; then
 		PRIV=755
@@ -21,6 +19,22 @@ function _dir_priv {
 		_is_integer "$PRIV"
 	fi
 
-	find "$1" -type d ! -name '.*' -exec chmod $PRIV {} \;
+	local _FIND=`echo "$@" | grep -E '^_find ' | sed -E 's/^_find //g' | sed -E "s/ $PRIV\$//"`
+	local FIND=`echo "$@" | grep -E '^find ' | sed -E 's/^find //g' | sed -E "s/ $PRIV\$//"`
+
+	if ! test -z "$_FIND"; then
+		_find $_FIND $FIND_OPT -type d
+		_chmod $PRIV
+	elif ! test -z "$FIND"; then
+		find $FIND $FIND_OPT -type d -exec chmod $PRIV {} \;
+	elif test -d "$1"; then
+		if test -z "$FIND_OPT"; then
+			find "$1" ! -name '.*' ! -name '*.sh' -type d -exec chmod $PRIV {} \;
+		else
+			find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \;
+		fi
+	else
+		_abort "invalid: _dir_priv $@"
+	fi
 }
 
