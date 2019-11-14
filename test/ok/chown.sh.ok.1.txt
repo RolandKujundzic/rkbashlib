@@ -1,2 +1,2 @@
-rk rk 'a.txt'
-rk rk 'b c.txt'
+rk rk -rw-r--r-- 'out/a.txt'
+rk rk -rw-r--r-- 'out/b c.txt'

@@ -1,2 +1,2 @@
-rk www-data 'a.txt'
-rk www-data 'b c.txt'
+rk www-data -rw-r--r-- 'out/a.txt'
+rk www-data -rw-r--r-- 'out/b c.txt'
