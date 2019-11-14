@@ -410,88 +410,89 @@ function _chmod_df {
 
 #------------------------------------------------------------------------------
 # Change mode of path $2 to $1. If chmod failed try sudo.
+# Use _find first to chmod all FOUND entries.
 #
 # @param file mode (octal)
-# @param file path
+# @param file path (if path is empty use $FOUND)
 # @require _abort _sudo
 #------------------------------------------------------------------------------
 function _chmod {
+	test -z "$1" && _abort "empty privileges parameter"
 	test -z "$2" && _abort "empty path"
 
-	local ENTRY=()
-	local a=; local i=;
-
-	if ! test -f "$2" && ! test -d "$2"; then
-		while read a; do
-			ENTRY+=("$a")
-		done <<< `find "$2" 2>/dev/null`
-	else
-		ENTRY+=("$2")
-	fi
-
-	test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$2]"
-
-	if test -z "$1"; then
-		_abort "empty privileges parameter"
-	fi
-
 	local tmp=`echo "$1" | sed -e 's/[012345678]*//'`
+	test -z "$tmp" || _abort "invalid octal privileges '$1'"
 
-	if ! test -z "$tmp"; then
-		_abort "invalid octal privileges '$1'"
-	fi
+	local a=; local i=; local PRIV=;
 
-	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
-		local PRIV=`stat -c "%a" "${ENTRY[$i]}"`
+	if test -z "$2"; then
+		for ((i = 0; i < ${#FOUND[@]}; i++)); do
+			PRIV=
+
+			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
+				PRIV=`stat -c "%a" "${FOUND[$i]}"`
+			fi
+
+			if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
+				_sudo "chmod -R $1 '${FOUND[$i]}'" 1
+			fi
+		done
+	elif test -f "$2"; then
+		PRIV=`stat -c "%a" "$2"`
 
 		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
-			_sudo "chmod -R $1 '${ENTRY[$i]}'" 1
+			_sudo "chmod -R $1 '$2'" 1
 		fi
-	done
+	else
+		# no stat compare because subdir entry may have changed
+		_sudo "chmod -R $1 '$2'" 1
+	fi
 }
 
 
 #------------------------------------------------------------------------------
 # Change owner and group of path
 #
-# @param path 
+# @param path (if empty use $FOUND)
 # @param owner
 # @param group 
 # @sudo
 # @require _abort
 #------------------------------------------------------------------------------
 function _chown {
-	test -z "$1" && _abort "empty path"
-
-	local ENTRY=()
-	local a=; local i=;
-
-	if ! test -f "$1" && ! test -d "$1"; then
-		while read a; do
-			ENTRY+=("$a")
-		done <<< `find "$1" 2>/dev/null`
-	else
-		ENTRY+=("$1")
-	fi
-
-	test ${#ENTRY[@]} -lt 1 && _abort "invalid path [$1]"
-
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
-	for ((i = 0; i < ${#ENTRY[@]}; i++)); do
-		local CURR_OWNER=$(stat -c '%U' "${ENTRY[$i]}")
-		local CURR_GROUP=$(stat -c '%G' "${ENTRY[$i]}")
+	if test -z "$1"; then
+		for ((i = 0; i < ${#FOUND[@]}; i++)); do
+			local CURR_OWNER=
+			local CURR_GROUP=
+
+			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
+				CURR_OWNER=$(stat -c '%U' "${FOUND[$i]}")
+				CURR_GROUP=$(stat -c '%G' "${FOUND[$i]}")
+			fi
+
+			if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
+				_sudo "chown -R '$2.$3' '${FOUND[$i]}'" 1
+			fi
+		done
+	elif test -f "$1"; then
+		local CURR_OWNER=$(stat -c '%U' "$1")
+		local CURR_GROUP=$(stat -c '%G' "$1")
 
 		if test -z "$CURR_OWNER" || test -z "$CURR_GROUP"; then
-			_abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [${ENTRY[$i]}] failed"
+			_abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
 		fi
 
 		if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
-			_sudo "chown -R '$2.$3' '${ENTRY[$i]}'"
+			_sudo "chown -R '$2.$3' '$1'" 1
 		fi
-	done
+	else
+		# no stat compare because subdir entry may have changed
+		_sudo "chown -R $2.$3 '$1'" 1
+	fi
 }
 
 
@@ -963,19 +964,17 @@ function _create_tgz {
 
 
 #------------------------------------------------------------------------------
-# Change directory privileges in directory to 755 (ignore .dot_dir, recursive)
+# Change directory privileges. Last parameter is privileges (default = 755).
+# If $1 is directory and FIND_OPT empy ignore .dot_directories and *.sh suffix.
+# Use "_find ..." or "find ..." to find files.
 #
 # @param directory
-# @param privileges 755
-# @require _abort _is_integer
+# @param privileges
+# @global FIND_OPT (_find|find options, e.g. "! -name '.*' ! -name '*.sh'")
+# @require _abort
 #------------------------------------------------------------------------------
 function _dir_priv {
-
-	if ! test -d "$1"; then
-		_abort "no such directory [$1]"
-	fi
-
-	local PRIV="$2"
+	local PRIV="${@: -1}"	# ${!#}
 
 	if test -z "$PRIV"; then
 		PRIV=755
@@ -983,7 +982,23 @@ function _dir_priv {
 		_is_integer "$PRIV"
 	fi
 
-	find "$1" -type d ! -name '.*' -exec chmod $PRIV {} \;
+	local _FIND=`echo "$@" | grep -E '^_find ' | sed -E 's/^_find //g' | sed -E "s/ $PRIV\$//"`
+	local FIND=`echo "$@" | grep -E '^find ' | sed -E 's/^find //g' | sed -E "s/ $PRIV\$//"`
+
+	if ! test -z "$_FIND"; then
+		_find $_FIND $FIND_OPT -type d
+		_chmod $PRIV
+	elif ! test -z "$FIND"; then
+		find $FIND $FIND_OPT -type d -exec chmod $PRIV {} \;
+	elif test -d "$1"; then
+		if test -z "$FIND_OPT"; then
+			find "$1" ! -name '.*' ! -name '*.sh' -type d -exec chmod $PRIV {} \;
+		else
+			find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \;
+		fi
+	else
+		_abort "invalid: _dir_priv $@"
+	fi
 }
 
 
@@ -1185,19 +1200,17 @@ function _extract_tgz {
 
 
 #------------------------------------------------------------------------------
-# Change file privileges in directory (ignore .dot_directories, recursive)
+# Change file privileges. Last parameter is privileges (default = 644). 
+# If $1 is directory and FIND_OPT empty ignore .dot_directories and *.sh.
+# Use "_find ..." or "find ..." to find files.
 #
 # @param directory
 # @param privileges
-# @global FILE_PRIV_EXCLUDE (if empty use ! -name '.*' ! -name '*.sh')
+# @global FIND_OPT (_find|find options, e.g. "! -name '.*' ! -name '*.sh'")
 # @require _abort
 #------------------------------------------------------------------------------
 function _file_priv {
-	if ! test -d "$1"; then
-		_abort "no such directory [$1]"
-	fi
-
-	local PRIV="$2"
+	local PRIV="${@: -1}"	# ${!#}
 
 	if test -z "$PRIV"; then
 		PRIV=644
@@ -1205,16 +1218,23 @@ function _file_priv {
 		_is_integer "$PRIV"
 	fi
 
-	test -z "$FILE_PRIV_EXCLUDE" && FILE_PRIV_EXCLUDE="! -name '.*' ! -name '*.sh'"
+	local _FIND=`echo "$@" | grep -E '^_find ' | sed -E 's/^_find //g' | sed -E "s/ $PRIV\$//"`
+	local FIND=`echo "$@" | grep -E '^find ' | sed -E 's/^find //g' | sed -E "s/ $PRIV\$//"`
 
-	local i=; local a=; local LIST=()
-	while read a; do
-		LIST+=("$a")
-	done <<< `find "$1" -type f $FILE_PRIV_EXCLUDE 2>/dev/null`
-
-	for ((i = 0; i < ${#LIST[@]}; i++)); do
-		_chmod $PRIV "${LIST[$i]}"
-	done
+	if ! test -z "$_FIND"; then
+		_find $_FIND $FIND_OPT -type f
+		_chmod $PRIV
+	elif ! test -z "$FIND"; then
+		find $FIND $FIND_OPT -type f -exec chmod $PRIV {} \;
+	elif test -d "$1"; then
+		if test -z "$FIND_OPT"; then
+			find "$1" ! -name '.*' ! -name '*.sh' -type f -exec chmod $PRIV {} \;
+		else
+			find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \;
+		fi
+	else
+		_abort "invalid: _file_priv $@"
+	fi
 }
 
 
@@ -1266,6 +1286,25 @@ function _find_docroot {
 	else
 		_abort "failed to find DOCROOT of [$1]"
 	fi
+}
+
+
+#------------------------------------------------------------------------------
+# Save found filesystem entries into FOUND.
+#
+# @param any paramter useable with find command
+# @export FOUND Path Array
+# @required _require_program
+#------------------------------------------------------------------------------
+function _find {
+	FOUND=()
+	local a=
+
+	_require_program find
+
+	while read a; do
+		FOUND+=("$a")
+	done <<< `find $@ 2>/dev/null`
 }
 
 
