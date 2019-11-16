@@ -29,8 +29,10 @@ function _file_priv {
 		find $FIND $FIND_OPT -type f -exec chmod $PRIV {} \;
 	elif test -d "$1"; then
 		if test -z "$FIND_OPT"; then
+			echo "chmod $PRIV files in $1/ (exclude .* and *.sh)"
 			find "$1" ! -name '.*' ! -name '*.sh' -type f -exec chmod $PRIV {} \;
 		else
+			echo "chmod $PRIV files in $1/"
 			find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \;
 		fi
 	else

@@ -402,12 +402,14 @@ function _chmod_df {
 
 	test -z "$FPRIV" && FPRIV=644
 	test -z "$DPRIV" && DPRIV=755
-	test -z "$MDPRIV" && MDPRIV=$DPRIV
 
-	echo "Fix privleges: $CHMOD_PATH=$MDPRIV subdirectories=$DPRIV files=$FPRIV"
-	chmod $MDPRIV "$CHMOD_PATH"
-	find "$CHMOD_PATH" -type d -exec chmod $DPRIV {} \;
-	find "$CHMOD_PATH" -type f -exec chmod $FPRIV {} \;
+	_file_priv "$CHMOD_PATH" $FPRIV
+	_dir_priv "$CHMOD_PATH" $DPRIV
+
+	if ! test -z "$MDPRIV" && test "$MDPRIV" != $"$DPRIV"; then
+		echo "chmod $MDPRIV '$CHMOD_PATH'"
+		chmod "$MDPRIV" "$CHMOD_PATH" || _abort "chmod $MDPRIV '$CHMOD_PATH'"
+	fi
 }
 
 
@@ -992,11 +994,14 @@ function _dir_priv {
 		_find $_FIND $FIND_OPT -type d
 		_chmod $PRIV
 	elif ! test -z "$FIND"; then
+		echo "chmod $PRIV directories in $1/"
 		find $FIND $FIND_OPT -type d -exec chmod $PRIV {} \;
 	elif test -d "$1"; then
 		if test -z "$FIND_OPT"; then
-			find "$1" ! -name '.*' ! -name '*.sh' -type d -exec chmod $PRIV {} \;
+			echo "chmod $PRIV directories in $1/ (exclude .*)"
+			find "$1" ! -name '.*' -type d -exec chmod $PRIV {} \;
 		else
+			echo "chmod $PRIV directories in $1/"
 			find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \;
 		fi
 	else
@@ -1231,8 +1236,10 @@ function _file_priv {
 		find $FIND $FIND_OPT -type f -exec chmod $PRIV {} \;
 	elif test -d "$1"; then
 		if test -z "$FIND_OPT"; then
+			echo "chmod $PRIV files in $1/ (exclude .* and *.sh)"
 			find "$1" ! -name '.*' ! -name '*.sh' -type f -exec chmod $PRIV {} \;
 		else
+			echo "chmod $PRIV files in $1/"
 			find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \;
 		fi
 	else

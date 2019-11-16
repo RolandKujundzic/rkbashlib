@@ -21,11 +21,13 @@ function _chmod_df {
 
 	test -z "$FPRIV" && FPRIV=644
 	test -z "$DPRIV" && DPRIV=755
-	test -z "$MDPRIV" && MDPRIV=$DPRIV
 
-	echo "Fix privleges: $CHMOD_PATH=$MDPRIV subdirectories=$DPRIV files=$FPRIV"
-	chmod $MDPRIV "$CHMOD_PATH"
-	find "$CHMOD_PATH" -type d -exec chmod $DPRIV {} \;
-	find "$CHMOD_PATH" -type f -exec chmod $FPRIV {} \;
+	_file_priv "$CHMOD_PATH" $FPRIV
+	_dir_priv "$CHMOD_PATH" $DPRIV
+
+	if ! test -z "$MDPRIV" && test "$MDPRIV" != $"$DPRIV"; then
+		echo "chmod $MDPRIV '$CHMOD_PATH'"
+		chmod "$MDPRIV" "$CHMOD_PATH" || _abort "chmod $MDPRIV '$CHMOD_PATH'"
+	fi
 }
 
