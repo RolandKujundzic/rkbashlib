@@ -48,10 +48,10 @@ function _has_process {
 
 	if test $((flag & 16)) = 16; then
 		if test -s "${PROCESS[log]}" || test $((flag & 2)) = 2; then
-			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-3][0-9]{0,4}$'`
+			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$'`
 
 			if test -z "$logfile_pid"; then
-				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-3][0-9]{0,4}$'`
+				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-9][0-9]{0,4}$'`
 			fi
 
 			if test -z "$logfile_pid"; then

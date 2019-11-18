@@ -22,7 +22,7 @@ function _kill_process {
 
 			MY_PID=`head -3 "$PID_FILE" | grep "PID=" | sed -e "s/PID=//"`
 			if test -z "$MY_PID"; then
-				MY_PID=`cat "$PID_FILE" | grep -E '^[1-3][0-9]{0,4}$'`
+				MY_PID=`cat "$PID_FILE" | grep -E '^[1-9][0-9]{0,4}$'`
 			fi
 			;;
 		pid:*)
@@ -37,7 +37,7 @@ function _kill_process {
 		_abort "no pid found ($1)"
 	fi
 
-	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[123][0-9]{0,4}$' | grep "$MY_PID"`
+	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
 	if test -z "$FOUND_PID"; then
 		if ! test -z "$2"; then
 			_abort "no such pid $MY_PID"
