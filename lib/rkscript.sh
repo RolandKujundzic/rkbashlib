@@ -1414,7 +1414,7 @@ function _github_latest {
 	local LATEST=`basename "$REDIR" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/'`
 
 	if ! test -z "$LATEST"; then
-		GITHUB_LATEST[$2]=$LATEST
+		GITHUB_LATEST[$2]=`basename "$REDIR"`
 		GITHUB_IS_LATEST[$2]=''
 
 		if ! test -z "$VNUM" && test `echo "$VNUM >= $LATEST" | bc -l` == 1; then
