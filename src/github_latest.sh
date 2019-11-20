@@ -19,7 +19,7 @@ function _github_latest {
 		GITHUB_LATEST[$2]=$LATEST
 		GITHUB_IS_LATEST[$2]=''
 
-		if ! test -z "$VNUM" && test `echo "$VNUM < $LATEST" | bc -l` == 1; then
+		if ! test -z "$VNUM" && test `echo "$VNUM >= $LATEST" | bc -l` == 1; then
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi
