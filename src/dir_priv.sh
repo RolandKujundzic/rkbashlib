@@ -26,11 +26,14 @@ function _dir_priv {
 		_find $_FIND $FIND_OPT -type d
 		_chmod $PRIV
 	elif ! test -z "$FIND"; then
+		echo "chmod $PRIV directories in $1/"
 		find $FIND $FIND_OPT -type d -exec chmod $PRIV {} \;
 	elif test -d "$1"; then
 		if test -z "$FIND_OPT"; then
-			find "$1" ! -name '.*' ! -name '*.sh' -type d -exec chmod $PRIV {} \;
+			echo "chmod $PRIV directories in $1/ (exclude .*)"
+			find "$1" ! -name '.*' -type d -exec chmod $PRIV {} \;
 		else
+			echo "chmod $PRIV directories in $1/"
 			find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \;
 		fi
 	else
