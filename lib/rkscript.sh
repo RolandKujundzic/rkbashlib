@@ -1398,6 +1398,32 @@ function _git_checkout {
 }
 
 
+declare -A GITHUB_LATEST
+declare -A GITHUB_IS_LATEST
+
+#------------------------------------------------------------------------------
+# Export GITHUB_[IS_]LATEST[$2].
+#
+# @export $GITHUB_LATEST[$1] = NN.NN and GITHUB_IS_LATEST[$1]=1|''
+# @param $1 user/project (latest github url = https://github.com/[user/project]/releases/latest)
+# @param $2 app
+#------------------------------------------------------------------------------
+function _github_latest {
+	local VNUM=`$2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/'`
+	local REDIR=`curl -Ls -o /dev/null -w %{url_effective} "https://github.com/$1/releases/latest"`
+	local LATEST=`basename "$REDIR" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/'`
+
+	if ! test -z "$LATEST"; then
+		GITHUB_LATEST[$2]=$LATEST
+		GITHUB_IS_LATEST[$2]=''
+
+		if ! test -z "$VNUM" && test `echo "$VNUM >= $LATEST" | bc -l` == 1; then
+			GITHUB_IS_LATEST[$2]=1
+		fi
+	fi
+}
+
+
 #------------------------------------------------------------------------------
 # Update git components.
 #
@@ -1501,10 +1527,10 @@ function _has_process {
 
 	if test $((flag & 16)) = 16; then
 		if test -s "${PROCESS[log]}" || test $((flag & 2)) = 2; then
-			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-3][0-9]{0,4}$'`
+			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$'`
 
 			if test -z "$logfile_pid"; then
-				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-3][0-9]{0,4}$'`
+				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-9][0-9]{0,4}$'`
 			fi
 
 			if test -z "$logfile_pid"; then
@@ -1822,7 +1848,7 @@ function _kill_process {
 
 			MY_PID=`head -3 "$PID_FILE" | grep "PID=" | sed -e "s/PID=//"`
 			if test -z "$MY_PID"; then
-				MY_PID=`cat "$PID_FILE" | grep -E '^[1-3][0-9]{0,4}$'`
+				MY_PID=`cat "$PID_FILE" | grep -E '^[1-9][0-9]{0,4}$'`
 			fi
 			;;
 		pid:*)
@@ -1837,7 +1863,7 @@ function _kill_process {
 		_abort "no pid found ($1)"
 	fi
 
-	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[123][0-9]{0,4}$' | grep "$MY_PID"`
+	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
 	if test -z "$FOUND_PID"; then
 		if ! test -z "$2"; then
 			_abort "no such pid $MY_PID"
@@ -3377,14 +3403,19 @@ function _rsync {
 
 
 #------------------------------------------------------------------------------
-# Abort if user is not root.
+# Abort if user is not root. If sudo cache time is ok allow sudo with $1 = 1.
 #
+# @param try sudo
 # @require _abort
 #------------------------------------------------------------------------------
 function _run_as_root {
-	if test "$UID" != "0"
-	then
+	test "$UID" = "0" && return
+
+	if test -z "$1"; then
 		_abort "Please change into root and try again"
+	else
+		echo "sudo true - Please type in your password"
+		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
 	fi
 }
 
