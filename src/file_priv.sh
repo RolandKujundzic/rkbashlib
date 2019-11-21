@@ -1,42 +1,37 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-# Change file privileges. Last parameter is privileges (default = 644). 
-# If $1 is directory and FIND_OPT empty ignore .dot_directories and *.sh.
-# Use "_find ..." or "find ..." to find files.
+# Change file privileges for directory (recursiv). 
 #
 # @param directory
-# @param privileges
-# @global FIND_OPT (_find|find options, e.g. "! -name '.*' ! -name '*.sh'")
-# @require _abort
+# @param privileges (default 644)
+# @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
+# @require _abort _require_program
 #------------------------------------------------------------------------------
 function _file_priv {
-	local PRIV="${@: -1}"	# ${!#}
+	_require_program "realpath find chmod"
 
+	local DIR=`realpath "$1"`
+	test -d "$DIR" || _abort "no such directory [$DIR]"
+
+	local PRIV="$2"
 	if test -z "$PRIV"; then
 		PRIV=644
 	else
 		_is_integer "$PRIV"
 	fi
 
-	local _FIND=`echo "$@" | grep -E '^_find ' | sed -E 's/^_find //g' | sed -E "s/ $PRIV\$//"`
-	local FIND=`echo "$@" | grep -E '^find ' | sed -E 's/^find //g' | sed -E "s/ $PRIV\$//"`
+	local MSG="chmod $PRIV files in $1/"
 
-	if ! test -z "$_FIND"; then
-		_find $_FIND $FIND_OPT -type f
-		_chmod $PRIV
-	elif ! test -z "$FIND"; then
-		find $FIND $FIND_OPT -type f -exec chmod $PRIV {} \;
-	elif test -d "$1"; then
-		if test -z "$FIND_OPT"; then
-			echo "chmod $PRIV files in $1/ (exclude .* and *.sh)"
-			find "$1" ! -name '.*' ! -name '*.sh' -type f -exec chmod $PRIV {} \;
-		else
-			echo "chmod $PRIV files in $1/"
-			find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \;
-		fi
+	if test -z "$3"; then
+		FIND_OPT="! -path '/.*/' ! -path '/bin/*' ! -name '.*' ! -name '*.sh'"
+		MSG="$MSG ($FIND_OPT)"
 	else
-		_abort "invalid: _file_priv $@"
+		FIND_OPT="$3"
+		MSG="$MSG ($FIND_OPT)"
 	fi
+
+	echo "$MSG"
+	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
 }
 
