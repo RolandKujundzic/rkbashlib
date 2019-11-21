@@ -419,6 +419,7 @@ function _chmod_df {
 #
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
+# global CHMOD (default chmod -R)
 # @require _abort _sudo
 #------------------------------------------------------------------------------
 function _chmod {
@@ -427,6 +428,12 @@ function _chmod {
 
 	local tmp=`echo "$1" | sed -e 's/[012345678]*//'`
 	test -z "$tmp" || _abort "invalid octal privileges '$1'"
+
+	local CMD="chmod -R"
+	if ! test -z "$CHMOD"; then
+		CMD="$CHMOD"
+		CHMOD=
+	fi
 
 	local a=; local i=; local PRIV=;
 
@@ -439,18 +446,18 @@ function _chmod {
 			fi
 
 			if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
-				_sudo "chmod -R $1 '${FOUND[$i]}'" 1
+				_sudo "$CMD $1 '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$2"; then
 		PRIV=`stat -c "%a" "$2"`
 
 		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
-			_sudo "chmod -R $1 '$2'" 1
+			_sudo "$CMD $1 '$2'" 1
 		fi
 	else
 		# no stat compare because subdir entry may have changed
-		_sudo "chmod -R $1 '$2'" 1
+		_sudo "$CMD $1 '$2'" 1
 	fi
 }
 
@@ -462,11 +469,18 @@ function _chmod {
 # @param owner
 # @param group 
 # @sudo
+# @global CHOWN (default chown -R)
 # @require _abort
 #------------------------------------------------------------------------------
 function _chown {
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
+	fi
+
+	local CMD="chown -R"
+	if ! test -z "$CHOWN"; then
+		CMD="$CHOWN"
+		CHOWN=
 	fi
 
 	if test -z "$1"; then
@@ -480,7 +494,7 @@ function _chown {
 			fi
 
 			if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
-				_sudo "chown -R '$2.$3' '${FOUND[$i]}'" 1
+				_sudo "$CMD '$2.$3' '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$1"; then
@@ -492,11 +506,11 @@ function _chown {
 		fi
 
 		if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
-			_sudo "chown -R '$2.$3' '$1'" 1
+			_sudo "$CMD '$2.$3' '$1'" 1
 		fi
 	else
 		# no stat compare because subdir entry may have changed
-		_sudo "chown -R $2.$3 '$1'" 1
+		_sudo "$CMD $2.$3 '$1'" 1
 	fi
 }
 

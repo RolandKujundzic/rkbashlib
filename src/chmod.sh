@@ -6,6 +6,7 @@
 #
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
+# global CHMOD (default chmod -R)
 # @require _abort _sudo
 #------------------------------------------------------------------------------
 function _chmod {
@@ -14,6 +15,12 @@ function _chmod {
 
 	local tmp=`echo "$1" | sed -e 's/[012345678]*//'`
 	test -z "$tmp" || _abort "invalid octal privileges '$1'"
+
+	local CMD="chmod -R"
+	if ! test -z "$CHMOD"; then
+		CMD="$CHMOD"
+		CHMOD=
+	fi
 
 	local a=; local i=; local PRIV=;
 
@@ -26,18 +33,18 @@ function _chmod {
 			fi
 
 			if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
-				_sudo "chmod -R $1 '${FOUND[$i]}'" 1
+				_sudo "$CMD $1 '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$2"; then
 		PRIV=`stat -c "%a" "$2"`
 
 		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
-			_sudo "chmod -R $1 '$2'" 1
+			_sudo "$CMD $1 '$2'" 1
 		fi
 	else
 		# no stat compare because subdir entry may have changed
-		_sudo "chmod -R $1 '$2'" 1
+		_sudo "$CMD $1 '$2'" 1
 	fi
 }
 
