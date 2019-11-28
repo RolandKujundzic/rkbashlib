@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create mysql dump. Abort if error.
 #
 # @param save_path
@@ -8,7 +8,7 @@
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _mysql_dump {
 
 	if test -z "$MYSQL_CONN"; then

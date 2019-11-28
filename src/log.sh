@@ -5,14 +5,14 @@ declare -A LOG_FILE  # define hash
 declare -A LOG_CMD  # define hash
 LOG_NO_ECHO=
 
-#------------------------------------------------------------------------------
+#--
 # Pring log message. If second parameter is set assume command logging.
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
 # @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
-#------------------------------------------------------------------------------
+#--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
 	

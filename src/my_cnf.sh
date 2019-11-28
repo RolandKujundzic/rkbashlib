@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Check if .my.cnf exists. If found export DB_PASS and DB_NAME. If $SQL_PASS 
 # and $MYSQL are set save $MYSQL as $MYSQL_SQL. Otherwise set MYSQL=[mysql --defaults-file=.my.cnf].
 #
 # @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
 # @param path to .my.cnf (default = .my.cnf)
-#------------------------------------------------------------------------------
+#--
 function _my_cnf {
 	local MY_CNF="$1"
 

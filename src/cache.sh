@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
 # modification of cache file .rkscript/cache/$1 with sh/run and ../rkscript/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
@@ -8,7 +8,7 @@
 # @param variable name
 # @param variable value
 # @require _mkdir
-#------------------------------------------------------------------------------
+#--
 function _cache {
 	test -z "$CACHE_OFF" || return
 

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Mount $1 (e.g. /dev/sdb2) to $2 (e.g. /mnt)
 #
 # @param device
 # @param directory (mount point)
 # @require _abort _confirm
-#------------------------------------------------------------------------------
+#--
 function _mount {
 	local HAS_FS=`file -sL $1 | grep ' filesystem'`
 	if test -z "$HAS_FS"; then

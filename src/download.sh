@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Download for url to local file.
 #
 # @param string url
 # @param string file
 # @param bool allow_fail
 # @require _abort _mkdir _wget
-#------------------------------------------------------------------------------
+#--
 function _download {
 	if test -z "$2"; then
 		_abort "Download target path is empty"

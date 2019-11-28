@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Return saved value ($RKSCRIPT_DIR/$APP/name.nfo).
 #
 # @param string name
-#------------------------------------------------------------------------------
+#--
 function _get {
 	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
 

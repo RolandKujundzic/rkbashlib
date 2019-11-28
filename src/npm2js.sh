@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Copy module from node_module/$2 to $1 if necessary.
 # Apply patch patch/npm2js/`basename $1`.patch if found.
 #
 # @param target path
 # @param source path (node_modules/$2)
 # @require _abort _cp _patch
-#------------------------------------------------------------------------------
+#--
 function _npm2js {
 
 	if test -z "$2"; then

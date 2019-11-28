@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort if global variable is empty. With bash version >= 4.4 check works even
 # for arrays. If bash version < 4.4 export HAS_HASH_$1
 #
 # @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 

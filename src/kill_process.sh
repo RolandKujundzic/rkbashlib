@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # If pid is file:path/to/process.pid try [head -3 path/to/process.pid | grep PID=] first
 # otherwise assume file contains only pid. If pid is rx:REGULAR_EXPRESSION try
 # [ps aux | grep -e "REGULAR_EXPRESSION"].
@@ -8,7 +8,7 @@
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _kill_process {
 	local MY_PID=
 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort if user is not root. If sudo cache time is ok allow sudo with $1 = 1.
 #
 # @param try sudo
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _run_as_root {
 	test "$UID" = "0" && return
 

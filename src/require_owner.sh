@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort if file or directory owner:group don't match.
 #
 # @param path
 # @param owner[:group]
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
 		_abort "no such file or directory '$1'"

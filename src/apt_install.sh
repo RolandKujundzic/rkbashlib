@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Install apt packages.
 #
 # @require _abort _run_as_root
-#------------------------------------------------------------------------------
+#--
 function _apt_install {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
 	LOG_NO_ECHO=1

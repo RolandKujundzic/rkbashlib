@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Backup mysql database. Run as cron job. Create daily backup.
 # Run as cron job, e.g. daily every 1/2 hour
 #
@@ -9,7 +9,7 @@
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @require _abort _cd _cp _mysql_dump _create_tgz _rm
-#------------------------------------------------------------------------------
+#--
 function _mysql_backup {
 
 	local DUMP="mysql_dump."`date +"%H%M"`".tgz"

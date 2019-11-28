@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Download source url to target path.
 #
 # @global DOCROOT if not empty and head.inc.html exists copy files here and append to 
@@ -11,7 +11,7 @@
 # @param string source url
 # @param string target path
 # @require _abort _mkdir _download
-#------------------------------------------------------------------------------
+#--
 function _cdn_dl {
 	local SUFFIX=`echo "$2" | awk -F . '{print $NF}'`
 	local TARGET="$2"

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Export remote ip adress REMOTE_IP and REMOTE_IP6.
 #
 # @export REMOTE_IP REMOTE_IP6
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _remote_ip {
 	_require_program curl
 

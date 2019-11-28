@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Add android platform to cordova. If platforms/android exists do nothing.
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
 # @require _rm _patch
-#------------------------------------------------------------------------------
+#--
 function _cordova_add_android {
 
 	if test "$1" = "clean" && test -d platforms/android; then

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create apigen documentation for php project in docs/apigen.
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/apigen)
 # @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
-#------------------------------------------------------------------------------
+#--
 function _apigen_doc {
   local DOC_DIR=./docs/apigen
 	local PRJ="docs/.apigen"

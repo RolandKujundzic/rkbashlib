@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create .htaccess file in directory $1 if missing. Options $2:
 #
 # - deny
@@ -9,7 +9,7 @@
 # @param path to directory
 # @param option (e.g. deny, auth)
 # @require _mkdir _abort
-#------------------------------------------------------------------------------
+#--
 function _htaccess {
 	if test "$2" = "deny"; then
 		if ! test -f "$1/.htaccess"; then

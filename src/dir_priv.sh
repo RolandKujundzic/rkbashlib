@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Change directory privileges (recursive).
 #
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _dir_priv {
 	_require_program "realpath find chmod"
 

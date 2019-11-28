@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Change owner and group of path
 #
 # @param path (if empty use $FOUND)
@@ -9,7 +9,7 @@
 # @sudo
 # @global CHOWN (default chown -R)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _chown {
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"

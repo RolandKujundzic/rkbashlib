@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Install composer (getcomposer.org). If no parameter is given ask for action
 # or execute default action (install composer if missing otherwise update) after
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
 # @require _composer_phar _abort _rm
-#------------------------------------------------------------------------------
+#--
 function _composer {
 	local DO="$1"
 	local GLOBAL_COMPOSER=`which composer`

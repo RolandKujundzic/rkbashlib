@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Check node.js version. Install node and npm if missing. 
 # Update to NODE_VERSION and NPM_VERSION if necessary.
 # Use NODE_VERSION=v6.11.4 and NPM_VERSION=5.4.2 ad default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
 # @require _ver3 _require_global _install_node _sudo
-#------------------------------------------------------------------------------
+#--
 function _node_version {
 
 	if test -z "$NODE_VERSION"; then

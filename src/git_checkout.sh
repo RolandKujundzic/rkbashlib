@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
 # For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
 #
@@ -14,7 +14,7 @@
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
-#------------------------------------------------------------------------------
+#--
 function _git_checkout {
 	local CURR="$PWD"
 

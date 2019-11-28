@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Remove files/directories.
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _rm {
 
 	if test -z "$1"; then

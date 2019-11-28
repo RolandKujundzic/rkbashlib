@@ -1,18 +1,18 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 function __abort {
 	echo -e "\nABORT: $1\n\n"
 	exit 1
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Use for dynamic loading.
 # @example _rkscript "_rm _mv _cp _mkdir"
 # @global RKSCRIPT = /path/to/rkscript/src
 # @param function list
-#------------------------------------------------------------------------------
+#--
 function _rkscript {
 
 	if test -z "$RKSCRIPT"; then

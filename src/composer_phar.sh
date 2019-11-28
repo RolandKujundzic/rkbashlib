@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
 # @require _abort _rm _wget
-#------------------------------------------------------------------------------
+#--
 function _composer_phar {
   local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
   php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"

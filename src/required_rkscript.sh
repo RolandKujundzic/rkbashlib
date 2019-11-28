@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Export required rkscript/src/* functions as $REQUIRED_RKSCRIPT.
 # Call scan_rkscript_src first.
 #
@@ -9,7 +9,7 @@
 # @export REQUIRED_RKSCRIPT REQUIRED_RKSCRIPT_INCLUDE
 # @global RKSCRIPT_FUNCTIONS
 # @require _require_global
-#------------------------------------------------------------------------------
+#--
 function _required_rkscript {
 	local BASE=`basename "$1"`
 	# negative offset doesn't work in OSX bash replace ${BASE::-3} with ${BASE:0:${#BASE}-3}

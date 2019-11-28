@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Export MYSQL_CONN or MYSQL (if parameter is set) connection string.
 # If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
 # MYSQL_CONN is "mysql -h DBHOST -u DBUSER -pDBPASS DBNAME".
@@ -11,7 +11,7 @@
 # @export MYSQL_CONN MYSQL 
 # @require _abort
 # @param require root access
-#------------------------------------------------------------------------------
+#--
 function _mysql_conn {
 
 	if test -z "$1" && test -z "$MYSQL_CONN"; then

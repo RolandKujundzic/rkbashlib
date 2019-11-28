@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Check if ip_address is ip6. IP can be empty if flag & 1.
 #
 # @param ip_address
 # @param flag
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function _is_ip6 {
 	local FLAG=$(($2 + 0))
 	if test -z "$1" && test $((FLAG & 1)) = 1; then

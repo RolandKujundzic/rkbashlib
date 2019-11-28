@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create Mysql Database and user. Define MYSQL="mysql -u root" if not set 
 # and user is root. If dbname and password are empty try to autodetect from 
 # settings.php or index.php. DB_CHARSET=[utf8|latin1|utf8mb4=ask] or empty
@@ -11,7 +11,7 @@
 # @global MYSQL, DB_CHARSET
 # @export DB_NAME, DB_PASS
 # @require _abort _mysql_split_dsn _mysql_conn
-#------------------------------------------------------------------------------
+#--
 function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2

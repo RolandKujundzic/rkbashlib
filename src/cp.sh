@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Copy $1 to $2
 #
 # @param source path
@@ -8,7 +8,7 @@
 # @param [md5] if set make md5 file comparison
 # @global SUDO
 # @require _abort _md5 _sudo
-#------------------------------------------------------------------------------
+#--
 function _cp {
 	local TARGET=`dirname "$2"`
 

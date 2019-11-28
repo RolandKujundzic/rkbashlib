@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create tgz archive $1 with files from file/directory list $2.
 #
 # @param tgz_file
 # @param directory/file list
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _create_tgz {
 	local a=; for a in $2
 	do

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Make directory $1 read|writeable for webserver.
 #
 # @param directory path
 # @require _abort _chown _chmod
-#------------------------------------------------------------------------------
+#--
 function _webserver_rw_dir {
 	test -d "$1" || _abort "no such directory $1"
 
@@ -16,7 +16,7 @@ function _webserver_rw_dir {
 		SERVER_USER=`cat /etc/apache2/envvars | grep -E '^export APACHE_RUN_USER=' | sed -E 's/.*APACHE_RUN_USER=//'`
 	fi
 
-	if ! test -z "$SERVER_USER" && "$SERVER_USER" = "$DIR_OWNER"; then
+	if ! test -z "$SERVER_USER" && test "$SERVER_USER" = "$DIR_OWNER"; then
 		echo "directory $1 is already owned by webserver $SERVER_USER"
 		return
 	fi

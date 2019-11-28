@@ -2,7 +2,7 @@
 
 declare -A PROCESS
 
-#------------------------------------------------------------------------------
+#--
 # Export PROCESS[pid|start|command]. Second parameter is 2^n flag:
 #
 #  - 2^0 = $1 is bash script (search for /[b]in/bash.+$1.sh)
@@ -18,7 +18,7 @@ declare -A PROCESS
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|command] 
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _has_process {
 	local flag=$(($2 + 0))
 	local logfile_pid=

@@ -3,13 +3,13 @@
 declare -A GITHUB_LATEST
 declare -A GITHUB_IS_LATEST
 
-#------------------------------------------------------------------------------
+#--
 # Export GITHUB_[IS_]LATEST[$2].
 #
 # @export $GITHUB_LATEST[$1] = NN.NN and GITHUB_IS_LATEST[$1]=1|''
 # @param $1 user/project (latest github url = https://github.com/[user/project]/releases/latest)
 # @param $2 app
-#------------------------------------------------------------------------------
+#--
 function _github_latest {
 	local VNUM=`$2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/'`
 	local REDIR=`curl -Ls -o /dev/null -w %{url_effective} "https://github.com/$1/releases/latest"`

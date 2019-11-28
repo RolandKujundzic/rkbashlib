@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Remove stopped docker container $1 (if found). Start docker container $1.
 #
 # @param name
 # @param config file
 # @require _abort _cd _docker_stop _docker_rm
-#------------------------------------------------------------------------------
+#--
 function _docker_run {
 	_docker_rm $1
 

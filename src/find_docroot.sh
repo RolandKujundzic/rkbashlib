@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Find document root of php project (realpath). Search for directory with 
 # index.php and (settings.php file or data/ dir).
 #
 # @param string path e.g. $PWD (optional use $PWD as default)
 # @export DOCROOT
 # @require _abort  
-#------------------------------------------------------------------------------
+#--
 function _find_docroot {
 	local DIR=
 	local LAST_DIR=

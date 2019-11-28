@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Change file+directory privileges recursive.
 #
 # @param path/to/entry
@@ -8,7 +8,7 @@
 # @param dir privileges (default = 755)
 # @param main dir privileges (default = dir privleges)
 # @require _abort _file_priv _dir_priv
-#------------------------------------------------------------------------------
+#--
 function _chmod_df {
 	local CHMOD_PATH="$1"
 	local FPRIV=$2

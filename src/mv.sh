@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Move files/directories. Target path directory must exist.
 #
 # @param source_path
 # @param target_path
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _mv {
 
 	if test -z "$1"; then

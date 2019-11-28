@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Extract tgz archive $1. If second parameter is existing directory, remove
 # before extraction.
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
 # @require _abort _rm
-#------------------------------------------------------------------------------
+#--
 function _extract_tgz {
 
 	if ! test -f "$1"; then

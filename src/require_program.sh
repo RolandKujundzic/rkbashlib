@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Print md5sum of file.
 #
 # @param program
 # @param abort if not found (1=abort, empty=continue)
 # @export HAS_PROGRAM (abs path to program or zero)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_program {
 	local TYPE=`type -t "$1"`
 

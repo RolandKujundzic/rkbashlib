@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create ssh key authentication for server $1 (rk@server.tld).
-#------------------------------------------------------------------------------
+#--
 function _ssh_auth {
 	echo "create ssh keys for password less authentication"
 

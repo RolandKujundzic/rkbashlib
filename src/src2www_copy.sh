@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Copy content from www_src to www.  and *.js files from src/javascript.
 #
 # @global SRC2WWW_FILES, SRC2WWW_DIR, SRC2WWW_RKJS_DIR, SRC2WWW_RKJS_FILES
 # @require _require_global
-#------------------------------------------------------------------------------
+#--
 function _src2www_copy {
 
 	local a=; for a in $SRC2WWW_FILES $SRC2WWW_DIR; do

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Backup $1 as $1.orig (if not already done).
 #
 # @param path
 # @require _cp _abort
-#------------------------------------------------------------------------------
+#--
 function _orig {
 	if test -f "$1"; then
 		if test -f "$1.orig"; then

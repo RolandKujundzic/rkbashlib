@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Gunzip file.
 #
 # @param file
 # @param ignore_if_not_gzip (optional)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _gunzip {
 
 	if ! test -f "$1"; then

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Create corodva project in app/ directory.
 # 
 # @param app name
 # @require _abort _os_type _cordova_add_android _cordova_add_ios _mkdir
-#------------------------------------------------------------------------------
+#--
 function _cordova_create {
 	if test -d "app/$1"; then
 		_abort "Cordova project app/$1 already exists"

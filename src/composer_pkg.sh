@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Install php package with composer. Target directory is vendor/$1
 #
 # @param composer-vendor-directory
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _composer_pkg {
 	if ! test -f composer.phar; then
 		_abort "Install composer first"

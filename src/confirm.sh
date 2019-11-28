@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Show "message  Press y or n  " and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
@@ -9,7 +9,7 @@
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @export CONFIRM CONFIRM_TEXT
-#------------------------------------------------------------------------------
+#--
 function _confirm {
 	CONFIRM=
 

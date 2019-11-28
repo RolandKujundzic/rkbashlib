@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Scan $RKSCRIPT_PATH/src/* directory. Cache result RKSCRIPT_FUNCTIONS.
 #
 # @export RKSCRIPT_FUNCTIONS 
 # @global RKSCRIPT_PATH
 # @require _require_global _cd _cache
-#------------------------------------------------------------------------------
+#--
 function _scan_rkscript_src {
 	RKSCRIPT_FUNCTIONS=
 

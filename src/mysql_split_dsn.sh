@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
 # do nothing.
 #
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @export DB_NAME DB_PASS MYSQL
 # @require _abort _find_docroot _my_cnf 
-#------------------------------------------------------------------------------
+#--
 function _mysql_split_dsn {
 	local SETTINGS_DSN=
 	local PATH_RKPHPLIB=$PATH_RKPHPLIB

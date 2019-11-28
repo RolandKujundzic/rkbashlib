@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Export ip address as IP_ADDRESS (ip4) and IP6_ADDRESS (ip6) (and DYNAMIC_IP).
 #
 # @export IP_ADDRESS, IP6_ADDRESS, DYNAMIC_IP
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _ip_address {
 	_require_program ip
 

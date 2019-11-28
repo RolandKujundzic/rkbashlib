@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort if ip_address of domain does not point to IP_ADDRESS.
 # Call _ip_address first.
 #
 # @global IP_ADDRESS
 # @param domain
 # @require _abort _require_program _is_ip4
-#------------------------------------------------------------------------------
+#--
 function _check_ip {
 	_require_program ping
 

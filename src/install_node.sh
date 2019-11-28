@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Install NODE_VERSION from latest binary package.
 #
 # @global NODE_VERSION 
 # @require _abort _os_type _require_global _install_app
-#------------------------------------------------------------------------------
+#--
 function _install_node {
 
 	if test -z "$NODE_VERSION"; then

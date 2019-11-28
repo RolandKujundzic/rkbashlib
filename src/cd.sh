@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Change to directory $1. If parameter is empty and _cd was executed before 
 # change to last directory.
 #
@@ -8,7 +8,7 @@
 # @param do_not_echo
 # @export LAST_DIR
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function _cd {
 	local has_realpath=`which realpath`
 

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort if file or directory privileges don't match.
 #
 # @param path
 # @param privileges (e.g. 600)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_priv {
 	if test -z "$2"; then
 		_abort "empty privileges"

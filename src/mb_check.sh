@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Show where php string function needs to change to mb_* version.
-#------------------------------------------------------------------------------
+#--
 function _mb_check {
 
 	echo -e "\nSearch all *.php files in src/ - output filename if string function\nmight need to be replaced with mb_* version.\n"

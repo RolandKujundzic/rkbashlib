@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Change mode of path $2 to $1. If chmod failed try sudo.
 # Use _find first to chmod all FOUND entries.
 #
@@ -8,7 +8,7 @@
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
 # @require _abort _sudo
-#------------------------------------------------------------------------------
+#--
 function _chmod {
 	test -z "$1" && _abort "empty privileges parameter"
 	test -z "$2" && _abort "empty path"

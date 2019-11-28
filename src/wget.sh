@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Download URL with wget. 
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
 # @require _abort _require_program _confirm
-#------------------------------------------------------------------------------
+#--
 function _wget {
 	if test -z "$1"; then
 		_abort "empty url"

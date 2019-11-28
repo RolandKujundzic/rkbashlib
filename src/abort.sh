@@ -2,13 +2,13 @@
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
-#------------------------------------------------------------------------------
+#--
 # Abort with error message. Use NO_ABORT=1 for just warning output.
 #
 # @exit
 # @global APP, NO_ABORT
 # @param abort message
-#------------------------------------------------------------------------------
+#--
 function _abort {
 	if test "$NO_ABORT" = 1; then
 		echo "WARNING: $1"

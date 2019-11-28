@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Load mysql dump. Abort if error. If restore.sh exists append load command to 
 # restore.sh. 
 #
@@ -8,7 +8,7 @@
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
 # @require _abort _confirm _mysql_conn
-#------------------------------------------------------------------------------
+#--
 function _mysql_load {
 
 	local DUMP=$1

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Update www/index.html. Concat files from www_src directory in this order:
 #
 # - header.html, app_header.html?, main.html, app_footer.html?, *.inc.html
@@ -8,7 +8,7 @@
 #		with main.js
 #	- footer.html
 #
-#------------------------------------------------------------------------------
+#--
 function _src2www_index {
 
 	cp www_src/header.html www/index.html

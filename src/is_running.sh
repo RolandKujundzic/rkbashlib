@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Abort with error message. Process Expression is either CUSTOM with 
 # regular expression as second parameter (first character must be in brackets)
 # or PORT with port number as second parameter or expression name from list:
@@ -18,7 +18,7 @@
 # @require _abort _os_type
 # @os linux
 # @return "$1_running"
-#------------------------------------------------------------------------------
+#--
 function _is_running {
 	_os_type linux
 

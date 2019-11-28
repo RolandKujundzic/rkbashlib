@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#------------------------------------------------------------------------------
+#--
 # Download and unpack archive (tar or zip).
 #
 # @param string directory name
 # @param string download url
 # @require _abort _mv _mkdir _wget
-#------------------------------------------------------------------------------
+#--
 function _dl_unpack {
 
 	if test -d "$1"; then
