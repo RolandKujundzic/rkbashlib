@@ -14,13 +14,13 @@ fi
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
-#------------------------------------------------------------------------------
+#--
 # Abort with error message. Use NO_ABORT=1 for just warning output.
 #
 # @exit
 # @global APP, NO_ABORT
 # @param abort message
-#------------------------------------------------------------------------------
+#--
 function _abort {
 	if test "$NO_ABORT" = 1; then
 		echo "WARNING: $1"
@@ -49,13 +49,13 @@ function _abort {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create apigen documentation for php project in docs/apigen.
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/apigen)
 # @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
-#------------------------------------------------------------------------------
+#--
 function _apigen_doc {
   local DOC_DIR=./docs/apigen
 	local PRJ="docs/.apigen"
@@ -105,11 +105,11 @@ function _apigen_doc {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Clean apt installation.
 #
 # @require _abort _run_as_root
-#------------------------------------------------------------------------------
+#--
 function _apt_clean {
 	_run_as_root
 	apt -y clean || _abort "apt -y clean"
@@ -119,11 +119,11 @@ function _apt_clean {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install apt packages.
 #
 # @require _abort _run_as_root
-#------------------------------------------------------------------------------
+#--
 function _apt_install {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
@@ -142,12 +142,12 @@ function _apt_install {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Remove (purge) apt packages.
 #
 # @param package list
 # @require _apt_clean _abort _run_as_root _confirm _rm
-#------------------------------------------------------------------------------
+#--
 function _apt_remove {
 	_run_as_root
 
@@ -163,18 +163,18 @@ function _apt_remove {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install Amazon AWS PHP SDK
 #
 # @require _composer _composer_pkg 
-#------------------------------------------------------------------------------
+#--
 function _aws {
 	_composer
 	_composer_pkg aws/aws-sdk-php
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
 # modification of cache file .rkscript/cache/$1 with sh/run and ../rkscript/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
@@ -182,7 +182,7 @@ function _aws {
 # @param variable name
 # @param variable value
 # @require _mkdir
-#------------------------------------------------------------------------------
+#--
 function _cache {
 	test -z "$CACHE_OFF" || return
 
@@ -220,7 +220,7 @@ function _cache {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Download source url to target path.
 #
 # @global DOCROOT if not empty and head.inc.html exists copy files here and append to 
@@ -231,7 +231,7 @@ function _cache {
 # @param string source url
 # @param string target path
 # @require _abort _mkdir _download
-#------------------------------------------------------------------------------
+#--
 function _cdn_dl {
 	local SUFFIX=`echo "$2" | awk -F . '{print $NF}'`
 	local TARGET="$2"
@@ -268,7 +268,7 @@ function _cdn_dl {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change to directory $1. If parameter is empty and _cd was executed before 
 # change to last directory.
 #
@@ -276,7 +276,7 @@ function _cdn_dl {
 # @param do_not_echo
 # @export LAST_DIR
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function _cd {
 	local has_realpath=`which realpath`
 
@@ -314,13 +314,13 @@ function _cd {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if domain is missing or /.../$2/fullchain.pem doesn not contain DNS:$1.
 #
 # @param string domain
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _cert_domain {
 	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"
 
@@ -341,14 +341,14 @@ function _cert_domain {
 
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if ip_address of domain does not point to IP_ADDRESS.
 # Call _ip_address first.
 #
 # @global IP_ADDRESS
 # @param domain
 # @require _abort _require_program _is_ip4
-#------------------------------------------------------------------------------
+#--
 function _check_ip {
 	_require_program ping
 
@@ -360,13 +360,13 @@ function _check_ip {
 
 
 
-#------------------------------------------------------------------------------
+#--
 # Print ssl public key status of /etc/letsencrypt/live/$1/fullchain.pem.
 # 
 # @export ENDDATE
 # @param string domain
 # @print valid, missing or expired
-#------------------------------------------------------------------------------
+#--
 function _check_ssl {
 	if ! test -f /etc/letsencrypt/live/$1/fullchain.pem; then
 		echo "missing"
@@ -381,7 +381,7 @@ function _check_ssl {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change file+directory privileges recursive.
 #
 # @param path/to/entry
@@ -389,7 +389,7 @@ function _check_ssl {
 # @param dir privileges (default = 755)
 # @param main dir privileges (default = dir privleges)
 # @require _abort _file_priv _dir_priv
-#------------------------------------------------------------------------------
+#--
 function _chmod_df {
 	local CHMOD_PATH="$1"
 	local FPRIV=$2
@@ -413,7 +413,7 @@ function _chmod_df {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change mode of path $2 to $1. If chmod failed try sudo.
 # Use _find first to chmod all FOUND entries.
 #
@@ -421,7 +421,7 @@ function _chmod_df {
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
 # @require _abort _sudo
-#------------------------------------------------------------------------------
+#--
 function _chmod {
 	test -z "$1" && _abort "empty privileges parameter"
 	test -z "$2" && _abort "empty path"
@@ -462,7 +462,7 @@ function _chmod {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change owner and group of path
 #
 # @param path (if empty use $FOUND)
@@ -471,7 +471,7 @@ function _chmod {
 # @sudo
 # @global CHOWN (default chown -R)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _chown {
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
@@ -515,13 +515,13 @@ function _chown {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Execute command $1.
 #
 # @param command
 # @param 2^n flag (2^0= no echo, 2^1= print output)
 # @require _abort _log
-#------------------------------------------------------------------------------
+#--
 function _cmd {
 
 	# @ToDo unescape $1 to avoid eval
@@ -546,12 +546,12 @@ function _cmd {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create composer.json
 #
 # @param package name e.g. rklib/test
 # @require _abort _rm _confirm _license
-#------------------------------------------------------------------------------
+#--
 function _composer_json {
 	if test -z "$1"; then
 		_abort "empty project name use e.g. rklib/NAME"
@@ -598,12 +598,12 @@ EOL
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
 # @require _abort _rm _wget
-#------------------------------------------------------------------------------
+#--
 function _composer_phar {
   local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
   php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
@@ -633,12 +633,12 @@ function _composer_phar {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install php package with composer. Target directory is vendor/$1
 #
 # @param composer-vendor-directory
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _composer_pkg {
 	if ! test -f composer.phar; then
 		_abort "Install composer first"
@@ -654,14 +654,14 @@ function _composer_pkg {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install composer (getcomposer.org). If no parameter is given ask for action
 # or execute default action (install composer if missing otherwise update) after
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
 # @require _composer_phar _abort _rm
-#------------------------------------------------------------------------------
+#--
 function _composer {
 	local DO="$1"
 	local GLOBAL_COMPOSER=`which composer`
@@ -744,7 +744,7 @@ function _composer {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Show "message  Press y or n  " and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
@@ -753,7 +753,7 @@ function _composer {
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @export CONFIRM CONFIRM_TEXT
-#------------------------------------------------------------------------------
+#--
 function _confirm {
 	CONFIRM=
 
@@ -819,13 +819,13 @@ function _confirm {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Add android platform to cordova. If platforms/android exists do nothing.
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
 # @require _rm _patch
-#------------------------------------------------------------------------------
+#--
 function _cordova_add_android {
 
 	if test "$1" = "clean" && test -d platforms/android; then
@@ -840,13 +840,13 @@ function _cordova_add_android {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Add ios platform to cordova. If platforms/ios exists do nothing.
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
 # @require _rm _os_type _patch
-#------------------------------------------------------------------------------
+#--
 function _cordova_add_ios {
 	local OS_TYPE=$(_os_type)
 
@@ -867,12 +867,12 @@ function _cordova_add_ios {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create corodva project in app/ directory.
 # 
 # @param app name
 # @require _abort _os_type _cordova_add_android _cordova_add_ios _mkdir
-#------------------------------------------------------------------------------
+#--
 function _cordova_create {
 	if test -d "app/$1"; then
 		_abort "Cordova project app/$1 already exists"
@@ -900,7 +900,7 @@ function _cordova_create {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Copy $1 to $2
 #
 # @param source path
@@ -908,7 +908,7 @@ function _cordova_create {
 # @param [md5] if set make md5 file comparison
 # @global SUDO
 # @require _abort _md5 _sudo
-#------------------------------------------------------------------------------
+#--
 function _cp {
 	local TARGET=`dirname "$2"`
 
@@ -953,13 +953,13 @@ function _cp {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create tgz archive $1 with files from file/directory list $2.
 #
 # @param tgz_file
 # @param directory/file list
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _create_tgz {
 	local a=; for a in $2
 	do
@@ -982,14 +982,14 @@ function _create_tgz {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change directory privileges (recursive).
 #
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _dir_priv {
 	_require_program "realpath find chmod"
 
@@ -1018,13 +1018,13 @@ function _dir_priv {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Download and unpack archive (tar or zip).
 #
 # @param string directory name
 # @param string download url
 # @require _abort _mv _mkdir _wget
-#------------------------------------------------------------------------------
+#--
 function _dl_unpack {
 
 	if test -d "$1"; then
@@ -1077,12 +1077,12 @@ function _dl_unpack {
   fi
 }
 
-#------------------------------------------------------------------------------
+#--
 # Remove stopped docker container (if found).
 #
 # @param name
 # @require _docker_stop
-#------------------------------------------------------------------------------
+#--
 function _docker_rm {
 	_docker_stop "$1"
 
@@ -1095,13 +1095,13 @@ function _docker_rm {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Remove stopped docker container $1 (if found). Start docker container $1.
 #
 # @param name
 # @param config file
 # @require _abort _cd _docker_stop _docker_rm
-#------------------------------------------------------------------------------
+#--
 function _docker_run {
 	_docker_rm $1
 
@@ -1128,11 +1128,11 @@ function _docker_run {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Stop running docker container (if found).
 #
 # @param name
-#------------------------------------------------------------------------------
+#--
 function _docker_stop {
 	local HAS_CONTAINER=`docker ps | grep "$1"`
 
@@ -1143,14 +1143,14 @@ function _docker_stop {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Download for url to local file.
 #
 # @param string url
 # @param string file
 # @param bool allow_fail
 # @require _abort _mkdir _wget
-#------------------------------------------------------------------------------
+#--
 function _download {
 	if test -z "$2"; then
 		_abort "Download target path is empty"
@@ -1182,14 +1182,14 @@ function _download {
 	fi
 }
 
-#------------------------------------------------------------------------------
+#--
 # Extract tgz archive $1. If second parameter is existing directory, remove
 # before extraction.
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
 # @require _abort _rm
-#------------------------------------------------------------------------------
+#--
 function _extract_tgz {
 
 	if ! test -f "$1"; then
@@ -1215,14 +1215,14 @@ function _extract_tgz {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Change file privileges for directory (recursiv). 
 #
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _file_priv {
 	_require_program "realpath find chmod"
 
@@ -1251,14 +1251,14 @@ function _file_priv {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Find document root of php project (realpath). Search for directory with 
 # index.php and (settings.php file or data/ dir).
 #
 # @param string path e.g. $PWD (optional use $PWD as default)
 # @export DOCROOT
 # @require _abort  
-#------------------------------------------------------------------------------
+#--
 function _find_docroot {
 	local DIR=
 	local LAST_DIR=
@@ -1302,13 +1302,13 @@ function _find_docroot {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Save found filesystem entries into FOUND.
 #
 # @param any paramter useable with find command
 # @export FOUND Path Array
 # @required _require_program
-#------------------------------------------------------------------------------
+#--
 function _find {
 	FOUND=()
 	local a=
@@ -1321,11 +1321,11 @@ function _find {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Return saved value ($RKSCRIPT_DIR/$APP/name.nfo).
 #
 # @param string name
-#------------------------------------------------------------------------------
+#--
 function _get {
 	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
 
@@ -1335,7 +1335,7 @@ function _get {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
 # For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
 #
@@ -1349,7 +1349,7 @@ function _get {
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
-#------------------------------------------------------------------------------
+#--
 function _git_checkout {
 	local CURR="$PWD"
 
@@ -1404,13 +1404,13 @@ function _git_checkout {
 declare -A GITHUB_LATEST
 declare -A GITHUB_IS_LATEST
 
-#------------------------------------------------------------------------------
+#--
 # Export GITHUB_[IS_]LATEST[$2].
 #
 # @export $GITHUB_LATEST[$1] = NN.NN and GITHUB_IS_LATEST[$1]=1|''
 # @param $1 user/project (latest github url = https://github.com/[user/project]/releases/latest)
 # @param $2 app
-#------------------------------------------------------------------------------
+#--
 function _github_latest {
 	local VNUM=`$2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/'`
 	local REDIR=`curl -Ls -o /dev/null -w %{url_effective} "https://github.com/$1/releases/latest"`
@@ -1427,11 +1427,11 @@ function _github_latest {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Update git components.
 #
 # @require _git_checkout _mkdir
-#------------------------------------------------------------------------------
+#--
 function _git_update {
 	_mkdir php
 	cd php
@@ -1441,13 +1441,13 @@ function _git_update {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Gunzip file.
 #
 # @param file
 # @param ignore_if_not_gzip (optional)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _gunzip {
 
 	if ! test -f "$1"; then
@@ -1484,7 +1484,7 @@ function _gunzip {
 
 declare -A PROCESS
 
-#------------------------------------------------------------------------------
+#--
 # Export PROCESS[pid|start|command]. Second parameter is 2^n flag:
 #
 #  - 2^0 = $1 is bash script (search for /[b]in/bash.+$1.sh)
@@ -1500,7 +1500,7 @@ declare -A PROCESS
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|command] 
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _has_process {
 	local flag=$(($2 + 0))
 	local logfile_pid=
@@ -1565,7 +1565,7 @@ function _has_process {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create .htaccess file in directory $1 if missing. Options $2:
 #
 # - deny
@@ -1574,7 +1574,7 @@ function _has_process {
 # @param path to directory
 # @param option (e.g. deny, auth)
 # @require _mkdir _abort
-#------------------------------------------------------------------------------
+#--
 function _htaccess {
 	if test "$2" = "deny"; then
 		if ! test -f "$1/.htaccess"; then
@@ -1591,14 +1591,14 @@ function _htaccess {
 	fi
 }
 
-#------------------------------------------------------------------------------
+#--
 # Install files from APP_FILE_LIST and APP_DIR_LIST to APP_PREFIX.
 #
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
 # @require _abort _mkdir _cp _dl_unpack _rm _require_global
-#------------------------------------------------------------------------------
+#--
 function _install_app {
 
 	if test -z "$1"; then
@@ -1635,12 +1635,12 @@ function _install_app {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install NODE_VERSION from latest binary package.
 #
 # @global NODE_VERSION 
 # @require _abort _os_type _require_global _install_app
-#------------------------------------------------------------------------------
+#--
 function _install_node {
 
 	if test -z "$NODE_VERSION"; then
@@ -1669,12 +1669,12 @@ function _install_node {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Export ip address as IP_ADDRESS (ip4) and IP6_ADDRESS (ip6) (and DYNAMIC_IP).
 #
 # @export IP_ADDRESS, IP6_ADDRESS, DYNAMIC_IP
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _ip_address {
 	_require_program ip
 
@@ -1704,11 +1704,11 @@ function _ip_address {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Print module name if $module is git module.
 #
 # @param module name
-#------------------------------------------------------------------------------
+#--
 function _is_gitmodule {
 
 	if test -z "$1" || ! test -s ".gitmodule"; then
@@ -1719,12 +1719,12 @@ function _is_gitmodule {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if parameter is not integer
 #
 # @param number
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _is_integer {
 	local re='^[0-9]+$'
 
@@ -1734,13 +1734,13 @@ function _is_integer {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Check if ip_address is ip4. IP can be empty if flag & 1.
 #
 # @param ip_address
 # @param flag
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function _is_ip4 {
 	local FLAG=$(($2 + 0))
 	if test -z "$1" && test $((FLAG & 1)) = 1; then
@@ -1755,13 +1755,13 @@ function _is_ip4 {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Check if ip_address is ip6. IP can be empty if flag & 1.
 #
 # @param ip_address
 # @param flag
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function _is_ip6 {
 	local FLAG=$(($2 + 0))
 	if test -z "$1" && test $((FLAG & 1)) = 1; then
@@ -1777,7 +1777,7 @@ function _is_ip6 {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort with error message. Process Expression is either CUSTOM with 
 # regular expression as second parameter (first character must be in brackets)
 # or PORT with port number as second parameter or expression name from list:
@@ -1795,7 +1795,7 @@ function _is_ip6 {
 # @require _abort _os_type
 # @os linux
 # @return "$1_running"
-#------------------------------------------------------------------------------
+#--
 function _is_running {
 	_os_type linux
 
@@ -1829,7 +1829,7 @@ function _is_running {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # If pid is file:path/to/process.pid try [head -3 path/to/process.pid | grep PID=] first
 # otherwise assume file contains only pid. If pid is rx:REGULAR_EXPRESSION try
 # [ps aux | grep -e "REGULAR_EXPRESSION"].
@@ -1837,7 +1837,7 @@ function _is_running {
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _kill_process {
 	local MY_PID=
 
@@ -1880,25 +1880,25 @@ function _kill_process {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Print label.
 #
 # @param label
-#------------------------------------------------------------------------------
+#--
 function _label {
 	echo "$1"
 	echo "-------------------------------------------------------------------------------"
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create LICENCSE file for "gpl-3.0" (keep existing).
 #
 # @see https://help.github.com/en/articles/licensing-a-repository 
 # @param license name (default "gpl-3.0")
 # @export LICENSE
 # @require _abort _wget _confirm
-#------------------------------------------------------------------------------
+#--
 function _license {
 	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
 		_abort "unknown license [$1] use [gpl-3.0]"
@@ -1929,13 +1929,13 @@ function _license {
 	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$LFILE"
 }
 
-#------------------------------------------------------------------------------
+#--
 # Link $2 to $1.
 #
 # @param source path
 # @param link path
 # @require _abort _rm _mkdir _require_program _cd
-#------------------------------------------------------------------------------
+#--
 function _ln {
 	_require_program realpath
 
@@ -1985,14 +1985,14 @@ declare -A LOG_FILE  # define hash
 declare -A LOG_CMD  # define hash
 LOG_NO_ECHO=
 
-#------------------------------------------------------------------------------
+#--
 # Pring log message. If second parameter is set assume command logging.
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
 # @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
-#------------------------------------------------------------------------------
+#--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
 	
@@ -2028,13 +2028,13 @@ function _log {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Run lynx. Keystroke file example: "key q\nkey y"
 #
 # @param url
 # @param keystroke file (optional)
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _lynx {
 	_require_program lynx
 
@@ -2050,9 +2050,9 @@ function _lynx {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Show where php string function needs to change to mb_* version.
-#------------------------------------------------------------------------------
+#--
 function _mb_check {
 
 	echo -e "\nSearch all *.php files in src/ - output filename if string function\nmight need to be replaced with mb_* version.\n"
@@ -2075,13 +2075,13 @@ function _mb_check {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Print md5sum of file.
 #
 # @param file
 # @require _abort
 # @print md5sum
-#------------------------------------------------------------------------------
+#--
 function _md5 {
 	if test -z "$1" || ! test -f "$1"
 	then
@@ -2095,14 +2095,14 @@ function _md5 {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create directory (including parent directories) if directory does not exists.
 #
 # @param path
 # @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory)
 # @global SUDO
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _mkdir {
 
 	if test -z "$1"; then	
@@ -2123,13 +2123,13 @@ function _mkdir {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Mount $1 (e.g. /dev/sdb2) to $2 (e.g. /mnt)
 #
 # @param device
 # @param directory (mount point)
 # @require _abort _confirm
-#------------------------------------------------------------------------------
+#--
 function _mount {
 	local HAS_FS=`file -sL $1 | grep ' filesystem'`
 	if test -z "$HAS_FS"; then
@@ -2162,13 +2162,13 @@ function _mount {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Move files/directories. Target path directory must exist.
 #
 # @param source_path
 # @param target_path
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _mv {
 
 	if test -z "$1"; then
@@ -2197,14 +2197,14 @@ function _mv {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Check if .my.cnf exists. If found export DB_PASS and DB_NAME. If $SQL_PASS 
 # and $MYSQL are set save $MYSQL as $MYSQL_SQL. Otherwise set MYSQL=[mysql --defaults-file=.my.cnf].
 #
 # @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
 # @param path to .my.cnf (default = .my.cnf)
-#------------------------------------------------------------------------------
+#--
 function _my_cnf {
 	local MY_CNF="$1"
 
@@ -2234,7 +2234,7 @@ function _my_cnf {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Backup mysql database. Run as cron job. Create daily backup.
 # Run as cron job, e.g. daily every 1/2 hour
 #
@@ -2243,7 +2243,7 @@ function _my_cnf {
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @require _abort _cd _cp _mysql_dump _create_tgz _rm
-#------------------------------------------------------------------------------
+#--
 function _mysql_backup {
 
 	local DUMP="mysql_dump."`date +"%H%M"`".tgz"
@@ -2279,7 +2279,7 @@ function _mysql_backup {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Export MYSQL_CONN or MYSQL (if parameter is set) connection string.
 # If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
 # MYSQL_CONN is "mysql -h DBHOST -u DBUSER -pDBPASS DBNAME".
@@ -2290,7 +2290,7 @@ function _mysql_backup {
 # @export MYSQL_CONN MYSQL 
 # @require _abort
 # @param require root access
-#------------------------------------------------------------------------------
+#--
 function _mysql_conn {
 
 	if test -z "$1" && test -z "$MYSQL_CONN"; then
@@ -2349,7 +2349,7 @@ function _mysql_conn {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create Mysql Database and user. Define MYSQL="mysql -u root" if not set 
 # and user is root. If dbname and password are empty try to autodetect from 
 # settings.php or index.php. DB_CHARSET=[utf8|latin1|utf8mb4=ask] or empty
@@ -2360,7 +2360,7 @@ function _mysql_conn {
 # @global MYSQL, DB_CHARSET
 # @export DB_NAME, DB_PASS
 # @require _abort _mysql_split_dsn _mysql_conn
-#------------------------------------------------------------------------------
+#--
 function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
@@ -2397,7 +2397,7 @@ function _mysql_create_db {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create mysql dump. Abort if error.
 #
 # @param save_path
@@ -2405,7 +2405,7 @@ function _mysql_create_db {
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _mysql_dump {
 
 	if test -z "$MYSQL_CONN"; then
@@ -2428,7 +2428,7 @@ function _mysql_dump {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Load mysql dump. Abort if error. If restore.sh exists append load command to 
 # restore.sh. 
 #
@@ -2436,7 +2436,7 @@ function _mysql_dump {
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
 # @require _abort _confirm _mysql_conn
-#------------------------------------------------------------------------------
+#--
 function _mysql_load {
 
 	local DUMP=$1
@@ -2485,14 +2485,14 @@ function _mysql_load {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Restore mysql database. Use mysql_dump.TS.tgz created with mysql_backup.
 #
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @require _abort _extract_tgz _cd _cp _chmod _rm _mv _mkdir _mysql_load _mysql_conn
-#------------------------------------------------------------------------------
+#--
 function _mysql_restore {
 
 	local TMP_DIR="/tmp/mysql_dump"
@@ -2563,14 +2563,14 @@ function _mysql_restore {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
 # do nothing.
 #
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @export DB_NAME DB_PASS MYSQL
 # @require _abort _find_docroot _my_cnf 
-#------------------------------------------------------------------------------
+#--
 function _mysql_split_dsn {
 	local SETTINGS_DSN=
 	local PATH_RKPHPLIB=$PATH_RKPHPLIB
@@ -2647,14 +2647,14 @@ function _mysql_split_dsn {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Check node.js version. Install node and npm if missing. 
 # Update to NODE_VERSION and NPM_VERSION if necessary.
 # Use NODE_VERSION=v6.11.4 and NPM_VERSION=5.4.2 ad default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
 # @require _ver3 _require_global _install_node _sudo
-#------------------------------------------------------------------------------
+#--
 function _node_version {
 
 	if test -z "$NODE_VERSION"; then
@@ -2690,14 +2690,14 @@ function _node_version {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Copy module from node_module/$2 to $1 if necessary.
 # Apply patch patch/npm2js/`basename $1`.patch if found.
 #
 # @param target path
 # @param source path (node_modules/$2)
 # @require _abort _cp _patch
-#------------------------------------------------------------------------------
+#--
 function _npm2js {
 
 	if test -z "$2"; then
@@ -2721,14 +2721,14 @@ function _npm2js {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install npm module $1 (globally if $2 = -g)
 #
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
 # @require _node_version
-#------------------------------------------------------------------------------
+#--
 function _npm_module {
 
   local HAS_NPM=`which npm`
@@ -2766,12 +2766,12 @@ function _npm_module {
 	npm install $EXTRA_PARAM $1 $2
 }
 
-#------------------------------------------------------------------------------
+#--
 # Backup $1 as $1.orig (if not already done).
 #
 # @param path
 # @require _cp _abort
-#------------------------------------------------------------------------------
+#--
 function _orig {
 	if test -f "$1"; then
 		if test -f "$1.orig"; then
@@ -2793,11 +2793,11 @@ function _orig {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Return linux, macos, cygwin.
 #
 # @print string (abort if set and os_type != $1)
-#------------------------------------------------------------------------------
+#--
 function _os_type {
 	local os=
 
@@ -2827,23 +2827,23 @@ shopt -s expand_aliases
 alias realpath="python -c 'import os,sys;print os.path.realpath(sys.argv[1])'"
 
 
-#------------------------------------------------------------------------------
+#--
 # OSX has md5 instead of md5sum. Use md5sum function wrapper.
 #
 # @param file
-#------------------------------------------------------------------------------
+#--
 function md5sum {
 	md5 -q "$1"
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # OSX /usr/bin/stat is incompatible with linux. Use stat function wrapper.
 #
 # @param -c
 # @param -
 # @require _abort 
-#------------------------------------------------------------------------------
+#--
 function stat {
 	if test "$1" = "-c"; then
 		if test "$2" = "%Y"; then
@@ -2864,14 +2864,14 @@ function stat {
 fi
 
 
-#-------------------------------------------------------------------------------
+#--
 # Install or update npm packages. Create package.json and README.md if missing.
 # Apply patches if patch/patch.sh exists.
 #
 # @param upgrade (default = empty = false)
 # @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
 # @require _npm_module
-#-------------------------------------------------------------------------------
+#--
 function _package_json {
 
 	if ! test -f package.json; then
@@ -2926,14 +2926,14 @@ function _package_json {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Patch either PATCH_LIST and PATCH_DIR are set or $1/patch.sh exists.
 # If $1/patch.sh exists it must export PATCH_LIST and PATCH_DIR.
 # Apply patch if target file and patch file exist.
 #
 # @param patch file directory
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _patch {
 
 	if test -f "$1/patch.sh"; then
@@ -2953,13 +2953,13 @@ function _patch {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create phpdocumentor documentation for php project in docs/phpdocumentor.
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/phpdocumentor)
 # @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
-#------------------------------------------------------------------------------
+#--
 function _phpdocumentor {
   local DOC_DIR=./docs/phpdocumentor
 	local PRJ="docs/.phpdocumentor"
@@ -3007,22 +3007,22 @@ function _phpdocumentor {
 	$BIN run -d "$SRC_DIR" -t "$DOC_DIR"
 }
 
-#------------------------------------------------------------------------------
+#--
 # Export PHP_VERSION=MAJOR.MINOR
 # 
 # @export PHP_VERSION
-#------------------------------------------------------------------------------
+#--
 function _php_version {
 	PHP_VERSION=`php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/'`
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Print $1 $2. If length $2 > 40 print [$1 $2:0:30 ... $2:-10].
 # 
 # @param string
 # @param string
-#------------------------------------------------------------------------------
+#--
 function _print {
 	if test ${#2} -gt 40; then
 		echo "$1 ${2:0:30} ... ${2: -10}"
@@ -3032,11 +3032,11 @@ function _print {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # realpath replacement on osx
 #
 # @param path
-#------------------------------------------------------------------------------
+#--
 function _realpath_osx {
 	local REALPATH=
 	local LINK=
@@ -3057,13 +3057,13 @@ function _realpath_osx {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Re-create database if inside docker.
 #
 # @param do_not_load_dump (optional, default = empty = load_dump)
 # @require _mysql_split_dsn _mysql_create_db _mysql_load
 # @export DB_NAME DB_PASS MYSQL_CONN
-#------------------------------------------------------------------------------
+#--
 function _recreate_docker_db {
 	local INSIDE_DOCKER=`cat /etc/hosts | grep 172.17`
 
@@ -3081,12 +3081,12 @@ function _recreate_docker_db {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Export remote ip adress REMOTE_IP and REMOTE_IP6.
 #
 # @export REMOTE_IP REMOTE_IP6
 # @require _abort _require_program
-#------------------------------------------------------------------------------
+#--
 function _remote_ip {
 	_require_program curl
 
@@ -3097,14 +3097,14 @@ function _remote_ip {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if directory does not exists or owner or privileges don't match.
 #
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
 # @require _abort _require_priv _require_owner
-#------------------------------------------------------------------------------
+#--
 function _require_dir {
 	test -d "$1" || _abort "no such directory '$1'"
 
@@ -3118,7 +3118,7 @@ function _require_dir {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Export required rkscript/src/* functions as $REQUIRED_RKSCRIPT.
 # Call scan_rkscript_src first.
 #
@@ -3127,7 +3127,7 @@ function _require_dir {
 # @export REQUIRED_RKSCRIPT REQUIRED_RKSCRIPT_INCLUDE
 # @global RKSCRIPT_FUNCTIONS
 # @require _require_global
-#------------------------------------------------------------------------------
+#--
 function _required_rkscript {
 	local BASE=`basename "$1"`
 	# negative offset doesn't work in OSX bash replace ${BASE::-3} with ${BASE:0:${#BASE}-3}
@@ -3184,14 +3184,14 @@ function _required_rkscript {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if file does not exists or owner or privileges don't match.
 #
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
 # @require _abort _require_owner _require_priv
-#------------------------------------------------------------------------------
+#--
 function _require_file {
 	test -f "$1" || _abort "no such file '$1'"
 
@@ -3205,13 +3205,13 @@ function _require_file {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if global variable is empty. With bash version >= 4.4 check works even
 # for arrays. If bash version < 4.4 export HAS_HASH_$1
 #
 # @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 
@@ -3230,13 +3230,13 @@ function _require_global {
 	done
 }
 
-#------------------------------------------------------------------------------
+#--
 # Abort if file or directory owner:group don't match.
 #
 # @param path
 # @param owner[:group]
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
 		_abort "no such file or directory '$1'"
@@ -3256,13 +3256,13 @@ function _require_owner {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if file or directory privileges don't match.
 #
 # @param path
 # @param privileges (e.g. 600)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_priv {
 	if test -z "$2"; then
 		_abort "empty privileges"
@@ -3276,14 +3276,14 @@ function _require_priv {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Print md5sum of file.
 #
 # @param program
 # @param abort if not found (1=abort, empty=continue)
 # @export HAS_PROGRAM (abs path to program or zero)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _require_program {
 	local TYPE=`type -t "$1"`
 
@@ -3295,19 +3295,19 @@ function _require_program {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 function __abort {
 	echo -e "\nABORT: $1\n\n"
 	exit 1
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Use for dynamic loading.
 # @example _rkscript "_rm _mv _cp _mkdir"
 # @global RKSCRIPT = /path/to/rkscript/src
 # @param function list
-#------------------------------------------------------------------------------
+#--
 function _rkscript {
 
 	if test -z "$RKSCRIPT"; then
@@ -3340,13 +3340,13 @@ function _rkscript {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Remove files/directories.
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _rm {
 
 	if test -z "$1"; then
@@ -3368,14 +3368,14 @@ function _rm {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Rsync $1 to $2. Apply rsync parameter $3 if set (e.g. --delete).
 #
 # @param source path e.g. user@host:/path/to/source
 # @param target path default=[.]
 # @param optional rsync parameter e.g. "--delete --exclude /data"
 # @require _abort _log
-#------------------------------------------------------------------------------
+#--
 function _rsync {
 	local TARGET="$2"
 
@@ -3405,12 +3405,12 @@ function _rsync {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort if user is not root. If sudo cache time is ok allow sudo with $1 = 1.
 #
 # @param try sudo
 # @require _abort
-#------------------------------------------------------------------------------
+#--
 function _run_as_root {
 	test "$UID" = "0" && return
 
@@ -3423,13 +3423,13 @@ function _run_as_root {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Scan $RKSCRIPT_PATH/src/* directory. Cache result RKSCRIPT_FUNCTIONS.
 #
 # @export RKSCRIPT_FUNCTIONS 
 # @global RKSCRIPT_PATH
 # @require _require_global _cd _cache
-#------------------------------------------------------------------------------
+#--
 function _scan_rkscript_src {
 	RKSCRIPT_FUNCTIONS=
 
@@ -3466,12 +3466,12 @@ function _scan_rkscript_src {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Save value as $name.nfo (in $RKSCRIPT_DIR/$APP).
 #
 # @param string name (required)
 # @param string value
-#------------------------------------------------------------------------------
+#--
 function _set {
 	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
 
@@ -3482,14 +3482,14 @@ function _set {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Show list with $linebreak entries per line.
 #
 # @param list
 # @param linebreak
 # @param label (optional)
 # @require _label
-#------------------------------------------------------------------------------
+#--
 function _show_list {
 	local i=0
 	local a=
@@ -3513,12 +3513,12 @@ function _show_list {
 	echo ""
 }
 
-#------------------------------------------------------------------------------
+#--
 # Copy content from www_src to www.  and *.js files from src/javascript.
 #
 # @global SRC2WWW_FILES, SRC2WWW_DIR, SRC2WWW_RKJS_DIR, SRC2WWW_RKJS_FILES
 # @require _require_global
-#------------------------------------------------------------------------------
+#--
 function _src2www_copy {
 
 	local a=; for a in $SRC2WWW_FILES $SRC2WWW_DIR; do
@@ -3534,7 +3534,7 @@ function _src2www_copy {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Update www/index.html. Concat files from www_src directory in this order:
 #
 # - header.html, app_header.html?, main.html, app_footer.html?, *.inc.html
@@ -3542,7 +3542,7 @@ function _src2www_copy {
 #		with main.js
 #	- footer.html
 #
-#------------------------------------------------------------------------------
+#--
 function _src2www_index {
 
 	cp www_src/header.html www/index.html
@@ -3573,9 +3573,9 @@ function _src2www_index {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create ssh key authentication for server $1 (rk@server.tld).
-#------------------------------------------------------------------------------
+#--
 function _ssh_auth {
 	echo "create ssh keys for password less authentication"
 
@@ -3599,13 +3599,13 @@ function _ssh_auth {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Stop webserver (apache2, nginx) on port 80 if running.
 # Ignore docker webservice on port 80.
 #
 # @require _is_running _os_type
 # @os linux
-#------------------------------------------------------------------------------
+#--
 function _stop_http {
   _os_type linux
 
@@ -3633,13 +3633,13 @@ function _stop_http {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Switch to sudo mode. Switch back after command is executed.
 # 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
 # @require _abort _log
-#------------------------------------------------------------------------------
+#--
 function _sudo {
 	local CURR_SUDO=$SUDO
 
@@ -3666,14 +3666,14 @@ function _sudo {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Create php file with includes from source directory.
 #
 # @param source directory
 # @param output file
 # @global PATH_RKPHPLIB
 # @require _require_global
-#------------------------------------------------------------------------------
+#--
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
 	local PHP_BIN=`grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//'`
@@ -3696,13 +3696,13 @@ function _syntax_check_php {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Abort with SYNTAX: message.
 # Usually APP=$0
 #
 # @global APP, APP_DESC, $APP_PREFIX
 # @param message
-#------------------------------------------------------------------------------
+#--
 function _syntax {
 	if ! test -z "$APP_PREFIX"; then
 		echo -e "\nSYNTAX: $APP_PREFIX $APP $1\n" 1>&2
@@ -3720,9 +3720,9 @@ function _syntax {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Run test.
-#------------------------------------------------------------------------------
+#--
 function _test {
 	if test -f "test/run.php"; then
 		php test/run.php
@@ -3730,40 +3730,40 @@ function _test {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Return lowercase text. 
 #
 # @param string txt
-#------------------------------------------------------------------------------
+#--
 function _tolower {
 	printf '%s\n' "$1" | awk '{ print tolower($0) }'
 }
 
-#------------------------------------------------------------------------------
+#--
 # Return uppercase text. 
 #
 # @param string txt
-#------------------------------------------------------------------------------
+#--
 function _toupper {
 	printf '%s\n' "$1" | awk '{ print toupper($0) }'
 }
 
-#------------------------------------------------------------------------------
+#--
 # Print trimmed string. 
 #
 # @param string name
-#------------------------------------------------------------------------------
+#--
 function _trim {
 	echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
 }
 
-#------------------------------------------------------------------------------
+#--
 # Link /bin/sh to /bin/shell.
 #
 # @abort
 # @require _abort _ln _cd _rm
 # @param abort message
-#------------------------------------------------------------------------------
+#--
 function _use_shell {
 	test -L "/bin/sh" || _abort "no /bin/sh link"
 	test -f "/bin/$1" || _abort "no such shell /bin/$1"
@@ -3780,24 +3780,24 @@ function _use_shell {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Convert nn.mm.kk into nnmmkk (with leading zeros) 
 # e.g. 3.10.8 = 031008, 14.22.72 = 142272 
 # 
 # @param version number (nn.mm.kk)
 # @print int
-#------------------------------------------------------------------------------
+#--
 function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Make directory $1 read|writeable for webserver.
 #
 # @param directory path
 # @require _abort _chown _chmod
-#------------------------------------------------------------------------------
+#--
 function _webserver_rw_dir {
 	test -d "$1" || _abort "no such directory $1"
 
@@ -3808,7 +3808,7 @@ function _webserver_rw_dir {
 		SERVER_USER=`cat /etc/apache2/envvars | grep -E '^export APACHE_RUN_USER=' | sed -E 's/.*APACHE_RUN_USER=//'`
 	fi
 
-	if ! test -z "$SERVER_USER" && "$SERVER_USER" = "$DIR_OWNER"; then
+	if ! test -z "$SERVER_USER" && test "$SERVER_USER" = "$DIR_OWNER"; then
 		echo "directory $1 is already owned by webserver $SERVER_USER"
 		return
 	fi
@@ -3822,13 +3822,13 @@ function _webserver_rw_dir {
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Download URL with wget. 
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
 # @require _abort _require_program _confirm
-#------------------------------------------------------------------------------
+#--
 function _wget {
 	if test -z "$1"; then
 		_abort "empty url"
