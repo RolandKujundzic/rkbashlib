@@ -1,5 +1,6 @@
 #!/bin/bash
-# set -e
+# enable auto abort
+set -e
 
 function _abort {
 	echo -e "\nERROR: $1\n$ERROR\n\n"
@@ -24,10 +25,10 @@ function _error2 {
 
 
 #--
-# No abort 
+# Disable auto abort (set -e) with leading :
 #--
 function _error3 {
-	cd no_such_directory
+	: cd no_such_directory
 }
 
 
@@ -35,7 +36,6 @@ function _error3 {
 # Auto abort (set -e)
 #--
 function _error4 {
-	set -e
 	cd no_such_directory
 }
 
