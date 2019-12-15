@@ -1,6 +1,8 @@
 #!/bin/bash
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
+# enable auto abort
+set -e  
 
 #--
 # Abort with error message. Use NO_ABORT=1 for just warning output.
