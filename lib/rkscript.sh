@@ -2799,9 +2799,12 @@ function _orig {
 # Return linux, macos, cygwin.
 #
 # @print string (abort if set and os_type != $1)
+# @require _abort _require_program
 #--
 function _os_type {
 	local os=
+
+	_require_program uname
 
 	if [ "$(uname)" = "Darwin" ]; then
 		os="macos"        
@@ -3031,6 +3034,21 @@ function _print {
 	else
 		echo "$1 $2"
 	fi
+}
+
+
+#--
+# Return random string length $1
+# @param string length (default = 8)
+# @require _require_program
+#--
+function _random_string {
+	_require_program sha256sum
+	_require_program base64
+	_require_program head
+
+	local LEN=${1:-8}
+	date +%s | sha256sum | base64 | head -c $LEN
 }
 
 
