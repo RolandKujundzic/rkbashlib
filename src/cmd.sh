@@ -22,7 +22,7 @@ function _cmd {
 	eval "$EXEC ${LOG_CMD[cmd]}" || _abort "command failed"
 	
 	if test $((FLAG & 2)) = 2; then
-		cat "$CMD.log"
+		tail -n +5 "${LOG_FILE[cmd]}"
 	else
 		echo "ok"
 	fi
