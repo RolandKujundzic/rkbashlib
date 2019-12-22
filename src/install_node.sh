@@ -9,7 +9,7 @@
 function _install_node {
 
 	if test -z "$NODE_VERSION"; then
-		NODE_VERSION=v10.16.3
+		NODE_VERSION=v12.14.0
 	fi
 
 	_require_global "NODE_VERSION"
