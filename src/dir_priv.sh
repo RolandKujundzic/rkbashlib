@@ -9,7 +9,7 @@
 # @require _abort _require_program
 #--
 function _dir_priv {
-	_require_program "realpath find chmod"
+	_require_program realpath
 
 	local DIR=`realpath "$1"`
 	test -d "$DIR" || _abort "no such directory [$DIR]"
