@@ -35,7 +35,7 @@ function _is_running {
 		if test "$1" = "CUSTOM"; then
 			IS_RUNNING=$(ps aux 2>/dev/null | grep -E "$2")
 		elif test "$1" = "PORT"; then
-			IS_RUNNING=$(netstat -tulpn | grep ":$2")
+			IS_RUNNING=$(netstat -tulpn 2>/dev/null | grep -E ":$2 .+:* .+LISTEN.*")
 		fi
 	elif test -z "${!1}"; then
 		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
