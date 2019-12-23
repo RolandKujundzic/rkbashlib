@@ -3,7 +3,7 @@
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
 for a in ps head grep awk sed sudo cd chown chmod mkdir rm ls; do
-  command -v $a || { echo "ERROR: missing $a"; exit 1; }
+  command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
 done
 
 #--

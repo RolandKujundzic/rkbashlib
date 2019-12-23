@@ -10,6 +10,10 @@ test -z "$CURR" && CURR="$PWD"
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
+for a in ps head grep awk sed sudo cd chown chmod mkdir rm ls; do
+  command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
+done
+
 #--
 # Abort with error message. Use NO_ABORT=1 for just warning output.
 #
@@ -98,6 +102,22 @@ function _apigen_doc {
 	echo "Create apigen documentation"
 	echo "$BIN generate '$SRC_DIR' --destination '$DOC_DIR'"
 	$BIN generate "$SRC_DIR" --destination "$DOC_DIR"
+}
+
+
+#--
+# Append $2 to $1 if first 3 lines from $2 are not in $1
+#
+# @param target file
+# @param source file
+# @require _abort
+#--
+function _append {
+	local FOUND=$(grep "`head -3 \"$2\"`" "$1")
+	test -z "$FOUND" || { echo "$2 was already appended to $1"; return; }
+
+	echo "append '$2' to '$1'"
+	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
 }
 
 
