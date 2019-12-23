@@ -1,20 +1,25 @@
 #!/bin/bash
 
 #--
-# Print md5sum of file.
+# Abort if program (function) does not exist
 #
 # @param program
-# @param abort if not found (1=abort, empty=continue)
-# @export HAS_PROGRAM (abs path to program or zero)
+# @param flag (default = 0, 1: return 1 if not found)
 # @require _abort
+# @return bool (if $2==1)
 #--
 function _require_program {
 	local TYPE=`type -t "$1"`
+	local ERROR=0
 
-	if test "$TYPE" = "function"; then
-		return
+	test "$TYPE" = "function" && return $ERROR
+
+	command -v "$1" >/dev/null 2>&1 || ERROR=1
+
+	if test -z "$2" && ! test -z "$ERROR"; then
+		_abort "No such program [$1]"
 	fi
 
-	command -v "$1" > /dev/null 2>&1 || ( test -z "$2" || _abort "No such program [$1]" )
+	return $ERROR
 }
 
