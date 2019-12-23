@@ -17,41 +17,34 @@
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
 # @require _abort _os_type
 # @os linux
-# @print "$1_running"
 # @return bool
 #--
 function _is_running {
 	_os_type linux
 
-	if test -z "$1"; then
-		_abort "no process name"
-	fi
+	test -z "$1" && _abort "no process name"
 
 	# use [a] = a to ignore "grep process"
 	local APACHE2='[a]pache2.*k start'
 	local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
 	local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
 	local NGINX='[n]ginx.*master process'
-
 	local IS_RUNNING=
 
 	if ! test -z "$2"; then
 		if test "$1" = "CUSTOM"; then
-			IS_RUNNING=$(ps aux | grep -E "$2")
+			IS_RUNNING=$(ps aux 2>/dev/null | grep -E "$2")
 		elif test "$1" = "PORT"; then
 			IS_RUNNING=$(netstat -tulpn | grep ":$2")
 		fi
 	elif test -z "${!1}"; then
 		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
 	else
-		IS_RUNNING=$(ps aux | grep -E "${!1}")
+		IS_RUNNING=$(ps aux 2>/dev/null | grep -E "${!1}")
 	fi
 
 	local RES=1  # not running
-	if ! test -z "$IS_RUNNING"; then
-		echo "$1_running"
-		RES=0
-	fi
+	test -z "$IS_RUNNING" || RES=0
 
 	return $RES
 }
