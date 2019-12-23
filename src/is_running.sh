@@ -17,7 +17,8 @@
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
 # @require _abort _os_type
 # @os linux
-# @return "$1_running"
+# @print "$1_running"
+# @return bool
 #--
 function _is_running {
 	_os_type linux
@@ -46,8 +47,13 @@ function _is_running {
 		IS_RUNNING=$(ps aux | grep -E "${!1}")
 	fi
 
+	local RES=0
+
 	if ! test -z "$IS_RUNNING"; then
 		echo "$1_running"
+		RES=1
 	fi
+
+	return $RES
 }
 
