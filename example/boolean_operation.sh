@@ -1,5 +1,12 @@
 #!/bin/bash
 
+
+function ret1 {
+	echo -n "if ret1($1) = [$1]: "
+	return $1
+}
+
+
 function boolean_operation {
 	local A=$1
 	local B=$2
@@ -8,6 +15,7 @@ function boolean_operation {
 	echo "A || B = $((A || B)), !A || B = $((!A || B)), A || !B = $((A || !B)), !A || !B = $((!A || !B)) - A=[$A] B=[$B]"
 	echo
 }
+
 
 function tf {
 	local A=$1
@@ -39,4 +47,9 @@ echo "Only number or empty string allowed:"
 tf "x" "y"
 tf "" 1
 tf 1 ""
+
+if ret1 0; then echo "true"; else echo "false"; fi
+if ret1 1; then echo "true"; else echo "false"; fi
+if ret1 0 && ret1 0; then echo "true"; else echo "false"; fi
+if ret1 1 || ret1 0; then echo "true"; else echo "false"; fi
 
