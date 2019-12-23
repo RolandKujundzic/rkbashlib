@@ -10,7 +10,7 @@ test -z "$CURR" && CURR="$PWD"
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
 
-for a in ps head grep awk sed sudo cd chown chmod mkdir rm ls; do
+for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
   command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
 done
 
@@ -1009,7 +1009,7 @@ function _create_tgz {
 # @require _abort _require_program
 #--
 function _dir_priv {
-	_require_program "realpath find chmod"
+	_require_program realpath
 
 	local DIR=`realpath "$1"`
 	test -d "$DIR" || _abort "no such directory [$DIR]"
@@ -1242,7 +1242,7 @@ function _extract_tgz {
 # @require _abort _require_program
 #--
 function _file_priv {
-	_require_program "realpath find chmod"
+	_require_program realpath
 
 	local DIR=`realpath "$1"`
 	test -d "$DIR" || _abort "no such directory [$DIR]"
@@ -1298,12 +1298,12 @@ function _find_docroot {
 		DOCROOT=`dirname $DIR`
 	fi
 
-	if ! test -z "$DOCROOT" && (test -f "$DOCROOT/index.php" && ( test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data" )); then
+	if ! test -z "$DOCROOT" && test -f "$DOCROOT/index.php" && (test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data"); then
 		echo "use DOCROOT=$DOCROOT"
 		return
 	fi
 
-	while test -d "$DIR" && ! (test -f "$DIR/index.php" && ( test -f "$DIR/settings.php" || test -d "$DIR/data" )); do
+	while test -d "$DIR" && ! (test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data")); do
 		LAST_DIR="$DIR"
 		DIR=$(dirname "$DIR")
 
@@ -1312,7 +1312,7 @@ function _find_docroot {
 		fi
 	done
 
-	if test -f "$DIR/index.php" && ( test -f "$DIR/settings.php" || test -d "$DIR/data" ); then
+	if test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data"); then
 		DOCROOT="$DIR"
 	else
 		_abort "failed to find DOCROOT of [$1]"
@@ -1812,38 +1812,36 @@ function _is_ip6 {
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
 # @require _abort _os_type
 # @os linux
-# @return "$1_running"
+# @return bool
 #--
 function _is_running {
 	_os_type linux
 
-	if test -z "$1"; then
-		_abort "no process name"
-	fi
+	test -z "$1" && _abort "no process name"
 
 	# use [a] = a to ignore "grep process"
 	local APACHE2='[a]pache2.*k start'
 	local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
 	local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
 	local NGINX='[n]ginx.*master process'
-
 	local IS_RUNNING=
 
 	if ! test -z "$2"; then
 		if test "$1" = "CUSTOM"; then
-			IS_RUNNING=$(ps aux | grep -E "$2")
+			IS_RUNNING=$(ps aux 2>/dev/null | grep -E "$2")
 		elif test "$1" = "PORT"; then
-			IS_RUNNING=$(netstat -tulpn | grep ":$2")
+			IS_RUNNING=$(netstat -tulpn 2>/dev/null | grep -E ":$2 .+:* .+LISTEN.*")
 		fi
 	elif test -z "${!1}"; then
 		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
 	else
-		IS_RUNNING=$(ps aux | grep -E "${!1}")
+		IS_RUNNING=$(ps aux 2>/dev/null | grep -E "${!1}")
 	fi
 
-	if ! test -z "$IS_RUNNING"; then
-		echo "$1_running"
-	fi
+	local RES=1  # not running
+	test -z "$IS_RUNNING" || RES=0
+
+	return $RES
 }
 
 
@@ -2097,19 +2095,17 @@ function _mb_check {
 # Print md5sum of file.
 #
 # @param file
-# @require _abort
+# @require _abort _require_program
 # @print md5sum
 #--
 function _md5 {
-	if test -z "$1" || ! test -f "$1"
-	then
+	_require_program md5sum
+	
+	if test -z "$1" || ! test -s "$1"; then
 		_abort "No such file [$1]"
 	fi
 
-	# use MD5 to drop filename
-	local MD5=$(md5sum "$1")
-
-	echo $MD5
+	md5sum "$1" | awk '{print $1}'
 }
 
 
@@ -2812,10 +2808,13 @@ function _orig {
 
 
 #--
-# Return linux, macos, cygwin.
+# Return linux, macos, cygwin if $1 is empty. 
+# If $1 is set and != os_type abort otherwise return 0.
 #
 # @print string (abort if set and os_type != $1)
 # @require _abort _require_program
+# @print linux|macos|cygwin if $1 is empty
+# @return bool
 #--
 function _os_type {
 	local os=
@@ -2832,11 +2831,13 @@ function _os_type {
 		os="cygwin"
 	fi
 
-	if ! test -z "$1" && test "$1" != "$os"; then
-		_abort "$os required (this is $os)"
+	if test -z "$1"; then
+		echo $os
+	elif test "$1" != "$os"; then
+		_abort "$1 required (this is $os)"
 	fi
 
-	echo $os
+	return 0
 }
 
 if [ "$(uname)" = "Darwin" ]; then
@@ -3313,21 +3314,27 @@ function _require_priv {
 
 
 #--
-# Print md5sum of file.
+# Abort if program (function) $1 does not exist (and $2 is not 1).
 #
 # @param program
-# @param abort if not found (1=abort, empty=continue)
-# @export HAS_PROGRAM (abs path to program or zero)
+# @param return_bool (default = 0)
 # @require _abort
+# @return bool (if $2==1)
 #--
 function _require_program {
 	local TYPE=`type -t "$1"`
+	local ERROR=0
+  local CHECK=$2
 
-	if test "$TYPE" = "function"; then
-		return
-	fi
+	test "$TYPE" = "function" && return $ERROR
 
-	command -v "$1" > /dev/null 2>&1 || ( test -z "$2" || _abort "No such program [$1]" )
+	command -v "$1" >/dev/null 2>&1 || ERROR=1
+
+  if ((!CHECK && ERROR)); then
+    echo "No such program [$1]" && exit 1
+  fi
+
+	return $ERROR
 }
 
 
@@ -3643,29 +3650,29 @@ function _ssh_auth {
 # @os linux
 #--
 function _stop_http {
-  _os_type linux
+	_os_type linux
 
-  if test "$(_is_running PORT 80)" != "PORT_running"; then
-    echo "no service on port 80"
-    return
-  fi 
+	if ! _is_running PORT 80; then
+		echo "no service on port 80"
+		return
+	fi
 
-  if test "$(_is_running DOCKER_PORT_80)" = "DOCKER_PORT_80_running"; then
-    echo "ignore docker service on port 80"
-    return
-  fi
+	if _is_running DOCKER_PORT_80; then
+		echo "ignore docker service on port 80"
+		return
+	fi
 
-  if test "$(_is_running NGINX)" = "NGINX_running"; then
-    echo "stop nginx"
-    sudo service nginx stop
-    return
-  fi
+	if _is_running NGINX; then
+		echo "stop nginx"
+		sudo service nginx stop
+		return
+	fi
 
-  if test "$(_is_running APACHE2)" = "APACHE2_running"; then
-    echo "stop apache2"
-    sudo service apache2 stop
-    return
-  fi
+	if _is_running APACHE2; then
+		echo "stop apache2"
+		sudo service apache2 stop
+		return
+	fi
 }
 
 
