@@ -47,11 +47,10 @@ function _is_running {
 		IS_RUNNING=$(ps aux | grep -E "${!1}")
 	fi
 
-	local RES=0
-
+	local RES=1  # not running
 	if ! test -z "$IS_RUNNING"; then
 		echo "$1_running"
-		RES=1
+		RES=0
 	fi
 
 	return $RES
