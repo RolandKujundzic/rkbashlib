@@ -3,13 +3,9 @@
 test -z "$RKSCRIPT_SH" || return
 RKSCRIPT_SH=1
 
-if test -z "$APP"; then
-  APP="$0"
-fi
-
-if test -z "$APP_PID"; then
-  export APP_PID="$APP_PID $$"
-fi
+test -z "$APP" && APP="$0"
+test -z "$APP_PID" && export APP_PID="$APP_PID $$"
+test -z "$CURR" && CURR="$PWD"
 
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"

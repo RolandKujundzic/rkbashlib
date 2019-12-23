@@ -19,13 +19,9 @@ function _build {
 	_chmod 644 "$LIB_TMP"
 
 	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n" >> $LIB_TMP
-	echo 'if test -z "$APP"; then' >> $LIB_TMP
-	echo '  APP="$0"' >> $LIB_TMP
-	echo 'fi' >> $LIB_TMP
-	echo >> $LIB_TMP
-	echo 'if test -z "$APP_PID"; then' >> $LIB_TMP
-	echo '  export APP_PID="$APP_PID $$"' >> $LIB_TMP
-	echo 'fi' >> $LIB_TMP
+	echo 'test -z "$APP" && APP="$0"' >> $LIB_TMP
+	echo 'test -z "$APP_PID" && export APP_PID="$APP_PID $$"' >> $LIB_TMP
+	echo 'test -z "$CURR" && CURR="$PWD"' >> $LIB_TMP
 	echo >> $LIB_TMP
 
 	echo "append $SCRIPT_SRC/*.sh to $LIB_TMP"
