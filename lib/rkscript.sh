@@ -2907,12 +2907,15 @@ function _overwrite_file {
 		BACKUP="$2.bak"
 	fi
 
-	_confirm "Overwrite existing file $1 (auto-backup)" $OVERWRITE
-	test "$CONFIRM" = "y" || return
-
-	echo "backup and overwrite file"
-	_cp "$2" "$2.bak" md5
-	_cp "$1" "$2" md5
+	_confirm "Overwrite existing file $2 (auto-backup)" $OVERWRITE
+	if test "$CONFIRM" = "y";
+		echo "backup and overwrite file"
+		_cp "$2" "$2.bak" md5
+		_cp "$1" "$2" md5
+	else
+		echo "keep existing file $2"
+		return
+	fi
 }
 
 
