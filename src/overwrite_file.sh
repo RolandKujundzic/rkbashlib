@@ -22,9 +22,9 @@ function _overwrite_file {
 	fi
 
 	_confirm "Overwrite existing file $2 (auto-backup)" $OVERWRITE
-	if test "$CONFIRM" = "y";
+	if test "$CONFIRM" = "y"; then
 		echo "backup and overwrite file"
-		_cp "$2" "$2.bak" md5
+		_cp "$2" "$BACKUP" md5
 		_cp "$1" "$2" md5
 	else
 		echo "keep existing file $2"
