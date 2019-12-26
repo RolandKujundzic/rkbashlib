@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR=".rkscript"
+test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript"
 
 for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
   command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }

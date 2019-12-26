@@ -2,7 +2,7 @@
 
 #--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
-# modification of cache file .rkscript/cache/$1 with sh/run and ../rkscript/src.
+# modification of cache file $HOME/.rkscript/cache/$1 with sh/run and ../rkscript/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
 #
 # @param variable name
@@ -20,9 +20,9 @@ function _cache {
 	local BASH3X=`/bin/bash --version | grep 'ersion 3.'`
 	test -z "$BASH3X" || return
 
-	_mkdir ".rkscript/cache"
+	_mkdir "$HOME/.rkscript/cache"
 
-	local CACHE=".rkscript/cache/$1.sh"
+	local CACHE="$HOME/.rkscript/cache/$1.sh"
 
 	if ! test -z "$2"; then
 		# update cache value - ${2@Q} = escaped value of $2

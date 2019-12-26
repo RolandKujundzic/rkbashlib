@@ -11,9 +11,9 @@ function _build {
 	echo "Build lib/rkscript.sh"
 
 	_mkdir "lib"
-	_mkdir ".rkscript"
+	_mkdir "$HOME/.rkscript"
 
-	local LIB_TMP=".rkscript/rkscript.sh"
+	local LIB_TMP="$HOME/.rkscript/rkscript.sh"
 
 	echo '#!/bin/bash' > $LIB_TMP
 	_chmod 644 "$LIB_TMP"
