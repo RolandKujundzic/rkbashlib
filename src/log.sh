@@ -24,7 +24,7 @@ function _log {
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
 	LOG_FILE[$2]="$RKSCRIPT_DIR/$2/${LOG_COUNT[$2]}.nfo"
-	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>&1"
+	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
 
 	if ! test -d "$RKSCRIPT_DIR/$2"; then
 		mkdir -p "$RKSCRIPT_DIR/$2"
