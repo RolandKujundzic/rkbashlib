@@ -928,14 +928,11 @@ function _cordova_create {
 # @require _abort _md5 _sudo
 #--
 function _cp {
-	local TARGET=`dirname "$2"`
-
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
 
-	if ! test -d "$TARGET"; then
-		_abort "no such directory [$TARGET]"
-	fi
+	local TARGET_DIR=`dirname "$2"`
+	test -d "$TARGET_DIR" || _abort "no such directory [$TARGET_DIR]"
 
 	if test "$3" = "md5" && test -f "$1" && test -f "$2"; then
 		local MD1=`_md5 "$1"`
@@ -2020,7 +2017,7 @@ function _log {
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
 	LOG_FILE[$2]="$RKSCRIPT_DIR/$2/${LOG_COUNT[$2]}.nfo"
-	LOG_CMD[$2]=">> '${LOG_FILE[$2]}' 2>&1"
+	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
 
 	if ! test -d "$RKSCRIPT_DIR/$2"; then
 		mkdir -p "$RKSCRIPT_DIR/$2"
