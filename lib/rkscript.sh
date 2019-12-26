@@ -2789,17 +2789,17 @@ function _npm_module {
 function _orig {
 	if test -f "$1"; then
 		if test -f "$1.orig"; then
+			echo "Backup $1.orig already exists"
+		else
 			echo "Backup $1 as $1.orig"
 			_cp "$1" "$1.orig"
-		else
-			echo "Backup $1.orig already exists"
 		fi
 	elif test -d "$1"; then
 		if test -d "$1.orig"; then
+			echo "Backup $1.orig already exists"
+		else
 			echo "Backup $1 as $1.orig"
 			_cp "$1" "$1.orig"
-		else
-			echo "Backup $1.orig already exists"
 		fi
 	else
 		_abort "no such file or directory: $1"
@@ -2884,6 +2884,36 @@ function stat {
 }
 
 fi
+
+
+#--
+# Overwrite file $2 with $1 (copy $1 to $2). If backup does not exist
+# create it ($2.orig|bak).
+#
+# @param source file $1
+# @param target file $2
+#--
+function _overwrite_file {
+	if ! test -f "$2"; then
+		_cp "$1" "$2"
+		return
+	fi
+
+	local OVERWRITE=1
+	local BACKUP="$2.orig"
+
+	if test -f "$2.orig"; then
+		OVERWRITE=
+		BACKUP="$2.bak"
+	fi
+
+	_confirm "Overwrite existing file $1 (auto-backup)" $OVERWRITE
+	test "$CONFIRM" = "y" || return
+
+	echo "backup and overwrite file"
+	_cp "$2" "$2.bak" md5
+	_cp "$1" "$2" md5
+}
 
 
 #--
