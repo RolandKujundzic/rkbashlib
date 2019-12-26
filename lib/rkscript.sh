@@ -1363,18 +1363,19 @@ function _get {
 # - else: git clone rk@git.tld:/path/to/repo test
 #
 # @param git url
-# @param local directory
+# @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
 #--
 function _git_checkout {
 	local CURR="$PWD"
+	local GIT_DIR="${2:-`basename "$1" | sed -E 's/\.git$//'`}"
 
-	if test -d "$2"; then
-		_confirm "Update $2 (git pull)?" 1
+	if test -d "$GIT_DIR"; then
+		_confirm "Update $GIT_DIR (git pull)?" 1
 	elif ! test -z "$CONFIRM_CHECKOUT"; then
-		_confirm "Checkout $1 to $2 (git clone)?" 1
+		_confirm "Checkout $1 to $GIT_DIR (git clone)?" 1
 	fi
 
 	if test "$CONFIRM" = "n"; then
@@ -1382,34 +1383,34 @@ function _git_checkout {
 		return
 	fi
 
-	if test -d "$2"; then
-		_cd "$2"
-		echo "git pull $2"
+	if test -d "$GIT_DIR"; then
+		_cd "$GIT_DIR"
+		echo "git pull $GIT_DIR"
 		git pull
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
 		_cd "$CURR"
-	elif test -d "../../$2" && ! test -L "../../$2"; then
-		_ln "../../$2" "$2"
-		_git_checkout "$1" "$2"
+	elif test -d "../../$GIT_DIR/.git" && ! test -L "../../$GIT_DIR"; then
+		_ln "../../$GIT_DIR" "$GIT_DIR"
+		_git_checkout "$1" "$GIT_DIR"
 	else
-		echo -e "git clone $GIT_PARAMETER '$1' '$2'\nEnter password if necessary"
-		git clone $GIT_PARAMETER "$1" "$2"
+		echo -e "git clone $GIT_PARAMETER '$1' '$GIT_DIR'\nEnter password if necessary"
+		git clone $GIT_PARAMETER "$1" "$GIT_DIR"
 
-		if ! test -d "$2/.git"; then
-			_abort "git clone failed - no $2/.git directory"
+		if ! test -d "$GIT_DIR/.git"; then
+			_abort "git clone failed - no $GIT_DIR/.git directory"
 		fi
 
-		if test -s "$2/.gitmodules"; then
-			_cd "$2"
+		if test -s "$GIT_DIR/.gitmodules"; then
+			_cd "$GIT_DIR"
 			test -s .gitmodules && git submodule update --init --recursive --remote
 			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
 			_cd ..
 		fi
 
 		if ! test -z "$3"; then
-			_cd "$2"
-			echo "run [$3] in $2"
+			_cd "$GIT_DIR"
+			echo "run [$3] in $GIT_DIR"
 			$3
 			_cd ..
 		fi
@@ -2887,6 +2888,39 @@ fi
 
 
 #--
+# Overwrite directory $2 with $1 (copy $1 to $2). If backup does not exist
+# create it ($2.orig|bak).
+#
+# @param source directory $1
+# @param target directory $2
+#--
+function _overwrite_dir {
+	if ! test -d "$2"; then
+		_cp "$1" "$2"
+		return
+	fi
+
+	local OVERWRITE=1
+	local BACKUP="$2.orig"
+
+	if test -d "$2.orig"; then
+		OVERWRITE=
+		BACKUP="$2.bak"
+	fi
+
+	_confirm "Overwrite existing directory $2 (auto-backup)" $OVERWRITE
+	if test "$CONFIRM" = "y"; then
+		echo "backup and overwrite directory"
+		_cp "$2" "$BACKUP"
+		_cp "$1" "$2"
+	else
+		echo "keep existing directory $2"
+		return
+	fi
+}
+
+
+#--
 # Overwrite file $2 with $1 (copy $1 to $2). If backup does not exist
 # create it ($2.orig|bak).
 #
@@ -2908,9 +2942,9 @@ function _overwrite_file {
 	fi
 
 	_confirm "Overwrite existing file $2 (auto-backup)" $OVERWRITE
-	if test "$CONFIRM" = "y";
+	if test "$CONFIRM" = "y"; then
 		echo "backup and overwrite file"
-		_cp "$2" "$2.bak" md5
+		_cp "$2" "$BACKUP" md5
 		_cp "$1" "$2" md5
 	else
 		echo "keep existing file $2"
