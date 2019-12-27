@@ -70,7 +70,7 @@ else
 fi
 
 if test -f "$OUT"; then
-	_confirm "Remove existing $OUT?"
+	_confirm "Remove existing $OUT?" 1
 
 	if test $CONFIRM = "y"; then
 		_rm $OUT
