@@ -1847,6 +1847,16 @@ function _is_running {
 
 
 #--
+# Join parameter with first parameter as delimiter.
+# @echo 
+#--
+function _join {
+  local IFS="$1"
+  echo "${*:2}" # same as: shift; echo "$*";
+}
+
+
+#--
 # If pid is file:path/to/process.pid try [head -3 path/to/process.pid | grep PID=] first
 # otherwise assume file contains only pid. If pid is rx:REGULAR_EXPRESSION try
 # [ps aux | grep -e "REGULAR_EXPRESSION"].
