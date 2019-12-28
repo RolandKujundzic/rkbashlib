@@ -11,6 +11,8 @@ function _apt_install {
 
 	_run_as_root 1
 
+	test "$RKSCRIPT_DIR" = "$HOME/.rkscript/$$" && RKSCRIPT_DIR="$HOME/.rkscript"
+
 	for a in $1
 	do
 		if test -d "$RKSCRIPT_DIR/apt/$a"; then
@@ -20,6 +22,8 @@ function _apt_install {
 			_log "apt -y install $a" apt/$a
 		fi
 	done
+
+	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
 	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
 }
