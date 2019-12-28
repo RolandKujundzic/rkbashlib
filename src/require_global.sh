@@ -17,10 +17,10 @@ function _require_global {
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
-				echo "no such global variable $a"
+				_abort "no such global variable $a"
 			fi
 		elif test -z "${a}" && test -z "${has_hash}"; then
-			echo "no such global variable $a - add HAS_HASH_$a if necessary"
+			_abort "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
