@@ -2799,6 +2799,7 @@ function _npm_module {
 # Backup $1 as $1.orig (if not already done).
 #
 # @param path
+# @param bool is_optional
 # @require _cp _abort
 #--
 function _orig {
@@ -2816,8 +2817,8 @@ function _orig {
 			echo "Backup $1 as $1.orig"
 			_cp "$1" "$1.orig"
 		fi
-	else
-		_abort "no such file or directory: $1"
+	elif test -z "$2"; then
+		_abort "missing $1"
 	fi
 }
 
