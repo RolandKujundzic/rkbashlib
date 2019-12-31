@@ -63,6 +63,8 @@ else {
 }
 EOF
 
+	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
+
 	if test -z "${ARG[script]}"; then
 		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
 		ARG[script]="$RKSCRIPT_DIR/php_server.php"
