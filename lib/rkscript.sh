@@ -3025,6 +3025,35 @@ function _package_json {
 }
 
 
+declare -A ARG
+
+#--
+# Set ARG[name]=value if --name=value or name=value.
+# If --name set ARG[name]=1. Set ARG[0] ... ARG[n].
+#
+# @parameter any
+# @global ARG (hash)
+#--
+function _parse_arg {
+	local key=; local i=; local v=;
+	ARG=()
+
+	for (( i = 0; i <= $#; i++ )); do
+		ARG[$i]="${!i}"
+		v="${!i}"
+
+		if [[ $v == "--"*"="* ]]; then
+			key="${v/=*/}"
+			ARG[${key/--/}]="${v/*=/}"
+		elif [[ $v == "--"* ]]; then
+			ARG[${v/--/}]=1
+		elif [[ $v == *"="* ]]; then
+			ARG[${v/=*/}]="${v/*=/}"
+		fi
+	done
+}
+
+
 #--
 # Patch either PATCH_LIST and PATCH_DIR are set or $1/patch.sh exists.
 # If $1/patch.sh exists it must export PATCH_LIST and PATCH_DIR.
@@ -3107,9 +3136,14 @@ function _phpdocumentor {
 }
 
 #--
-# Start buildin standalone PHP Webserver
-# @param port (default = 15080)
-# @global RKSCRIPT_DIR
+# Start buildin standalone PHP Webserver. Use ARG:
+#   - user ($USER) 
+#   - port (15080)
+#   - docroot ($PWD)
+#   - script (buildin = RKSCRIPT_DIR/php_server.php)
+#
+# @call_before _parse_arg "$@" 
+# @global RKSCRIPT_DIR ARG
 # @require _require_program _abort _mkdir _confirm _is_running
 #--
 function _php_server {
@@ -3118,32 +3152,87 @@ function _php_server {
 
 	local PHP_CODE=
 IFS='' read -r -d '' PHP_CODE <<'EOF'
-if (preg_match('/\.(php|js|css|html|jpg|jpeg|png|gif|ico)$/', $_SERVER['REQUEST_URI']) && file_exists('./'.$_SERVER['REQUEST_URI'])) {
-	return true;
+<?php
+
+function wsLog($msg) {
+	file_put_contents("php://stdout", $msg."\n");
+}
+
+
+function wsHtaccessRedirect() {
+	$htaccess = file('/webhome/notoys/www/.htaccess');
+	$uri = mb_substr($_SERVER['REQUEST_URI'], 1);
+
+	foreach ($htaccess as $line) {
+	  if (mb_substr($line, 0, 12) == 'RewriteRule ' && ($pos = mb_strpos($line, 'index.php')) !== false) {
+  	  $rx = '/'.trim(mb_substr($line, 12, $pos - 12)).'/i';
+
+	    if (preg_match($rx, $uri, $match)) {
+	    	$redir = trim(mb_substr($line, $pos));
+    	  for ($n = 1; $n < count($match); $n++) {
+      	  $redir = str_replace('$'.$n, $match[$n], $redir);
+	      }
+
+				wsLog("redirect: $redir");
+				header('Location: '.$redir);
+				exit();
+	    }
+	  }
+	}
+}
+
+
+if (file_exists($_SERVER['DOCUMENT_ROOT'].'/.htaccess')) {
+	wsHtaccessRedirect();
+}
+
+if (!preg_match('/\.inc\.([a-z]+)$/i', $_SERVER['SCRIPT_NAME']) &&
+		preg_match('/\.(php|js|css|html?|jpe?g|png|gif|ico|svg|eot|ttf|woff2?)$/i', $_SERVER['SCRIPT_NAME']) && 
+		file_exists($_SERVER['DOCUMENT_ROOT'].'/'.$_SERVER['SCRIPT_NAME'])) {
+	return false;
+}
+else {
+	wsLog("return 403 (".$_SERVER['REQUEST_URI'].")");
+	http_response_code(403);
+	exit();
 }
 EOF
 
-	local PORT=${1:-15080}
+	if test -z "${ARG[script]}"; then
+		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
+		ARG[script]="$RKSCRIPT_DIR/php_server.php"
+	fi
+
+	test -z "${ARG[port]}" && ARG[port]=15080
+	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"	
+	local LOG="$RKSCRIPT_DIR/php_server.log"
 	local SERVER_PID=
 
-	if _is_running PORT $PORT; then
-		local SERVER_PID=`ps aux | grep -E '[p]hp .+S localhost:15080' | awk '{print $2}'`
-		test -z "$SERVER_PID" && _abort "Port $PORT is already used" || \
-			_abort "PHP Server is already running on localhost:$PORT\n\nStop PHP Server: kill $SERVER_PID"
+	if _is_running "PORT" "${ARG[port]}"; then
+		local SERVER_PID=`ps aux | grep -E "[p]hp .+S localhost:${ARG[port]}" | awk '{print $2}'`
+		test -z "$SERVER_PID" && _abort "Port ${ARG[port]} is already used" || \
+			_abort "PHP Server is already running on localhost:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
 	fi
-	
+
 	_confirm "Start buildin PHP standalone Webserver" 1
 	test "$CONFIRM" = "y" || _abort "user abort"
 
-	{ php -r "$PHP_CODE" -S localhost:$PORT >"$RKSCRIPT_DIR/php_server.log" 2>&1 || _abort "PHP Server failed - see: $RKSCRIPT_DIR/php_server.log"; } &
+	if test -z "${ARG[user]}"; then
+		{ php -t "${ARG[docroot]}" -S localhost:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
+			_abort "PHP Server failed - see: $LOG"; } &
+	else
+		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S localhost:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
+			_abort "PHP Server failed - see: $LOG"; } &
+		sleep 1
+	fi
 
-	local SERVER_PID=`ps aux | grep -E '[p]hp .+S localhost:15080' | awk '{print $2}'` 
+	local SERVER_PID=`ps aux | grep -E "[p]hp .+S localhost:${ARG[port]}" | awk '{print $2}'` 
 	test -z "$SERVER_PID" && _abort "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
-	echo "URL: http://localhost:$PORT"
-	echo "LOG: tail -f $RKSCRIPT_DIR/php_server.log"
-	echo "DOCROOT: $PWD"
+	echo "URL: http://localhost:${ARG[port]}"
+	echo "LOG: tail -f $LOG"
+	echo "DOCROOT: ${ARG[docroot]}"
 	echo -e "STOP: kill $SERVER_PID\n"
 }
 
