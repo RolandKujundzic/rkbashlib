@@ -146,6 +146,8 @@ function _apt_install {
 
 	_run_as_root 1
 
+	test "$RKSCRIPT_DIR" = "$HOME/.rkscript/$$" && RKSCRIPT_DIR="$HOME/.rkscript"
+
 	for a in $1
 	do
 		if test -d "$RKSCRIPT_DIR/apt/$a"; then
@@ -155,6 +157,8 @@ function _apt_install {
 			_log "apt -y install $a" apt/$a
 		fi
 	done
+
+	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
 	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
 }
@@ -2103,20 +2107,25 @@ function _mb_check {
 
 
 #--
-# Print md5sum of file.
+# Print md5sum of file (text if $2=1).
 #
 # @param file
+# @param bool (optional: 1 = threat $1 as string)
 # @require _abort _require_program
 # @print md5sum
 #--
 function _md5 {
 	_require_program md5sum
 	
-	if test -z "$1" || ! test -s "$1"; then
+	if test -z "$1"; then
+		_abort "Empty parameter"
+	elif test -f "$1"; then
+		md5sum "$1" | awk '{print $1}'
+	elif test "$2" = "1"; then
+		echo -n "$1" | md5sum | awk '{print $1}'
+	else
 		_abort "No such file [$1]"
 	fi
-
-	md5sum "$1" | awk '{print $1}'
 }
 
 
@@ -2795,6 +2804,7 @@ function _npm_module {
 # Backup $1 as $1.orig (if not already done).
 #
 # @param path
+# @param bool is_optional
 # @require _cp _abort
 #--
 function _orig {
@@ -2812,8 +2822,8 @@ function _orig {
 			echo "Backup $1 as $1.orig"
 			_cp "$1" "$1.orig"
 		fi
-	else
-		_abort "no such file or directory: $1"
+	elif test -z "$2"; then
+		_abort "missing $1"
 	fi
 }
 
@@ -3467,10 +3477,10 @@ function _require_global {
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
-				echo "no such global variable $a"
+				_abort "no such global variable $a"
 			fi
 		elif test -z "${a}" && test -z "${has_hash}"; then
-			echo "no such global variable $a - add HAS_HASH_$a if necessary"
+			_abort "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
