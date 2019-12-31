@@ -3151,6 +3151,7 @@ function _phpdocumentor {
 #   - port (15080)
 #   - docroot ($PWD)
 #   - script (buildin = RKSCRIPT_DIR/php_server.php)
+#	  - host (0.0.0.0)
 #
 # @call_before _parse_arg "$@" 
 # @global RKSCRIPT_DIR ARG
@@ -3216,33 +3217,34 @@ EOF
 	fi
 
 	test -z "${ARG[port]}" && ARG[port]=15080
-	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"	
+	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"
+	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
 	local LOG="$RKSCRIPT_DIR/php_server.log"
 	local SERVER_PID=
 
 	if _is_running "PORT" "${ARG[port]}"; then
-		local SERVER_PID=`ps aux | grep -E "[p]hp .+S localhost:${ARG[port]}" | awk '{print $2}'`
+		local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'`
 		test -z "$SERVER_PID" && _abort "Port ${ARG[port]} is already used" || \
-			_abort "PHP Server is already running on localhost:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
+			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
 	fi
 
 	_confirm "Start buildin PHP standalone Webserver" 1
 	test "$CONFIRM" = "y" || _abort "user abort"
 
 	if test -z "${ARG[user]}"; then
-		{ php -t "${ARG[docroot]}" -S localhost:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
+		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
 			_abort "PHP Server failed - see: $LOG"; } &
 	else
-		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S localhost:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
+		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
 			_abort "PHP Server failed - see: $LOG"; } &
 		sleep 1
 	fi
 
-	local SERVER_PID=`ps aux | grep -E "[p]hp .+S localhost:${ARG[port]}" | awk '{print $2}'` 
+	local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'` 
 	test -z "$SERVER_PID" && _abort "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
-	echo "URL: http://localhost:${ARG[port]}"
+	echo "URL: http://${ARG[host]}:${ARG[port]}"
 	echo "LOG: tail -f $LOG"
 	echo "DOCROOT: ${ARG[docroot]}"
 	echo -e "STOP: kill $SERVER_PID\n"
