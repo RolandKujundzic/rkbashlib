@@ -25,8 +25,8 @@ function wsLog($msg) {
 }
 
 
-function wsHtaccessRedirect() {
-	$htaccess = file('/webhome/notoys/www/.htaccess');
+function wsHtaccessRedirect($htaccess_file) {
+	$htaccess = file($htaccess_file);
 	$uri = mb_substr($_SERVER['REQUEST_URI'], 1);
 
 	foreach ($htaccess as $line) {
@@ -49,16 +49,19 @@ function wsHtaccessRedirect() {
 
 
 if (file_exists($_SERVER['DOCUMENT_ROOT'].'/.htaccess')) {
-	wsHtaccessRedirect();
+	wsHtaccessRedirect($_SERVER['DOCUMENT_ROOT'].'/.htaccess');
 }
 
 if (!preg_match('/\.inc\.([a-z]+)$/i', $_SERVER['SCRIPT_NAME']) &&
 		preg_match('/\.(php|js|css|html?|jpe?g|png|gif|ico|svg|eot|ttf|woff2?)$/i', $_SERVER['SCRIPT_NAME']) && 
-		file_exists($_SERVER['DOCUMENT_ROOT'].'/'.$_SERVER['SCRIPT_NAME'])) {
+		file_exists($_SERVER['DOCUMENT_ROOT'].$_SERVER['SCRIPT_NAME'])) {
 	return false;
 }
+else if (getenv('route') && file_exists($_SERVER['DOCUMENT_ROOT'].'/'.getenv('route'))) {
+	include $_SERVER['DOCUMENT_ROOT'].'/'.getenv('route');
+}
 else {
-	wsLog("return 403 (".$_SERVER['REQUEST_URI'].")");
+	wsLog('return 403 ('.$_SERVER['DOCUMENT_ROOT'].$_SERVER['SCRIPT_NAME'].': '.$_SERVER['REQUEST_URI'].')');
 	http_response_code(403);
 	exit();
 }
@@ -102,6 +105,7 @@ EOF
 	echo "URL: http://${ARG[host]}:${ARG[port]}"
 	echo "LOG: tail -f $LOG"
 	echo "DOCROOT: ${ARG[docroot]}"
+	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1"
 	echo -e "STOP: kill $SERVER_PID\n"
 }
 
