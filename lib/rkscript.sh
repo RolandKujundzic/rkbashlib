@@ -3203,8 +3203,8 @@ if (!preg_match('/\.inc\.([a-z]+)$/i', $_SERVER['SCRIPT_NAME']) &&
 		file_exists($_SERVER['DOCUMENT_ROOT'].$_SERVER['SCRIPT_NAME'])) {
 	return false;
 }
-else if (getenv('route') && file_exists($_SERVER['DOCUMENT_ROOT'].'/'.getenv('route'))) {
-	include $_SERVER['DOCUMENT_ROOT'].'/'.getenv('route');
+else if (getenv('route')) {
+	require_once $_SERVER['DOCUMENT_ROOT'].'/'.getenv('route');
 }
 else {
 	wsLog('return 403 ('.$_SERVER['DOCUMENT_ROOT'].$_SERVER['SCRIPT_NAME'].': '.$_SERVER['REQUEST_URI'].')');
