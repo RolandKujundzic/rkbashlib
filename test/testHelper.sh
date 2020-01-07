@@ -37,7 +37,7 @@ function test_call {
 #------------------------------------------------------------------------------
 function ls_out {
 	_require_dir out
-	TEST_OUT[${#TEST_OUT[@]}]=`find out -type f -printf "%u %g %M '%p'\n"`
+	TEST_OUT[${#TEST_OUT[@]}]=`find out -type f -printf "%u %g %M '%p'\n" | sort`
 }
 
 
