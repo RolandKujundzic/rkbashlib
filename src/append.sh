@@ -1,17 +1,13 @@
 #!/bin/bash
 
 #--
-# Append $2 to $1 if first 3 lines from $2 are not in $1
-#
+# @deprecated use _append_file
 # @param target file
 # @param source file
-# @require _abort
+# @require _append_file _msg
 #--
 function _append {
-	local FOUND=$(grep "`head -3 \"$2\"`" "$1")
-	test -z "$FOUND" || { echo "$2 was already appended to $1"; return; }
-
-	echo "append '$2' to '$1'"
-	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
+	_msg "DEPRECATED: use _append_file"
+	_append_file "$1" "$2"
 }
 
