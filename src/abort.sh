@@ -7,7 +7,7 @@ for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
 done
 
 #--
-# Abort with error message. Use NO_ABORT=1 for just warning output.
+# Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
 #
 # @exit
 # @global APP, NO_ABORT
@@ -15,8 +15,9 @@ done
 #--
 function _abort {
 	if test "$NO_ABORT" = 1; then
+		ABORT=1
 		echo "WARNING: $1"
-		return
+		return 1
 	fi
 
 	echo -e "\nABORT: $1\n\n" 1>&2
