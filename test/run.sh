@@ -21,4 +21,4 @@ for a in inc/*.sh; do
 	compare_ok `basename $a`
 done
 
-rm ok/*.out.*
+rm ok/*.out.* 2>/dev/null
