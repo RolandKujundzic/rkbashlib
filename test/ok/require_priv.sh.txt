@@ -1,0 +1,6 @@
+
+check privileges of non existing file xyz
+WARNING: stat -c '%a' 'xyz'
+WARNING: invalid privileges [] - chmod -R 755 'xyz'
+check privileges of ./run.sh ... ok
+done
