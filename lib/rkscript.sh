@@ -15,7 +15,7 @@ for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
 done
 
 #--
-# Abort with error message. Use NO_ABORT=1 for just warning output.
+# Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
 #
 # @exit
 # @global APP, NO_ABORT
@@ -23,8 +23,9 @@ done
 #--
 function _abort {
 	if test "$NO_ABORT" = 1; then
+		ABORT=1
 		echo "WARNING: $1"
-		return
+		return 1
 	fi
 
 	echo -e "\nABORT: $1\n\n" 1>&2
@@ -105,19 +106,87 @@ function _apigen_doc {
 }
 
 
+declare -A API_QUERY
+
 #--
-# Append $2 to $1 if first 3 lines from $2 are not in $1
+# Query $API_QUERY[url]/$1. Set $API_QUERY[log|out]. Abort if "query failed|no result".
+#
+# @param string query type curl|func|wget
+# @param string query string
+# @param hash query parameter
+# @global API_QUERY
+#--
+function _api_query {
+	test -z "$1" && _abort "missing query type - use curl|func|wget"
+	test -z "$2" && _abort "missing query string"
+
+	local OUT_F="$RKSCRIPT_DIR/api_query.res"	
+	local LOG_F="$RKSCRIPT_DIR/api_query.log"	
+	local ERR_F="$RKSCRIPT_DIR/api_query.err"
+
+	echo '' > "$OUT_F"
+
+	API_QUERY[out]=
+	API_QUERY[log]=
+
+	if test "$1" = "wget"; then
+		_msg "wget ${API_QUERY[url]}/$2"
+		wget -q -O "$OUT_F" "${API_QUERY[url]}/$2" >"$LOG_F" 2>"$ERR_F" || _abort "wget failed"
+		test -s "$OUT_F" || _abort "no result"
+	else
+		_abort "$1 api query not implemented"
+	fi
+
+	test -s "$OUT_F" && API_QUERY[out]=`cat "$OUT_F"`
+	test -s "$LOG_F" && API_QUERY[log]=`cat "$LOG_F"`
+	test -z "$ERR_F" || _abort "non-empty error log"
+}
+
+
+#--
+# Append file $2 to file $1 if first 3 lines from $2 are not in $1.
 #
 # @param target file
 # @param source file
-# @require _abort
+# @require _abort _msg
+#--
+function _append_file {
+	local FOUND=
+	test -f "$2" || _abort "no such file [$2]"
+	test -s "$1" && FOUND=$(grep "`head -3 \"$2\"`" "$1")
+	test -z "$FOUND" || { _msg "$2 was already appended to $1"; return; }
+
+	_msg "append file '$2' to '$1'"
+	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
+}
+
+
+#--
+# @deprecated use _append_file
+# @param target file
+# @param source file
+# @require _append_file _msg
 #--
 function _append {
-	local FOUND=$(grep "`head -3 \"$2\"`" "$1")
-	test -z "$FOUND" || { echo "$2 was already appended to $1"; return; }
+	_msg "DEPRECATED: use _append_file"
+	_append_file "$1" "$2"
+}
 
-	echo "append '$2' to '$1'"
-	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
+
+#--
+# Append text $2 to file $1 if not found in $1.
+#
+# @param target file
+# @param text
+# @require _abort
+#--
+function _append_txt {
+	local FOUND=
+	test -f "$1" && FOUND=$(grep "$2" "$1")
+	test -z "$FOUND" || { _msg "$2 was already appended to $1"; return; }
+
+	_msg "append text '$2' to '$1'"
+	echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
 }
 
 
@@ -1001,6 +1070,24 @@ function _create_tgz {
   echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
+}
+
+	
+#--
+# Install user ($1) crontab ($2 $3).
+#
+# @param string user
+# @param string repeat-time
+# @param string command
+# @require _abort
+#--
+function _crontab {
+	local CRONTAB_DIR="/var/spool/cron/crontabs"
+	log "install $1 crontab: $2 $3"
+	_mkdir "$CRONTAB_DIR" >/dev/null
+
+	grep "$3" "$CRONTAB_DIR/$1" && { echo "already installed - skip"; return; }
+	echo "$2 $3" >>"$CRONTAB_DIR/$1" || _abort "failed to create $1 cron"
 }
 
 
@@ -2197,6 +2284,16 @@ function _mount {
 
 
 #--
+# Print message
+#
+# @param message
+# @param echo option (-n|-e|default='')
+#--
+function _msg {
+	echo $2 "$1"
+}
+
+#--
 # Move files/directories. Target path directory must exist.
 #
 # @param source_path
@@ -3371,14 +3468,8 @@ function _remote_ip {
 #--
 function _require_dir {
 	test -d "$1" || _abort "no such directory '$1'"
-
-	if ! test -z "$2"; then
-		_require_owner "$1" "$2"
-	fi
-
-	if ! test -z "$3"; then
-		_require_priv "$1" "$3"
-	fi
+	test -z "$2" || _require_owner "$1" "$2"
+	test -z "$3" || _require_priv "$1" "$3"
 }
 
 
@@ -3458,14 +3549,8 @@ function _required_rkscript {
 #--
 function _require_file {
 	test -f "$1" || _abort "no such file '$1'"
-
-	if ! test -z "$2"; then
-		_require_owner "$1" "$2"
-	fi
-
-	if ! test -z "$3"; then
-		_require_priv "$1" "$3"
-	fi
+	test -z "$2" || _require_owner "$1" "$2"
+	test -z "$3" || _require_priv "$1" "$3"
 }
 
 
@@ -3479,7 +3564,8 @@ function _require_file {
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 
-	local a=; local has_hash=; for a in $1; do
+	local a=; local has_hash=; 
+	for a in $1; do
 		has_hash="HAS_HASH_$a"
 
 		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
@@ -3507,8 +3593,10 @@ function _require_owner {
 	fi
 
 	local arr=( ${2//:/ } )
-	local owner=`stat -c '%U' "$1"`
-	local group=`stat -c '%G' "$1"`
+	local owner=`stat -c '%U' "$1" 2>/dev/null`
+	test -z "$owner" && _abort "stat -c '%U' '$1'"
+	local group=`stat -c '%G' "$1" 2>/dev/null`
+	test -z "$group" && _abort "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
 		_abort "invalid owner - chown ${arr[0]} '$1'"
@@ -3528,15 +3616,10 @@ function _require_owner {
 # @require _abort
 #--
 function _require_priv {
-	if test -z "$2"; then
-		_abort "empty privileges"
-	fi
-
-	local priv=`stat -c '%a' "$1" || _abort "no such filesystem entry '$1'"`
-
-	if ! test "$2" = "$priv"; then
-		_abort "invalid privileges - chmod $1 '$2'"
-	fi
+	test -z "$2" && _abort "empty privileges"
+	local priv=`stat -c '%a' "$1" 2>/dev/null`
+	test -z "$priv" && _abort "stat -c '%a' '$1'"
+	test "$2" = "$priv" || _abort "invalid privileges [$priv] - chmod -R $2 '$1'"
 }
 
 
