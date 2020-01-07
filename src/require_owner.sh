@@ -13,8 +13,10 @@ function _require_owner {
 	fi
 
 	local arr=( ${2//:/ } )
-	local owner=`stat -c '%U' "$1"`
-	local group=`stat -c '%G' "$1"`
+	local owner=`stat -c '%U' "$1" 2>/dev/null`
+	test -z "$owner" && _abort "stat -c '%U' '$1'"
+	local group=`stat -c '%G' "$1" 2>/dev/null`
+	test -z "$group" && _abort "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
 		_abort "invalid owner - chown ${arr[0]} '$1'"
