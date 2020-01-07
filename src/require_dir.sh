@@ -10,13 +10,7 @@
 #--
 function _require_dir {
 	test -d "$1" || _abort "no such directory '$1'"
-
-	if ! test -z "$2"; then
-		_require_owner "$1" "$2"
-	fi
-
-	if ! test -z "$3"; then
-		_require_priv "$1" "$3"
-	fi
+	test -z "$2" || _require_owner "$1" "$2"
+	test -z "$3" || _require_priv "$1" "$3"
 }
 
