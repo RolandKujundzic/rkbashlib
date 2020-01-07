@@ -20,3 +20,5 @@ for a in inc/*.sh; do
 	ls_out
 	compare_ok `basename $a`
 done
+
+rm ok/*.out.*
