@@ -1,16 +1,18 @@
 #!/bin/bash
 
 #--
-# Return random string length $1
+# Print random string of length $1
+#
 # @param string length (default = 8)
-# @require _require_program
 #--
 function _random_string {
-	_require_program sha256sum
-	_require_program base64
-	_require_program head
-
+	local CHARS="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 	local LEN=${1:-8}
-	date +%s | sha256sum | base64 | head -c $LEN
+	local i
+
+	for (( i = 0; i < $1; i++ )); do
+		echo -n "${CHARS:RANDOM%${#CHARS}:1}"
+	done
+	echo
 }
 
