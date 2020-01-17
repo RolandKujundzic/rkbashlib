@@ -4,7 +4,7 @@
 # Abort with SYNTAX: message.
 # Usually APP=$0
 #
-# @global APP, APP_DESC, $APP_PREFIX
+# @global APP APP_DESC $APP_PREFIX
 # @param message
 #--
 function _syntax {
