@@ -1,0 +1,1 @@
+echo "SELECT * FROM test WHERE id='10'" | mysql -u'db-user' -p'db-pass' db-name
