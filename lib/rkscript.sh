@@ -3880,6 +3880,7 @@ function _show_list {
 
 _SQL=
 declare -A _SQL_QUERY
+declare -A _SQL_PARAM
 
 #--
 # Run sql select or execute query. Query is either $2 or _SQL_QUERY[$2] (if set). 
@@ -3887,7 +3888,7 @@ declare -A _SQL_QUERY
 # be execute (default=y) or skip. Set _SQL (e.g. SQL="rks-db_connect query") and
 # _SQL_QUERY (optional).
 #
-# @global SQL_QUERY SQL
+# @global _SQL _SQL_QUERY (hash) _SQL_PARAM (hash)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @require
@@ -3896,7 +3897,16 @@ function _sql {
 	test -z "$_SQL" && _abort "set _SQL="
 	
 	local QUERY="$2"
-	test -z "${_SQL_QUERY[$2]}" || QUERY="${_SQL_QUERY[$2]}"
+	if ! test -z "${_SQL_QUERY[$2]}"; then
+		QUERY="${_SQL_QUERY[$2]}"
+		local a=
+
+		for a in "${!_SQL_PARAM[@]}"; do
+			echo "key  : $a"
+			echo "value: ${_SQL_PARAM[$a]}"
+			QUERY="${QUERY//\{:=$a\}/${_SQL_PARAM[$a]}}"
+		done
+	fi
 
 	if test "$1" = "select"; then
 		$_SQL "$QUERY" | tail -1
