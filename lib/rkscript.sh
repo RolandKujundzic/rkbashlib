@@ -3902,7 +3902,7 @@ function _sql {
 		local a=
 
 		for a in "${!_SQL_PARAM[@]}"; do
-			QUERY="${QUERY//\{:=$a\}/${_SQL_PARAM[$a]}}"
+			QUERY="${QUERY//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
 		done
 	fi
 
