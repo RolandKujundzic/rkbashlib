@@ -18,7 +18,7 @@ done
 # Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
 #
 # @exit
-# @global APP, NO_ABORT
+# @global APP NO_ABORT
 # @param abort message
 #--
 function _abort {
@@ -1782,7 +1782,7 @@ function _install_node {
 #--
 # Export ip address as IP_ADDRESS (ip4) and IP6_ADDRESS (ip6) (and DYNAMIC_IP).
 #
-# @export IP_ADDRESS, IP6_ADDRESS, DYNAMIC_IP
+# @export IP_ADDRESS IP6_ADDRESS DYNAMIC_IP
 # @require _abort _require_program
 #--
 function _ip_address {
@@ -2488,8 +2488,8 @@ function _mysql_conn {
 #
 # @param dbname = username
 # @param password
-# @global MYSQL, DB_CHARSET
-# @export DB_NAME, DB_PASS
+# @global MYSQL DB_CHARSET
+# @export DB_NAME DB_PASS
 # @require _abort _mysql_split_dsn _mysql_conn
 #--
 function _mysql_create_db {
@@ -2621,7 +2621,7 @@ function _mysql_load {
 #
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
-# @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
+# @global MYSQL_CONN (call _mysql_conn for mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME")
 # @require _abort _extract_tgz _cd _cp _chmod _rm _mv _mkdir _mysql_load _mysql_conn
 #--
 function _mysql_restore {
@@ -3075,7 +3075,7 @@ function _overwrite_file {
 # Apply patches if patch/patch.sh exists.
 #
 # @param upgrade (default = empty = false)
-# @global NPM_PACKAGE, NPM_PACKAGE_GLOBAL, NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
+# @global NPM_PACKAGE NPM_PACKAGE_GLOBAL NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
 # @require _npm_module
 #--
 function _package_json {
@@ -3878,10 +3878,49 @@ function _show_list {
 	echo ""
 }
 
+_SQL=
+declare -A _SQL_QUERY
+
+#--
+# Run sql select or execute query. Query is either $2 or _SQL_QUERY[$2] (if set). 
+# If $1=select print result of select query. If $1=execute ask if query $2 should
+# be execute (default=y) or skip. Set _SQL (e.g. SQL="rks-db_connect query") and
+# _SQL_QUERY (optional).
+#
+# @global SQL_QUERY SQL
+# @param type select|execute
+# @param query or SQL_QUERY key
+# @require
+#--
+function _sql {
+	test -z "$_SQL" && _abort "set _SQL="
+	
+	local QUERY="$2"
+	test -z "${_SQL_QUERY[$2]}" || QUERY="${_SQL_QUERY[$2]}"
+
+	if test "$1" = "select"; then
+		$_SQL "$2" | tail -1
+	elif test "$1" = "execute"; then
+		local CONFIRM=
+		echo -n "$2 [y] "
+	  read -n1 CONFIRM
+
+		if test "$CONFIRM" = "y"; then
+			$_SQL "$2"
+			echo " ... query executed"
+		else
+			echo " ... skip"
+		fi
+	else
+		_abort "_sql(...) invalid first parameter [$1] - use select|execute"
+	fi
+}
+
+
 #--
 # Copy content from www_src to www.  and *.js files from src/javascript.
 #
-# @global SRC2WWW_FILES, SRC2WWW_DIR, SRC2WWW_RKJS_DIR, SRC2WWW_RKJS_FILES
+# @global SRC2WWW_FILES SRC2WWW_DIR SRC2WWW_RKJS_DIR SRC2WWW_RKJS_FILES
 # @require _require_global
 #--
 function _src2www_copy {
@@ -4065,7 +4104,7 @@ function _syntax_check_php {
 # Abort with SYNTAX: message.
 # Usually APP=$0
 #
-# @global APP, APP_DESC, $APP_PREFIX
+# @global APP APP_DESC $APP_PREFIX
 # @param message
 #--
 function _syntax {
