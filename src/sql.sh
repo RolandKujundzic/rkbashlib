@@ -21,14 +21,14 @@ function _sql {
 	test -z "${_SQL_QUERY[$2]}" || QUERY="${_SQL_QUERY[$2]}"
 
 	if test "$1" = "select"; then
-		$_SQL "$2" | tail -1
+		$_SQL "$QUERY" | tail -1
 	elif test "$1" = "execute"; then
 		local CONFIRM=
-		echo -n "$2 [y] "
+		echo -n "$QUERY [y] "
 	  read -n1 CONFIRM
 
 		if test "$CONFIRM" = "y"; then
-			$_SQL "$2"
+			$_SQL "$QUERY"
 			echo " ... query executed"
 		else
 			echo " ... skip"
