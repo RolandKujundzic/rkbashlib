@@ -10,7 +10,7 @@ done
 # Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
 #
 # @exit
-# @global APP, NO_ABORT
+# @global APP NO_ABORT
 # @param abort message
 #--
 function _abort {

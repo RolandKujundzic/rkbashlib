@@ -8,8 +8,8 @@
 #
 # @param dbname = username
 # @param password
-# @global MYSQL, DB_CHARSET
-# @export DB_NAME, DB_PASS
+# @global MYSQL DB_CHARSET
+# @export DB_NAME DB_PASS
 # @require _abort _mysql_split_dsn _mysql_conn
 #--
 function _mysql_create_db {
