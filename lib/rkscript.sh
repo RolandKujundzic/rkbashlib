@@ -843,13 +843,22 @@ function _composer {
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
+# If AUTOCONFIRM is set do: echo $1 [$AUTOCONFIRM] && CONFIRM=$AUTOCONFIRM && return.
 #
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
+# @global AUTOCONFIRM --qN
 # @export CONFIRM CONFIRM_TEXT
 #--
 function _confirm {
 	CONFIRM=
+
+	if ! test -z "$AUTOCONFIRM"; then
+		CONFIRM="$AUTOCONFIRM"
+		echo "$1 <$AUTOCONFIRM>"
+		AUTOCONFIRM=
+		return
+	fi
 
 	if test -z "$CONFIRM_COUNT"; then
 		CONFIRM_COUNT=1
@@ -3913,6 +3922,23 @@ function _show_list {
 	echo ""
 }
 
+#--
+# Load sql dump $1 (ask). Based on rks-db_connect - implement custom _sql_load if missing.
+# If flag=1 load dump without confirmation.
+#
+# @param sql dump
+# @param flag
+# @require _require_program _require_file _confirm
+#--
+function _sql_load {
+	_require_program "rks-db_connect"
+	_require_file "$1"
+
+	test "$2" = "1" && AUTOCONFIRM=y
+	_confirm "load sql dump '$1'?" 1
+	test "$CONFIRM" = "y" && rks-db_connect load "$1" --q1=n --q2=y
+}
+
 _SQL=
 declare -A _SQL_QUERY
 declare -A _SQL_PARAM
@@ -3920,17 +3946,25 @@ declare -A _SQL_PARAM
 #--
 # Run sql select or execute query. Query is either $2 or _SQL_QUERY[$2] (if set). 
 # If $1=select print result of select query. If $1=execute ask if query $2 should
-# be execute (default=y) or skip. Set _SQL (e.g. SQL="rks-db_connect query") and
+# be execute (default=y) or skip. Set _SQL (default _SQL="rks-db_connect query") and
 # _SQL_QUERY (optional).
 #
 # @global _SQL _SQL_QUERY (hash) _SQL_PARAM (hash)
+# @export SQL (=rks-db_connect query)
 # @param type select|execute
 # @param query or SQL_QUERY key
-# @require
+# @param flag (1=execute sql without confirmation)
+# @require _abort _confirm
 #--
 function _sql {
-	test -z "$_SQL" && _abort "set _SQL="
-	
+	if test -z "$_SQL"; then
+		if test -s "/usr/local/bin/rks-db_connect"; then
+			_SQL='rks-db_connect query'
+		else
+			_abort "set _SQL="
+		fi
+	fi
+
 	local QUERY="$2"
 	if ! test -z "${_SQL_QUERY[$2]}"; then
 		QUERY="${_SQL_QUERY[$2]}"
@@ -3941,21 +3975,113 @@ function _sql {
 		done
 	fi
 
+	test -z "$QUERY" && _abort "empty query in _sql $1"
+
 	if test "$1" = "select"; then
 		$_SQL "$QUERY" | tail -1
 	elif test "$1" = "execute"; then
-		local CONFIRM=
-		echo -n "$QUERY [y] "
-	  read -n1 CONFIRM
-
-		if test "$CONFIRM" = "y"; then
+		if test "$3" = "1"; then
+			echo "execute sql query: ${QUERY:0:20} ..."
 			$_SQL "$QUERY"
-			echo " ... query executed"
 		else
-			echo " ... skip"
+			_confirm "execute sql query: ${QUERY:0:20} ... ? " 1
+			test "$CONFIRM" = "y" && $_SQL "$QUERY"
 		fi
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute"
+	fi
+}
+
+
+#--
+# Execute sql transaction. Use $1 as sql dump directory. 
+# If $1/tables.txt exists load table list (sorted in create order) or autodetect ($1/prefix_*.sql). 
+# Parameter $2 is action flag (2^n): 1=drop, 2=create, 4=alter, 8=insert, 16=update, 32=autoexec.
+# Action dump files are either $1/alter|insert|update.sql or $1/alter|insert|update/table.sql.
+# If not autoexec ask before every action.
+#
+# @param string directory name 
+# @param int flag 
+# @require _sql_load _require_dir _confirm _cp
+#--
+function _sql_transaction {
+	local FLAG=$(($2 + 0))
+	local SQL_DIR="$1"
+	local ST="START TRANSACTION;"
+	local ET="COMMIT;"
+	local SQL_DUMP
+	local TABLES
+	local ACF
+	local i
+
+	_require_dir "$SQL_DIR"
+	_mkdir "$RKSCRIPT_DIR/sql_transaction" >/dev/null
+
+	if test -s "$SQL_DIR/tables.txt"; then
+		TABLES=( `cat "$SQL_DIR/tables.txt"` )
+	else
+		TABLES=( `ls "$SQL_DIR/"*_*.sql | sed -E 's/^.+?\/([a-z0-9_]+)\.sql$/\1/i'` )
+		ST="$ST\nSET FOREIGN_KEY_CHECKS=0;"
+		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
+	fi
+
+	test ${#TABLES[@]} -lt 1 && _abort "table list is empty"
+	test $((FLAG & 32)) -eq 32 && ACF=y
+
+	if test $((FLAG & 1)) -eq 1; then	
+		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/drop.sql"
+		echo -e "$ST\n" >$SQL_DUMP
+		for ((i = ${#TABLES[@]} - 1; i > -1; i--)); do
+			echo "DROP TABLE IF EXISTS ${TABLES[$i]};" >>$SQL_DUMP
+		done 
+		echo -e "\n$ET" >>$SQL_DUMP
+
+		AUTOCONFIRM=$ACF
+		_confirm "Drop ${#TABLES[@]} tables (load $SQL_DUMP)?"
+		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
+	fi
+
+	if test $((FLAG & 2)) -eq 2; then	
+		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/create.sql"
+		echo -e "$ST\n" >$SQL_DUMP
+		for ((i = 0; i < ${#TABLES[@]}; i++)); do
+			cat "$SQL_DIR/${TABLES[$i]}.sql" >>$SQL_DUMP
+		done
+		echo -e "\n$ET" >>$SQL_DUMP
+
+		AUTOCONFIRM=$ACF
+		_confirm "Create tables (load $SQL_DUMP)?"
+		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
+	fi
+
+	test $((FLAG & 4)) -eq 4 && _sql_transaction_load "$SQL_DIR" alter $ACF
+	test $((FLAG & 8)) -eq 8 && _sql_transaction_load "$SQL_DIR" update $ACF
+	test $((FLAG & 16)) -eq 16 && _sql_transaction_load "$SQL_DIR" insert $ACF
+}
+
+
+#--
+# Helper function. Load $1.
+#
+# @parma sql directory path
+# @param name (alter|insert|update)
+# @param autoconfirm
+# @require _rm _cp _confirm _sql_load
+#--
+function _sql_transaction_load {
+	local SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/$2.sql"
+	_rm "$SQL_DUMP" >/dev/null
+
+	if test -s "$1/$2.sql"; then
+		_cp "$1/$2.sql" "$SQL_DUMP"
+	elif test -d "$1/$2"; then
+		cat "$1/$2/*.sql" > "$SQL_DUMP"
+	fi
+
+	if test -s "$SQL_DUMP"; then
+		AUTOCONFIRM=$3
+		_confirm "Execute $2 queries (load $SQL_DUMP)?"
+		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
 	fi
 }
 
