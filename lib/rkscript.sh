@@ -2227,7 +2227,7 @@ function _merge_sh {
 	local SH_DIR="$APP"'_'
 	_require_dir "$SH_DIR"
 
-	local MD5_OLD=`_md5_file "$APP"`
+	local MD5_OLD=`_md5 "$APP"`
   echo -n "merge $SH_DIR into $APP ... "
 
 	local a
@@ -2237,7 +2237,7 @@ function _merge_sh {
 
   _chmod 755 "$APP"
 
-	local MD5_NEW=`_md5_file "$APP"`
+	local MD5_NEW=`_md5 "$APP"`
 	test "$MD5_OLD"="$MD5_NEW" && echo "no change" || echo "update"
 }
 
