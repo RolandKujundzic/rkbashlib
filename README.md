@@ -6,6 +6,8 @@ Collection of shell script snipplets (functions).
 Include lib/rkscript.sh to use the function collection.
 
 ```sh
+#!/bin/bash
+
 . lib/rkscript.sh
 
 _run_as_root
@@ -18,6 +20,8 @@ Take a look at the src directory to see what is available.
 Here is another example.
 
 ```sh
+#!/bin/bash
+
 . lib/rkscript.sh
 
 _confirm "Do you wan't to continue?"
