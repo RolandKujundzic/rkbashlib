@@ -6,7 +6,7 @@
 # @param string script path
 # @require _require_file _require_dir _chmod _md5
 #--
-function merge_sh {
+function _merge_sh {
 	_require_file "$1"
 	local SH_DIR=`dirname "$1"`'_'
 	_require_dir "$DIR"
