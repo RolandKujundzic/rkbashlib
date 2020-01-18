@@ -5,13 +5,22 @@
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
+# If AUTOCONFIRM is set do: echo $1 [$AUTOCONFIRM] && CONFIRM=$AUTOCONFIRM && return.
 #
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
+# @global AUTOCONFIRM --qN
 # @export CONFIRM CONFIRM_TEXT
 #--
 function _confirm {
 	CONFIRM=
+
+	if ! test -z "$AUTOCONFIRM"; then
+		CONFIRM="$AUTOCONFIRM"
+		echo "$1 <$AUTOCONFIRM>"
+		AUTOCONFIRM=
+		return
+	fi
 
 	if test -z "$CONFIRM_COUNT"; then
 		CONFIRM_COUNT=1
