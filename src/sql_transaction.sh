@@ -12,35 +12,36 @@
 # @require _sql_load _require_dir _confirm _cp
 #--
 function _sql_transaction {
-	local SQL_DUMP="$RKSCRIPT_DIR/dump.sql"
 	local FLAG=$(($2 + 0))
 	local SQL_DIR="$1"
 	local ST="START TRANSACTION;"
 	local ET="COMMIT;"
-	local ACF=''
+	local SQL_DUMP
 	local TABLES
+	local ACF
 	local i
 
 	_require_dir "$SQL_DIR"
+	_mkdir "$RKSCRIPT_DIR/sql_transaction" >/dev/null
 
 	if test -s "$SQL_DIR/tables.txt"; then
 		TABLES=( `cat "$SQL_DIR/tables.txt"` )
 	else
-		TABLES=( `ls "$SQL_DIR/*_*.sql | sed -E 's/^.+?\/([a-z0-9_]+)\.sql$/\1/i'` )
+		TABLES=( `ls "$SQL_DIR/"*_*.sql | sed -E 's/^.+?\/([a-z0-9_]+)\.sql$/\1/i'` )
 		ST="$ST\nSET FOREIGN_KEY_CHECKS=0;"
-		ET="SET FOREIGN_KEY_CHECKS=1; $ET"
+		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
 	fi
 
 	test ${#TABLES[@]} -lt 1 && _abort "table list is empty"
-
 	test $((FLAG & 32)) -eq 32 && ACF=y
 
 	if test $((FLAG & 1)) -eq 1; then	
-		echo -e "$ST\n" > $SQL_DUMP || _abort "overwrite '$SQL_DUMP' failed"
-		for ((i = ${#TABLES[@]} - 1; i > 0; i--)); do
-			echo "DROP TABLE IF EXISTS ${TABLES[$i]};" >> $SQL_DUMP || _abort "append to '$SQL_DUMP' failed"
+		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/drop.sql"
+		echo -e "$ST\n" >$SQL_DUMP
+		for ((i = ${#TABLES[@]} - 1; i > -1; i--)); do
+			echo "DROP TABLE IF EXISTS ${TABLES[$i]};" >>$SQL_DUMP
 		done 
-		echo -e "$ET\n" >> $SQL_DUMP || _abort "append to '$SQL_DUMP' failed"
+		echo -e "\n$ET" >>$SQL_DUMP
 
 		AUTOCONFIRM=$ACF
 		_confirm "Drop ${#TABLES[@]} tables (load $SQL_DUMP)?"
@@ -48,11 +49,12 @@ function _sql_transaction {
 	fi
 
 	if test $((FLAG & 2)) -eq 2; then	
-		echo -e "$ST\n" > $SQL_DUMP || _abort "overwrite '$SQL_DUMP' failed"
+		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/create.sql"
+		echo -e "$ST\n" >$SQL_DUMP
 		for ((i = 0; i < ${#TABLES[@]}; i++)); do
-			cat "$SQL_DIR/${TABLE[$i]}.sql" >>$SQL_DUMP || _abort "append to '$SQL_DUMP' failed"
+			cat "$SQL_DIR/${TABLES[$i]}.sql" >>$SQL_DUMP
 		done
-		echo -e "$ET\n" >> $SQL_DUMP || _abort "append to '$SQL_DUMP' failed"
+		echo -e "\n$ET" >>$SQL_DUMP
 
 		AUTOCONFIRM=$ACF
 		_confirm "Create tables (load $SQL_DUMP)?"
@@ -71,9 +73,11 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
+# @require _rm _cp _confirm _sql_load
 #--
 function _sql_transaction_load {
-	local SQL_DUMP="$RKSCRIPT_DIR/dump.sql"
+	local SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/$2.sql"
+	_rm "$SQL_DUMP" >/dev/null
 
 	if test -s "$1/$2.sql"; then
 		_cp "$1/$2.sql" "$SQL_DUMP"
