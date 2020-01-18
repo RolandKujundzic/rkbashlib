@@ -8,7 +8,7 @@
 #--
 function _merge_sh {
 	_require_file "$1"
-	local SH_DIR=`dirname "$1"`'_'
+	local SH_DIR=`dirname "$1"`'/_'
 	_require_dir "$SH_DIR"
 
 	local MD5_OLD=`_md5_file "$0"`
