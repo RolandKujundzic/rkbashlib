@@ -3,64 +3,23 @@ Collection of shell script snipplets (functions).
 
 ## Examples
 
-Create run.sh shell script with abort and syntax function.
+Include lib/rkscript.sh to use the function collection.
 
 ```sh
-./merge2run "abort syntax"
+. lib/rkscript.sh
+
+_run_as_root
+
+# other wrapper functions are: _rm, _mkdir, _chown, ...
+_cp "does not exist.txt" "no such directory/test.txt"
 ```
 
-Content of run.sh
+Take a look at the src directory to see what is available.
+Here is another example.
 
 ```sh
-#!/bin/bash
-MERGE2RUN="abort syntax"
+. lib/rkscript.sh
 
-
-#------------------------------------------------------------------------------
-# Abort with error message.
-#
-# @param abort message
-#------------------------------------------------------------------------------
-function _abort {
-  echo -e "\nABORT: $1\n\n" 1>&2
-  exit 1
-}
-
-
-#------------------------------------------------------------------------------
-# Abort with SYNTAX: message.
-#
-# @global APP, APP_DESC
-# @param message
-#------------------------------------------------------------------------------
-function _syntax {
-  echo -e "\nSYNTAX: $APP $1\n" 1>&2
-
-  if ! test -z "$APP_DESC"; then
-    echo -e "$APP_DESC\n\n" 1>&2
-  else
-    echo 1>&2
-  fi
-
-  exit 1
-}
-```
-
-## Mix rkscript functions with custom code
-
-Create directory sh/run. Example:
-
-* sh/run/custom.sh
-* sh/run/syntax.sh
-* sh/run/main.sh
-
-```sh
-#!/bin/bash
-# (re)build with: /path/to/rkscript/merge2run "abort syntax custom.sh main.sh"
-MERGE2RUN="abort syntax custom.sh main.sh"
-
-#
-# Only abort is from rkscript. Include custom.sh, syntax.sh and main.sh from sh/run/. 
-#
-
+_confirm "Do you wan't to continue?"
+test "$CONFIRM"="y" || _abort "i quit"
 ```
