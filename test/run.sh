@@ -7,6 +7,8 @@ APP="$0"
 
 TEST_CALL[total]=`ls inc/*.sh | wc -l`
 
+test -d out && _rm out
+
 test_start "call/*sh: run ${TEST_CALL[total]} test(s)"
 for a in call/*.sh; do
 	test_call `basename $a`
