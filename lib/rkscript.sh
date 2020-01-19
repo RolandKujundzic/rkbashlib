@@ -178,12 +178,15 @@ function _append {
 #
 # @param target file
 # @param text
-# @require _abort
+# @require _abort _msg _mkdir
 #--
 function _append_txt {
 	local FOUND=
 	test -f "$1" && FOUND=$(grep "$2" "$1")
 	test -z "$FOUND" || { _msg "$2 was already appended to $1"; return; }
+
+	local DIR=`dirname "$1"`
+	test -d "$DIR" || _mkdir "$DIR"
 
 	_msg "append text '$2' to '$1'"
 	echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
@@ -1685,28 +1688,25 @@ function _has_process {
 
 
 #--
-# Create .htaccess file in directory $1 if missing. Options $2:
-#
-# - deny
-# - auth
-#
+# Create .htaccess file in directory $1 if missing. 
 # @param path to directory
-# @param option (e.g. deny, auth)
-# @require _mkdir _abort
+# @param option (deny|auth:user:pass)
+# @require _mkdir _abort _append_txt _split _msg
 #--
 function _htaccess {
 	if test "$2" = "deny"; then
-		if ! test -f "$1/.htaccess"; then
-			_mkdir "$1"
-			echo "Require all denied" > "$1/.htaccess"
-		else
-			local has_deny=`cat "$1/.htaccess" | grep 'Require all denied'`
-			if test -z "$has_deny"; then
-				echo "Require all denied" > "$1/.htaccess"
-			fi
-		fi
-	elif test "$2" = "auth"; then
-		_abort "ToDo ..."
+		_append_txt "$1/.htaccess" "Require all denied"
+	elif test "${2:0:5}" = "auth:"; then
+		_split ":" "$2" >/dev/null
+		local BASIC_AUTH="AuthType Basic
+AuthName \"Require Authentication\"
+AuthUserFile $1/.htpasswd
+require valid-user"
+		_append_txt "$1/.htaccess" "$BASIC_AUTH"
+		_msg "add user ${_SPLIT[1]} to $1/.htpasswd"
+		htpasswd -cb "$1/.htpasswd" "${_SPLIT[1]}" "${_SPLIT[2]}" 2>/dev/null
+	else
+		_abort "invalid second parameter use deny|auth:user:pass"
 	fi
 }
 
@@ -1947,12 +1947,34 @@ function _is_running {
 
 
 #--
-# Join parameter with first parameter as delimiter.
+# Join parameter ($2 or shift; echo "$*") with first parameter as delimiter ($1).
+# If parameter count is 2 try if $2 is array.
+#
+# @param delimiter
+# @param array|array parts 
 # @echo 
 #--
 function _join {
-  local IFS="$1"
-  echo "${*:2}" # same as: shift; echo "$*";
+	local IFS="$1"
+	local OUT=""
+
+	if test $# -eq 2; then
+		if local -n array=$2 2>/dev/null; then
+			OUT="${array[0]}"
+
+			local i
+			for (( i=1; i < ${#array[@]}; i++ )); do
+				OUT="$OUT$1${array[i]}"
+			done
+
+		else
+			OUT="${*:2}"
+		fi
+	else
+  	OUT="${*:2}"
+	fi
+
+	echo "$OUT"
 }
 
 
@@ -3921,6 +3943,19 @@ function _show_list {
 
 	echo ""
 }
+
+#--
+# Split string "$2" at "$1" (export as $_SPLIT[@]).
+# @param delimter
+# @param string
+# @export array _SPLIT
+# @echo
+#--
+function _split {
+	IFS="$1" read -ra _SPLIT <<< "$2"
+	echo ${_SPLIT[@]}
+}
+
 
 #--
 # Load sql dump $1 (ask). Based on rks-db_connect - implement custom _sql_load if missing.
