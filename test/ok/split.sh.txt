@@ -1,1 +1,2 @@
 13 John Doe
+_SPLIT=(13 John Doe)=(13|John|Doe)

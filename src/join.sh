@@ -1,11 +1,33 @@
 #!/bin/bash
 
 #--
-# Join parameter with first parameter as delimiter.
+# Join parameter ($2 or shift; echo "$*") with first parameter as delimiter ($1).
+# If parameter count is 2 try if $2 is array.
+#
+# @param delimiter
+# @param array|array parts 
 # @echo 
 #--
 function _join {
-  local IFS="$1"
-  echo "${*:2}" # same as: shift; echo "$*";
+	local IFS="$1"
+	local OUT=""
+
+	if test $# -eq 2; then
+		if local -n array=$2 2>/dev/null; then
+			OUT="${array[0]}"
+
+			local i
+			for (( i=1; i < ${#array[@]}; i++ )); do
+				OUT="$OUT$1${array[i]}"
+			done
+
+		else
+			OUT="${*:2}"
+		fi
+	else
+  	OUT="${*:2}"
+	fi
+
+	echo "$OUT"
 }
 
