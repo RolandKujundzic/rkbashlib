@@ -11,11 +11,11 @@
 function _node_version {
 
 	if test -z "$NODE_VERSION"; then
-		NODE_VERSION=v12.14.0
+		NODE_VERSION=v12.14.1
 	fi
 
 	if test -z "$NPM_VERSION"; then
-		NPM_VERSION=6.13.4
+		NPM_VERSION=6.13.6
 	fi
 
 	local HAS_NODE=`which node`
