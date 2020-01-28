@@ -4007,14 +4007,19 @@ function _sql_load {
 _SQL=
 declare -A _SQL_QUERY
 declare -A _SQL_PARAM
+declare -A _SQL_COL
 
 #--
 # Run sql select or execute query. Query is either $2 or _SQL_QUERY[$2] (if set). 
 # If $1=select print result of select query. If $1=execute ask if query $2 should
 # be execute (default=y) or skip. Set _SQL (default _SQL="rks-db_connect query") and
-# _SQL_QUERY (optional).
+# _SQL_QUERY (optional). If type is select echo output and if result is single line
+# fill _SQL_COL hash. Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
 #
-# @global _SQL _SQL_QUERY (hash) _SQL_PARAM (hash)
+# BEWARE: don't use `_sql select ...` or $(_sql select) if you need access to _SQL_COL
+#         use [_sql select >/dev/null] instead  
+#
+# @global _SQL _SQL_QUERY (hash) _SQL_PARAM (hash) _SQL_COL (hash)
 # @export SQL (=rks-db_connect query)
 # @param type select|execute
 # @param query or SQL_QUERY key
@@ -4043,7 +4048,27 @@ function _sql {
 	test -z "$QUERY" && _abort "empty query in _sql $1"
 
 	if test "$1" = "select"; then
-		$_SQL "$QUERY" | tail -1
+		local DBOUT=`$_SQL "$QUERY"`
+		local LNUM=`echo "$DBOUT" | wc -l`
+
+		echo "$DBOUT"
+
+		if test $LNUM -eq 2; then
+			local LINE1=`echo "$DBOUT" | head -1`
+			local LINE2=`echo "$DBOUT" | tail -1`
+			local CKEY; local CVAL; local i;
+
+			IFS=$'\t' read -ra CKEY <<< "$LINE1"
+			IFS=$'\t' read -ra CVAL <<< "$LINE2"
+
+			_SQL_COL=()
+			_SQL_COL[_all]="$DBOUT"
+			_SQL_COL[_rows]=$((LNUM - 1))
+
+			for (( i=0; i < ${#CKEY[@]}; i++ )); do
+				_SQL_COL[${CKEY[$i]}]="${CVAL[$i]}"
+			done
+		fi
 	elif test "$1" = "execute"; then
 		if test "$3" = "1"; then
 			echo "execute sql query: ${QUERY:0:20} ..."
