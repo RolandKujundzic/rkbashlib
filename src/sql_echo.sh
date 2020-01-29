@@ -8,6 +8,6 @@
 function _sql_echo {
 	local QUERY="$1"
 	test ${#QUERY} -gt 60 && QUERY="${QUERY:0:60} ..."
-	echo $QUERY
+	echo -n $QUERY
 }
 
