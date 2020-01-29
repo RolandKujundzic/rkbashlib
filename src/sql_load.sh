@@ -14,5 +14,5 @@ function _sql_load {
 
 	test "$2" = "1" && AUTOCONFIRM=y
 	_confirm "load sql dump '$1'?" 1
-	test "$CONFIRM" = "y" && rks-db_connect load "$1" --q1=n --q2=y
+	test "$CONFIRM" = "y" && rks-db_connect load >/dev/null "$1" --q1=n --q2=y
 }
