@@ -43,7 +43,7 @@ function _sql {
 	test -z "$QUERY" && _abort "empty query in _sql $1"
 
 	if test "$1" = "select"; then
-		local DBOUT=`$_SQL "$QUERY"`
+		local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
 		local LNUM=`echo "$DBOUT" | wc -l`
 
 		_SQL_COL=()
@@ -71,10 +71,10 @@ function _sql {
 	elif test "$1" = "execute"; then
 		if test "$3" = "1"; then
 			echo "execute sql query: $(_sql_echo "$QUERY")"
-			$_SQL "$QUERY"
+			$_SQL "$QUERY" || _abort "$QUERY"
 		else
 			_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-			test "$CONFIRM" = "y" && $_SQL "$QUERY"
+			test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
 		fi
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute"

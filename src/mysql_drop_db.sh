@@ -1,29 +1,32 @@
 #!/bin/bash
 
 #--
-# Create Mysql Database and user. Define MYSQL="mysql -u root" if not set 
-# and user is root. If dbname and password are empty try to autodetect from 
-# settings.php or index.php. DB_CHARSET=[utf8|latin1|utf8mb4=ask] or empty
-# (=server default) if nothing is set.
+# Drop Mysql Database $1. Define MYSQL or "mysql -u root" is used.
 #
-# @param dbname
-# @global MYSQL (use mysql -u root if empty)
-# @require _abort _confirm _msg _run_as_root
+# @param database name
+# @global MYSQL (use 'mysql -u root' if empty)
+# @require _abort _confirm _msg _mysql_drop_user
 #--
 function _mysql_drop_db {
-	DB_NAME=$1
+	local NAME=$1
 
 	if test -z "$MYSQL"; then
-		_run_as_root 1
-		local MYSQL="mysql -u root"
+		local MYSQL
+		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
 	fi
 
-	if { echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
-		_confirm "Drop database $DB_NAME?" 1
+	if { echo "SHOW CREATE DATABASE $NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
+		_confirm "Drop database $NAME?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
-		echo "DROP DATABASE $DB_NAME" | $MYSQL || _abort "drop database $DB_NAME failed"
+
+		# drop user too if DB_NAME=DB_USER and DB_HOST=localhost
+		local DROP_USER=`echo "SELECT db FROM db WHERE user='$NAME' AND db='$NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
+
+		{ echo "DROP DATABASE $NAME" | $MYSQL; } || _abort "drop database $NAME failed"
+
+		test -z "$DROP_USER" || _mysql_drop_user $NAME
 	else
-		_msg "no such database $DB_NAME"
+		_msg "no such database $NAME"
 		return
 	fi
 }

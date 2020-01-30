@@ -9,6 +9,8 @@ TEST_CALL[total]=`ls inc/*.sh | wc -l`
 
 test -d out && _rm out
 
+LOG_NO_ECHO=1  # because PID changes in ~/.rkscript/PID/...
+
 test_start "call/*sh: run ${TEST_CALL[total]} test(s)"
 for a in call/*.sh; do
 	test_call `basename $a`

@@ -1,11 +1,12 @@
 #!/bin/bash
 
 #--
-# Show "message  Press y or n  " and wait for key press. 
+# Show "message  y [n]" (or $2 & 1: [y] n) and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
-# key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
+# key was pressed or 10 (3) sec expired. Use --q1=y and --q2=n call parameter to confirm
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
-# If AUTOCONFIRM is set do: echo $1 [$AUTOCONFIRM] && CONFIRM=$AUTOCONFIRM && return.
+# If AUTOCONFIRM is set (e.g. yyn) set CONFIRM=AUTOCONFIRM[0], shift AUTOCONFIRM left
+# and return.
 #
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
@@ -16,9 +17,9 @@ function _confirm {
 	CONFIRM=
 
 	if ! test -z "$AUTOCONFIRM"; then
-		CONFIRM="$AUTOCONFIRM"
-		echo "$1 <$AUTOCONFIRM>"
-		AUTOCONFIRM=
+		CONFIRM="${AUTOCONFIRM:0:1}"
+		echo "$1 <$CONFIRM>"
+		AUTOCONFIRM="${AUTOCONFIRM:1}"
 		return
 	fi
 

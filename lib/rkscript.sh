@@ -842,11 +842,12 @@ function _composer {
 
 
 #--
-# Show "message  Press y or n  " and wait for key press. 
+# Show "message  y [n]" (or $2 & 1: [y] n) and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
-# key was pressed or 10 sec expired. Use --q1=y and --q2=n call parameter to confirm
+# key was pressed or 10 (3) sec expired. Use --q1=y and --q2=n call parameter to confirm
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
-# If AUTOCONFIRM is set do: echo $1 [$AUTOCONFIRM] && CONFIRM=$AUTOCONFIRM && return.
+# If AUTOCONFIRM is set (e.g. yyn) set CONFIRM=AUTOCONFIRM[0], shift AUTOCONFIRM left
+# and return.
 #
 # @param string message
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
@@ -857,9 +858,9 @@ function _confirm {
 	CONFIRM=
 
 	if ! test -z "$AUTOCONFIRM"; then
-		CONFIRM="$AUTOCONFIRM"
-		echo "$1 <$AUTOCONFIRM>"
-		AUTOCONFIRM=
+		CONFIRM="${AUTOCONFIRM:0:1}"
+		echo "$1 <$CONFIRM>"
+		AUTOCONFIRM="${AUTOCONFIRM:1}"
 		return
 	fi
 
@@ -1058,30 +1059,38 @@ function _cp {
 
 #--
 # Create tgz archive $1 with files from file/directory list $2.
+# If existing archive changed ask otherwise keep.
 #
 # @param tgz_file
 # @param directory/file list
-# @require _abort
+# @require _abort _confirm _msg
 #--
 function _create_tgz {
-	local a=; for a in $2
-	do
-		if ! test -f $a && ! test -d $a
-		then
+	test -z "$1" && _abort "Empty archive path"
+
+	local a
+	for a in $2; do
+		if ! test -f $a && ! test -d $a; then
 			_abort "No such file or directory $a"
 		fi
 	done
 
-	if test -z "$1"; then
-		_abort "Empty archive path"
+	# compare existing archive
+	if test -s "$1"; then	
+		if tar -d --file="$1" $2 >/dev/null 2>/dev/null; then
+			return
+		else
+			_confirm "Update archive $1?" 1
+			test "$CONFIRM" = "y" || _abort "user abort"
+		fi
 	fi
 
-  echo "create archive $1"
+  _msg "create archive $1"
   SECONDS=0
-  tar -czf $1 $2 || _abort "tar -czf $1 $2 failed"
-  echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+  tar -czf "$1" $2 >/dev/null 2>/dev/null || _abort "tar -czf '$1' $2 failed"
+  _msg "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
-	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "invalid archive '$1'" 
 }
 
 	
@@ -1100,6 +1109,36 @@ function _crontab {
 
 	grep "$3" "$CRONTAB_DIR/$1" && { echo "already installed - skip"; return; }
 	echo "$2 $3" >>"$CRONTAB_DIR/$1" || _abort "failed to create $1 cron"
+}
+
+
+#--
+# Open encrypted path/to/ARCHIVE.tgz.cpt as ./ARCHIVE.
+#
+# @param file
+#--
+function _decrypt {
+	local BASE=`basename "$1"`
+	local DIR=`dirname "$1"`
+
+	BASE=`echo "$BASE" | sed -E 's/\.tgz\.cpt$//'`
+
+	_set "$BASE.TGZ_CPT" "$1"
+
+	if test -z "$1" || ! test -s "$DIR/$BASE.tgz.cpt"; then
+		_syntax "open path/to/archive.tgz.cpt"
+	fi
+
+	if test -d "$BASE"; then
+		_confirm "Remove $BASE"
+		test "$CONFIRM" = "y" || return
+		_rm "$BASE"
+	fi
+
+	_cp "$1" "_$BASE.tgz.cpt" 
+	ccrypt -d "_$BASE.tgz.cpt"
+	_mv "_$BASE.tgz" "$BASE.tgz"
+	tar -xzf "$BASE.tgz"
 }
 
 
@@ -1304,6 +1343,46 @@ function _download {
 }
 
 #--
+# Encrypt file $1 (as $1.cpt) or directory (as $1.tgz.cpt). 
+# Use $RKSCRIPT_DIR/crypt.key
+#
+# @param file or directory path
+# @param crypt key path (optional)
+# @require _abort
+#--
+function _encrypt {
+	if test -d "$1"; then
+		tar -czf "$1.tgz" "$1"
+	elif test -f "$1"; then
+		IS_DIR=0
+	else
+		_abort "no such file or directory [$1]"
+	fi
+
+
+	local BASE=`basename "$1"`
+	local TGZ_CPT=`_get "$BASE.TGZ_CPT"`
+
+	test -s "$TGZ_CPT" || _abort "no such file $TGZ_CPT"
+	test -s "$1.tgz" || _abort "no such file $1.tgz"
+
+	gunzip "$1.tgz"
+	local DIFF=`tar --compare --file="$1.tar" "$1"`
+
+	if ! test -z "$DIFF"; then
+		_confirm "Update archive $TGZ_CPT" 1
+		if test "$CONFIRM" = "y"; then
+			tar -czf "$1.tgz" "$1"
+			ccrypt -e "$1.tgz"
+			_mv "$1.tgz.cpt" "$TGZ_CPT"
+		fi
+	fi
+
+	_rm "$1 $1.tar"
+}
+
+
+#--
 # Extract tgz archive $1. If second parameter is existing directory, remove
 # before extraction.
 #
@@ -1377,8 +1456,10 @@ function _file_priv {
 # index.php and (settings.php file or data/ dir).
 #
 # @param string path e.g. $PWD (optional use $PWD as default)
+# @param int don't abort if error (default = 0 = abort)
 # @export DOCROOT
-# @require _abort  
+# @return bool (if $2=1)
+# @require _abort _msg 
 #--
 function _find_docroot {
 	local DIR=
@@ -1386,8 +1467,9 @@ function _find_docroot {
 
 	if ! test -z "$DOCROOT"; then
 		DOCROOT=`realpath $DOCROOT`
-		echo "use existing DOCROOT=$DOCROOT"
-		return
+		_msg "use existing DOCROOT=$DOCROOT"
+		test -z "$DOCROOT" && { test -z "$2" && _abort "invalid DOCROOT" || return 1; }
+		return 0
 	fi
 
 	if test -z "$1"; then
@@ -1397,13 +1479,11 @@ function _find_docroot {
 	fi
 
 	local BASE=`basename $DIR`
-	if test "$BASE"="cms"; then
-		DOCROOT=`dirname $DIR`
-	fi
+	test "$BASE" = "cms" && DOCROOT=`dirname $DIR`
 
 	if ! test -z "$DOCROOT" && test -f "$DOCROOT/index.php" && (test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data"); then
-		echo "use DOCROOT=$DOCROOT"
-		return
+		_msg "use DOCROOT=$DOCROOT"
+		return 0
 	fi
 
 	while test -d "$DIR" && ! (test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data")); do
@@ -1411,15 +1491,17 @@ function _find_docroot {
 		DIR=$(dirname "$DIR")
 
 		if test "$DIR" = "$LAST_DIR" || ! test -d "$DIR"; then
-			_abort "failed to find DOCROOT of [$1]"
+			test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
 		fi
 	done
 
 	if test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data"); then
 		DOCROOT="$DIR"
 	else
-		_abort "failed to find DOCROOT of [$1]"
+		test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
 	fi
+
+	return 0
 }
 
 
@@ -2450,18 +2532,11 @@ function _my_cnf {
 		local MYSQL_SQL="$MYSQL"
 	fi
 
-	if test -z "$MY_CNF"; then
-		MY_CNF=".my.cnf"
-	fi
-
-	if ! test -s "$MY_CNF"; then
-		return
-	fi
+	test -z "$MY_CNF" && MY_CNF=".my.cnf"
+	test -s "$MY_CNF" || return
 
 	local MY_CNF_CONTENT=`cat ".my.cnf" 2> /dev/null`
-	if test -z "$MY_CNF_CONTENT"; then
-		return
-	fi
+	test -z "$MY_CNF_CONTENT" && return
 
 	DB_PASS=`grep password "$MY_CNF" | sed -E 's/.*=\s*//g'`
 	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`
@@ -2518,72 +2593,45 @@ function _mysql_backup {
 
 
 #--
-# Export MYSQL_CONN or MYSQL (if parameter is set) connection string.
-# If MYSQL_CONN is empty but DB_NAME and DB_PASS exist use these.
-# MYSQL_CONN is "mysql -h DBHOST -u DBUSER -pDBPASS DBNAME".
-# MYSQL is "mysql -u root".
+# Export MYSQL_CONN (and if $1=1 MYSQL).
+# If MYSQL_CONN is empty and DB_NAME and DB_PASS are set assume MYSQL_CONN="-h DBHOST -u DBUSER -pDBPASS DBNAME".
+# If 1=$1 set MYSQL="[sudo] mysql -u root".
 #
-# @abort
 # @global MYSQL_CONN DB_NAME DB_PASS
-# @export MYSQL_CONN MYSQL 
+# @export MYSQL_CONN (and MYSQL if $1=1)
+# @param require root access (default = false)
 # @require _abort
-# @param require root access
 #--
 function _mysql_conn {
 
-	if test -z "$1" && test -z "$MYSQL_CONN"; then
-		if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
-		else
-			_abort "mysql connection string MYSQL_CONN is empty (DB_NAME=$DB_NAME)"
-		fi
-	fi
-
-	if test -z "$MYSQL_CONN" && ! test -z "$1" && test "$UID" = "0"; then
-		MYSQL_CONN="-u root"
-	fi
-
-	local TRY_MYSQL=
-
+	# if $1=1 DB_NAME might not exist yet
 	if test -z "$1"; then
-    TRY_MYSQL=`(echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1) | grep 'ERROR 1045'`
+		test -z "$DB_NAME" && _abort "$DB_NAME is not set"
 
-		if test -z "$TRY_MYSQL"; then
-			# MYSQL_CONN works
-			return
-		else
-			_abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
+		if test -z "$MYSQL_CONN"; then
+			test -z "$DB_PASS" && _abort "neither MYSQL_CONN nor DB_NAME and DB_PASS are set"
+			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
+
+		TRY_MYSQL=`{ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045'`
+		test -z "$TRY_MYSQL" || _abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
+
+		return
 	fi
 
+	# $1=1 - root access required
 	if test -z "$MYSQL"; then
 		if ! test -z "$MYSQL_CONN"; then
 			MYSQL="mysql $MYSQL_CONN"
-		elif ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
-			MYSQL="mysql -h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
+		elif test "$UID" = "0"; then
+			MYSQL="mysql -u root"
+		else
+			MYSQL="sudo mysql -u root"
 		fi
 	fi
 
-	if ! test -z "$MYSQL"; then
-    TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
-    if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
-      MYSQL=
-    fi
-  fi
-
-  if test -z "$MYSQL"; then
-    if test "$UID" = "0"; then
-      MYSQL="mysql -u root"
-    else
-      _abort "you must be root to run [mysql -u root]"
-    fi
-  fi
-
-  TRY_MYSQL=`(echo "USE mysql" | $MYSQL 2>&1) | grep 'ERROR 1045'`
-  if ! test -z "$TRY_MYSQL" && test "$MYSQL" != "mysql -u root"; then
-    echo "admin access to mysql database failed: $MYSQL"
-  fi
+	TRY_MYSQL=`{ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045'`
+	test -z "$TRY_MYSQL" || _abort "admin access to mysql database failed: $MYSQL"
 }
 
 
@@ -2597,18 +2645,24 @@ function _mysql_conn {
 # @param password
 # @global MYSQL DB_CHARSET
 # @export DB_NAME DB_PASS
-# @require _abort _mysql_split_dsn _mysql_conn
+# @require _abort _mysql_split_dsn _mysql_conn _confirm _msg _require_global
 #--
 function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
-	_mysql_split_dsn
+	_require_global "DB_NAME DB_PASS"
 	_mysql_conn 1
 
-	local HAS_DB=`echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL 2> /dev/null && echo "ok"`
-	if ! test -z "$HAS_DB"; then
-		echo "Keep existing database $DB_NAME"
+	if { echo "SHOW CREATE DATABASE $DB_NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
+		_msg "keep existing database $DB_NAME"
+
+		local HAS_USER=`echo "SELECT user FROM user WHERE user='$DB_NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
+		if test -z "$HAS_USER"; then
+			{ echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL; } || \
+				_abort "create database user $DB_NAME@localhost failed"
+		fi
+
 		return
 	fi
 
@@ -2621,17 +2675,76 @@ function _mysql_create_db {
 	elif test "$DB_CHARSET" = "latin1"; then
 		CHARSET="DEFAULT CHARACTER SET latin1 DEFAULT COLLATE latin1_german1_ci"
 	else
-		_confirm "Use charset utf8mb4"
-		if test "$CONFIRM" = "y"; then
-			CHARSET="DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci"
-		fi
+		_confirm "Use charset utf8mb4?" 1
+		test "$CONFIRM" = "y" && CHARSET="DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci"
 	fi
 
-	echo "create mysql database $DB_NAME"
-	echo "CREATE DATABASE $DB_NAME $CHARSET" | $MYSQL || _abort "create database $DB_NAME failed"
-	echo "create mysql database user $DB_NAME"
-	echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL || \
-		_abort "create database user $DB_NAME failed"
+	_msg "create mysql database $DB_NAME"
+	{ echo "CREATE DATABASE $DB_NAME $CHARSET" | $MYSQL; } || _abort "create database $DB_NAME failed"
+	_msg "create mysql database user $DB_NAME"
+	{ echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL; } || \
+		_abort "create database user $DB_NAME@localhost failed"
+}
+
+
+#--
+# Drop Mysql Database $1. Define MYSQL or "mysql -u root" is used.
+#
+# @param database name
+# @global MYSQL (use 'mysql -u root' if empty)
+# @require _abort _confirm _msg _mysql_drop_user
+#--
+function _mysql_drop_db {
+	local NAME=$1
+
+	if test -z "$MYSQL"; then
+		local MYSQL
+		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
+	fi
+
+	if { echo "SHOW CREATE DATABASE $NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
+		_confirm "Drop database $NAME?" 1
+		test "$CONFIRM" = "y" || _abort "user abort"
+
+		# drop user too if DB_NAME=DB_USER and DB_HOST=localhost
+		local DROP_USER=`echo "SELECT db FROM db WHERE user='$NAME' AND db='$NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
+
+		{ echo "DROP DATABASE $NAME" | $MYSQL; } || _abort "drop database $NAME failed"
+
+		test -z "$DROP_USER" || _mysql_drop_user $NAME
+	else
+		_msg "no such database $NAME"
+		return
+	fi
+}
+
+
+#--
+# Drop Mysql User $1. Set MYSQL otherwise "mysql -u root" is used.
+#
+# @param name
+# @param host (default = localhost)
+# @global MYSQL (use 'mysql -u root' if empty)
+# @require _abort _confirm _msg
+#--
+function _mysql_drop_user {
+	local NAME=$1
+	local HOST="${2:-localhost}"
+
+	if test -z "$MYSQL"; then
+		local MYSQL
+		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
+	fi
+
+	local HAS_USER=`echo "SELECT user FROM user WHERE user='$NAME' AND host='$HOST'" | $MYSQL mysql 2>/dev/null`
+	if test -z "$HAS_USER"; then
+		_msg "no such user $NAME@$HOST"
+		return
+	else
+		_confirm "Drop user $NAME@$HOST?" 1
+		test "$CONFIRM" = "y" || _abort "user abort"
+		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort "drop user '$NAME'@'$HOST' failed"
+	fi
 }
 
 
@@ -2806,34 +2919,33 @@ function _mysql_restore {
 # do nothing.
 #
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
+# @param int don't abort (default = 0 = abort)
 # @export DB_NAME DB_PASS MYSQL
 # @require _abort _find_docroot _my_cnf 
+# @return bool
 #--
 function _mysql_split_dsn {
-	local SETTINGS_DSN=
 	local PATH_RKPHPLIB=$PATH_RKPHPLIB
+	local SETTINGS_DSN=
 	local PHP_CODE=
 
 	_my_cnf
 
-	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"
-	then
+	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
 		# use already defined DB_NAME and DB_PASS
-		return
+		return 0
 	fi
 
 	if ! test -f "$1"; then
-		test -z "$DOCROOT" && _find_docroot "$PWD"
+		test -z "$DOCROOT" && { _find_docroot "$PWD" "$2" || return 1; }
 
 		if test -f "$DOCROOT/settings.php"; then
-			_mysql_split_dsn "$DOCROOT/settings.php"
-			return
+			_mysql_split_dsn "$DOCROOT/settings.php" "$2" && return 0 || return 1
 		elif test -f "$DOCROOT/index.php"; then
-			_mysql_split_dsn "$DOCROOT/index.php"
-			return
+			_mysql_split_dsn "$DOCROOT/index.php" "$2" && return 0 || return 1
 		fi
 
-		_abort "no such file [$1]"
+		test -z "$2" && _abort "no such file [$1]" || return 1
 	fi
 
 	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
@@ -2860,14 +2972,14 @@ function _mysql_split_dsn {
 	fi
 
 	if test -z "$SETTINGS_DSN"; then
-		_abort "autodetect SETTINGS_DSN failed"
+		test -z "$2" && _abort "autodetect SETTINGS_DSN failed" || return 1
 	fi
  
 	if test -z "$PATH_RKPHPLIB"; then
 		if test -d "/home/rk/Desktop/workspace/rkphplib/src"; then
 			PATH_RKPHPLIB="/home/rk/Desktop/workspace/rkphplib/src/"
 		else
-			_abort "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/"
+			test -z "$2" && _abort "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/" || return 1
 		fi
 	fi
 
@@ -2880,7 +2992,7 @@ function _mysql_split_dsn {
 	DB_PASS=`php -r "$PHP_CODE"`
 
 	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
-		_abort "database name [$DB_NAME] or password [$DB_PASS] is empty"
+		test -z "$2" && _abort "database name [$DB_NAME] or password [$DB_PASS] is empty" || return 1
 	fi
 }
 
@@ -4070,7 +4182,7 @@ function _sql {
 	test -z "$QUERY" && _abort "empty query in _sql $1"
 
 	if test "$1" = "select"; then
-		local DBOUT=`$_SQL "$QUERY"`
+		local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
 		local LNUM=`echo "$DBOUT" | wc -l`
 
 		_SQL_COL=()
@@ -4098,10 +4210,10 @@ function _sql {
 	elif test "$1" = "execute"; then
 		if test "$3" = "1"; then
 			echo "execute sql query: $(_sql_echo "$QUERY")"
-			$_SQL "$QUERY"
+			$_SQL "$QUERY" || _abort "$QUERY"
 		else
 			_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-			test "$CONFIRM" = "y" && $_SQL "$QUERY"
+			test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
 		fi
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute"

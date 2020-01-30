@@ -15,18 +15,11 @@ function _my_cnf {
 		local MYSQL_SQL="$MYSQL"
 	fi
 
-	if test -z "$MY_CNF"; then
-		MY_CNF=".my.cnf"
-	fi
-
-	if ! test -s "$MY_CNF"; then
-		return
-	fi
+	test -z "$MY_CNF" && MY_CNF=".my.cnf"
+	test -s "$MY_CNF" || return
 
 	local MY_CNF_CONTENT=`cat ".my.cnf" 2> /dev/null`
-	if test -z "$MY_CNF_CONTENT"; then
-		return
-	fi
+	test -z "$MY_CNF_CONTENT" && return
 
 	DB_PASS=`grep password "$MY_CNF" | sed -E 's/.*=\s*//g'`
 	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`

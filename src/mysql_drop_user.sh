@@ -4,25 +4,27 @@
 # Drop Mysql User $1. Set MYSQL otherwise "mysql -u root" is used.
 #
 # @param name
+# @param host (default = localhost)
 # @global MYSQL (use 'mysql -u root' if empty)
-# @require _abort _confirm _msg _run_as_root
+# @require _abort _confirm _msg
 #--
 function _mysql_drop_user {
 	local NAME=$1
+	local HOST="${2:-localhost}"
 
 	if test -z "$MYSQL"; then
-		_run_as_root 1
-		local MYSQL="mysql -u root"
+		local MYSQL
+		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
 	fi
 
-	local HAS_USER=`echo "SELECT user FROM user WHERE user='$NAME'" | $MYSQL mysql 2>/dev/null`
+	local HAS_USER=`echo "SELECT user FROM user WHERE user='$NAME' AND host='$HOST'" | $MYSQL mysql 2>/dev/null`
 	if test -z "$HAS_USER"; then
-		_msg "no such user $NAME"
+		_msg "no such user $NAME@$HOST"
 		return
 	else
-		_confirm "Drop user $NAME?" 1
+		_confirm "Drop user $NAME@$HOST?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
-		echo "DROP USER $NAME" | $MYSQL || _abort "drop user $NAME failed"
+		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort "drop user '$NAME'@'$HOST' failed"
 	fi
 }
 
