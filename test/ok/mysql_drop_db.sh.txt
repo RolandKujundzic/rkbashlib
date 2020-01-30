@@ -1,0 +1,3 @@
+Drop database rkscript? <y>
+Drop user rkscript@localhost? <y>
+no such database rkscript

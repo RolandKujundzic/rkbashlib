@@ -1,0 +1,7 @@
+create archive out/test.tgz
+0 minutes and 0 seconds elapsed.
+out/test.tgz
+Update archive out/test.tgz? <y>
+create archive out/test.tgz
+0 minutes and 0 seconds elapsed.
+out/test.tgz

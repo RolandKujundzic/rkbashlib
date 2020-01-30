@@ -1,0 +1,4 @@
+Use charset utf8mb4? <y>
+create mysql database rkscript
+create mysql database user rkscript
+keep existing database rkscript
