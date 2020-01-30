@@ -2278,16 +2278,22 @@ function _md5 {
 
 
 #--
-# Merge "$APP"_ into $APP (concat "$APP""_/*.inc.sh").
+# Merge "$APP"_ (or `basename "$APP"`'_') into $APP (concat "$APP""_/*.inc.sh").
+# Use 0_header.inc.sh, function.inc.sh, ... Z_main.inc.sh.
 #
 # @global APP
 # @require _require_file _require_dir _chmod _md5 _rm
+# @exit
 #--
 function _merge_sh {
 	_require_file "$APP"
 	local SH_DIR="$APP"'_'
-	local TMP_APP="$APP"'__'
+
+	test -d "$SH_DIR" || { test -d `basename $APP`'_' && SH_DIR=`basename $APP`'_'; }
+
 	_require_dir "$SH_DIR"
+
+	local TMP_APP="$SH_DIR"'_'
 
 	local MD5_OLD=`_md5 "$APP"`
   echo -n "merge $SH_DIR into $APP ... "
@@ -2309,6 +2315,8 @@ function _merge_sh {
 		_mv "$TMP_APP" "$APP"
   	_chmod 755 "$APP"
 	fi
+
+	exit 0
 }
 
 
