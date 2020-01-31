@@ -1,1 +1,14 @@
-echo "SELECT * FROM test WHERE id='10'" | mysql -u'db-user' -p'db-pass' db-name
+Use charset utf8mb4? <y>
+create mysql database rkscript
+create mysql database user rkscript
+execute sql query: CREATE TABLE customer (id int not null auto_increment, name ...?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('John')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('Paul')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('Peter')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('Mary')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('Claudia')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('Maria')?  <y>
+execute sql query: INSERT INTO customer (name) VALUES ('David')?  <y>
+3: Peter
+Drop database rkscript? <y>
+Drop user rkscript@localhost? <y>

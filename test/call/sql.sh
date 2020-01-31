@@ -5,8 +5,7 @@ function call_mysql {
 }
 
 
-AUTOCONFIRM="yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
-
+AUTOCONFIRM="yy"
 _mysql_create_db 'rkscript' 'secret'
 
 _SQL="call_mysql"
@@ -19,10 +18,12 @@ CUSTOMER="John Paul Peter Mary Claudia Maria David"
 _sql 'execute' 'customer_table'
 
 for a in $CUSTOMER; do
+	AUTOCONFIRM="y"
 	_SQL_PARAM=([name]="$a")
 	_sql 'execute' 'insert_customer'
 done
 
+AUTOCONFIRM="yy"
 _SQL_PARAM=([id]="3")
 _sql 'select' 'select_customer'
 echo "${_SQL_COL[id]}: ${_SQL_COL[name]}"

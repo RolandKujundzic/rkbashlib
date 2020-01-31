@@ -5,9 +5,10 @@
 
 APP="$0"
 
-TEST_CALL[total]=`ls inc/*.sh | wc -l`
+TEST_CALL[total]=`ls call/*.sh | wc -l`
 
 test -d out && _rm out
+_mysql_drop_db rkscript
 
 LOG_NO_ECHO=1  # because PID changes in ~/.rkscript/PID/...
 
