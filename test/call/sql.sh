@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function call_mysql {
-	echo "echo \"$1\"" | mysql -u'rkscript' -p'secret' 'rkscript'
+	{ echo "$1" | mysql -u'rkscript' -p'secret' 'rkscript'; } && return 0 || return 1
 }
 
 
