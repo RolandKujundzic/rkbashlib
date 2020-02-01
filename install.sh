@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------
 # Build lib/rkscript.sh.
 #------------------------------------------------------------------------------
-function _build {
+function do_build {
 	echo "Build lib/rkscript.sh"
 
 	_mkdir "lib"
@@ -37,10 +37,10 @@ function _build {
 #------------------------------------------------------------------------------
 # Install lib/rkscript.sh in $1 (= /usr/local/lib/rkscript.sh).
 #------------------------------------------------------------------------------
-function _install {
+function do_install {
 
 	if test -z "$1"; then
-		_confirm "Install lib/rkscript.sh to [/usr/local/lib/rkscript.sh] ?"
+		_confirm "Install lib/rkscript.sh to /usr/local/lib/rkscript.sh?"
 
 		if test "$CONFIRM" = "y"; then
 			_cp "lib/rkscript.sh" "/usr/local/lib/rkscript.sh" md5
@@ -79,21 +79,14 @@ command -v realpath > /dev/null 2>&1 && APP=`realpath "$0"`
 export APP_PID="$APP_PID $$"
 
 SCRIPT_SRC=`dirname "$APP"`"/src"
+INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh"
 
-. "$SCRIPT_SRC/abort.sh"
-. "$SCRIPT_SRC/osx.sh"
-. "$SCRIPT_SRC/mkdir.sh"
-. "$SCRIPT_SRC/cp.sh"
-. "$SCRIPT_SRC/md5.sh"
-. "$SCRIPT_SRC/log.sh"
-. "$SCRIPT_SRC/chmod.sh"
-. "$SCRIPT_SRC/sudo.sh"
-. "$SCRIPT_SRC/confirm.sh"
-. "$SCRIPT_SRC/syntax.sh"
-. "$SCRIPT_SRC/require_program.sh"
+for a in $INCLUDE_FUNC; do
+	. "$SCRIPT_SRC/$a"
+done
 
 echo
-_build
-_install "$1"
+do_build
+do_install "$1"
 echo -e "done.\n"
 
