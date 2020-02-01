@@ -6,7 +6,7 @@
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
-# @require _abort _require_program
+# @require _abort _require_program _msg
 #--
 function _dir_priv {
 	_require_program realpath
@@ -31,7 +31,7 @@ function _dir_priv {
     MSG="$MSG ($FIND_OPT)"	
   fi
 
-	echo "$MSG"
+	_msg "$MSG"
 	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
 }
 
