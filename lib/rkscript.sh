@@ -1148,7 +1148,7 @@ function _decrypt {
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
-# @require _abort _require_program
+# @require _abort _require_program _msg
 #--
 function _dir_priv {
 	_require_program realpath
@@ -1173,7 +1173,7 @@ function _dir_priv {
     MSG="$MSG ($FIND_OPT)"	
   fi
 
-	echo "$MSG"
+	_msg "$MSG"
 	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
 }
 
@@ -1421,7 +1421,7 @@ function _extract_tgz {
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
-# @require _abort _require_program
+# @require _abort _require_program _msg
 #--
 function _file_priv {
 	_require_program realpath
@@ -1446,7 +1446,7 @@ function _file_priv {
 		MSG="$MSG ($FIND_OPT)"
 	fi
 
-	echo "$MSG"
+	_msg "$MSG"
 	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
 }
 
