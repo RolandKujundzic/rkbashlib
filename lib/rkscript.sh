@@ -1014,7 +1014,7 @@ function _cordova_create {
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require _abort _md5 _sudo
+# @require _abort _md5 _sudo _confirm _rm _rsync _msg
 #--
 function _cp {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
@@ -1028,9 +1028,9 @@ function _cp {
 		local MD2=`_md5 "$2"`
 
 		if test "$MD1" = "$MD2"; then
-			echo "_cp: keep $2 (same as $1)"
+			_msg "_cp: keep $2 (same as $1)"
 		else
-			echo "Copy file $1 to $2 (update)"
+			_msg "Copy file $1 to $2 (update)"
 			_sudo "cp '$1' '$2'" 1
 		fi
 
@@ -1038,15 +1038,22 @@ function _cp {
 	fi
 
 	if test -f "$1"; then
-		echo "Copy file $1 to $2"
+		_msg "Copy file $1 to $2"
 		_sudo "cp '$1' '$2'" 1
 	elif test -d "$1"; then
 		if test -d "$2"; then
-			local PDIR=`dirname $2`"/"
-			echo "Copy directory $1 to $PDIR"
-			_sudo "cp -r '$1' '$PDIR'" 1
+			local PDIR="$2"
+			_confirm "Remove existing target directory '$2'?"
+			if test "$CONFIRM" = "y"; then
+				_rm "$PDIR"
+				_msg "Copy directory $1 to $2"
+				_sudo "cp -r '$1' '$2'" 1
+			else
+				_msg "Copy directory $1 to $2 (use rsync)" 
+				_rsync "$1/" "$2"
+			fi
 		else
-			echo "Copy directory $1 to $2"
+			_msg "Copy directory $1 to $2"
 			_sudo "cp -r '$1' '$2'" 1
 		fi
 	else
@@ -1148,7 +1155,7 @@ function _decrypt {
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
-# @require _abort _require_program
+# @require _abort _require_program _msg
 #--
 function _dir_priv {
 	_require_program realpath
@@ -1173,7 +1180,7 @@ function _dir_priv {
     MSG="$MSG ($FIND_OPT)"	
   fi
 
-	echo "$MSG"
+	_msg "$MSG"
 	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
 }
 
@@ -1351,34 +1358,19 @@ function _download {
 # @require _abort
 #--
 function _encrypt {
+	local FILE="$1"
+
 	if test -d "$1"; then
 		tar -czf "$1.tgz" "$1"
-	elif test -f "$1"; then
-		IS_DIR=0
-	else
-		_abort "no such file or directory [$1]"
+		FILE="$1.tgz"
 	fi
 
+	_require_file "$FILE"
 
 	local BASE=`basename "$1"`
 	local TGZ_CPT=`_get "$BASE.TGZ_CPT"`
 
-	test -s "$TGZ_CPT" || _abort "no such file $TGZ_CPT"
-	test -s "$1.tgz" || _abort "no such file $1.tgz"
-
-	gunzip "$1.tgz"
-	local DIFF=`tar --compare --file="$1.tar" "$1"`
-
-	if ! test -z "$DIFF"; then
-		_confirm "Update archive $TGZ_CPT" 1
-		if test "$CONFIRM" = "y"; then
-			tar -czf "$1.tgz" "$1"
-			ccrypt -e "$1.tgz"
-			_mv "$1.tgz.cpt" "$TGZ_CPT"
-		fi
-	fi
-
-	_rm "$1 $1.tar"
+	ccrypt -e "$1.tgz"
 }
 
 
@@ -1421,7 +1413,7 @@ function _extract_tgz {
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
-# @require _abort _require_program
+# @require _abort _require_program _msg
 #--
 function _file_priv {
 	_require_program realpath
@@ -1446,7 +1438,7 @@ function _file_priv {
 		MSG="$MSG ($FIND_OPT)"
 	fi
 
-	echo "$MSG"
+	_msg "$MSG"
 	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
 }
 
@@ -1530,7 +1522,9 @@ function _find {
 # @param string name
 #--
 function _get {
-	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
+	local DIR="$RKSCRIPT_DIR"
+	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
+	DIR="$DIR/"`basename "$APP"`
 
 	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
 
@@ -4057,9 +4051,11 @@ function _scan_rkscript_src {
 # @param string value
 #--
 function _set {
-	local DIR="$RKSCRIPT_DIR/"`basename "$APP"`
+	local DIR="$RKSCRIPT_DIR"
+	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
+	DIR="$DIR/"`basename "$APP"`
 
-	test -d "$DIR" || _mkdir "$DIR"
+	test -d "$DIR" || _mkdir "$DIR" >/dev/null
 	test -z "$1" && _abort "empty name"
 
 	echo -e "$2" > "$DIR/$1.nfo"
