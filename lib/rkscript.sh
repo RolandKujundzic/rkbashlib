@@ -51,6 +51,44 @@ function _abort {
 
 
 #--
+# Create vhost link to $2. Create /website/... and docroot.
+# Add $1 domain to /etc/hosts (if *.xx). 
+#
+# @param domain
+# @param docroot
+# @require _mkdir _confirm _cd _ln _run_as_root _append_txt _msg _split
+#--
+function _apache2_vhost {
+	if ! test -d "$2"; then
+		_confirm "Create docroot '$2'?" 1
+		test "$CONFIRM" = "y" && _mkdir "$2"
+	fi
+
+	_split '.' "$1" >/dev/null
+
+	local a
+
+	if test "${#_SPLIT[@]}" -eq 2; then
+		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
+		_mkdir "$a"
+		_cd "$a"
+		_ln "$2" '_'
+	else
+		a="/website/${_SPLIT[1]}"'_'"${_SPLIT[2]}"
+		_mkdir "$a"
+		_cd "$a"
+		_ln "$2" "${_SPLIT[0]}"
+	fi
+
+	local IS_XX=`echo "$1" | grep -E '\.xx$'`
+	if ! test -z "$IS_XX"; then
+		_msg "Add $1 domain to /etc/hosts"
+		_append_txt /etc/hosts "127.0.0.1 $1"
+	fi
+}
+
+
+#--
 # Create apigen documentation for php project in docs/apigen.
 #
 # @param source directory (optional, default = src)
@@ -189,7 +227,11 @@ function _append_txt {
 	test -d "$DIR" || _mkdir "$DIR"
 
 	_msg "append text '$2' to '$1'"
-	echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
+	if test -w "$1"; then
+		echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
+	else
+		{ echo "$2" | sudo tee -a "$1" >/dev/null; } || _abort "echo '$2' | sudo tee -a '$1'"
+	fi
 }
 
 
@@ -1371,6 +1413,46 @@ function _encrypt {
 	local TGZ_CPT=`_get "$BASE.TGZ_CPT"`
 
 	ccrypt -e "$1.tgz"
+}
+
+
+#--
+# Encrypt file $1 (as $1.cpt) or directory (as $1.tgz.cpt). 
+# Use $RKSCRIPT_DIR/crypt.key
+#
+# @param file or directory path
+# @param crypt key path (optional)
+# @require _abort
+#--
+function _encrypt {
+	if test -d "$1"; then
+		tar -czf "$1.tgz" "$1"
+	elif test -f "$1"; then
+		IS_DIR=0
+	else
+		_abort "no such file or directory [$1]"
+	fi
+
+
+	local BASE=`basename "$1"`
+	local TGZ_CPT=`_get "$BASE.TGZ_CPT"`
+
+	test -s "$TGZ_CPT" || _abort "no such file $TGZ_CPT"
+	test -s "$1.tgz" || _abort "no such file $1.tgz"
+
+	gunzip "$1.tgz"
+	local DIFF=`tar --compare --file="$1.tar" "$1"`
+
+	if ! test -z "$DIFF"; then
+		_confirm "Update archive $TGZ_CPT" 1
+		if test "$CONFIRM" = "y"; then
+			tar -czf "$1.tgz" "$1"
+			ccrypt -e "$1.tgz"
+			_mv "$1.tgz.cpt" "$TGZ_CPT"
+		fi
+	fi
+
+	_rm "$1 $1.tar"
 }
 
 
