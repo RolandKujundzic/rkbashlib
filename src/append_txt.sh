@@ -16,6 +16,10 @@ function _append_txt {
 	test -d "$DIR" || _mkdir "$DIR"
 
 	_msg "append text '$2' to '$1'"
-	echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
+	if test -w "$1"; then
+		echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
+	else
+		{ echo "$2" | sudo tee -a "$1" >/dev/null; } || _abort "echo '$2' | sudo tee -a '$1'"
+	fi
 }
 
