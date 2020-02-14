@@ -79,7 +79,7 @@ command -v realpath > /dev/null 2>&1 && APP=`realpath "$0"`
 export APP_PID="$APP_PID $$"
 
 SCRIPT_SRC=`dirname "$APP"`"/src"
-INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh"
+INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh"
 
 for a in $INCLUDE_FUNC; do
 	. "$SCRIPT_SRC/$a"
