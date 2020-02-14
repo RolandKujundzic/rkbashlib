@@ -20,6 +20,7 @@ function _apache2_vhost {
 
 	if test "${#_SPLIT[@]}" -eq 2; then
 		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
+		_mkdir "$a"
 		_cd "$a"
 		_ln "$2" '_'
 	else
@@ -32,7 +33,6 @@ function _apache2_vhost {
 	local IS_XX=`echo "$1" | grep -E '\.xx$'`
 	if ! test -z "$IS_XX"; then
 		_msg "Add $1 domain to /etc/hosts"
-		_run_as_root 1
 		_append_txt /etc/hosts "127.0.0.1 $1"
 	fi
 }
