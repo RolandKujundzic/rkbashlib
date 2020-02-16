@@ -5,25 +5,19 @@
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require _abort
+# @require _abort _msg
 #--
 function _rm {
+	test -z "$1" && _abort "Empty remove path list"
 
-	if test -z "$1"; then
-		_abort "Empty remove path list"
-	fi
-
-	local a=; for a in $1
-	do
-		if ! test -f $a && ! test -d $a
-		then
-			if ! test -z "$2"; then
-				_abort "No such file or directory $a"
-			fi
+	local a
+	while read a; do
+		if ! test -f "$a" && ! test -d "$a"; then
+			test -z "$2" || _abort "No such file or directory '$a'"
 		else
-			echo "remove $a"
-			rm -rf $a
+			_msg "remove '$a'"
+			rm -rf "$a" || _abort "rm -rf '$a'"
 		fi
-	done
+	done <<< `echo -e "$1"`
 }
 
