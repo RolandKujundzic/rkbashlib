@@ -1162,32 +1162,48 @@ function _crontab {
 
 
 #--
-# Open encrypted path/to/ARCHIVE.tgz.cpt as ./ARCHIVE.
+# Decrypt $1. Second parameter is either empty (=ask password), password or password-file (basename starts with dot).
+# If decrypted file is *.tgz archive extract it.
 #
-# @param file
+# @param encrypted file or archive
+# @param password or password-file (optional, default = ask)
+# @require _abort _require_program _require_file _confirm _extract_tgz _msg
 #--
 function _decrypt {
-	local BASE=`basename "$1"`
-	local DIR=`dirname "$1"`
+	test -z "$1" && _abort "_decrypt: empty filepath"
+	test -s "$1" || _abort "no such file '$1'"
+	_require_program ccrypt
 
-	BASE=`echo "$BASE" | sed -E 's/\.tgz\.cpt$//'`
+	local TARGET=`basename "$1" | sed -E 's/\.cpt$//'`
+	local PDIR=`dirname "$1"`
 
-	_set "$BASE.TGZ_CPT" "$1"
-
-	if test -z "$1" || ! test -s "$DIR/$BASE.tgz.cpt"; then
-		_syntax "open path/to/archive.tgz.cpt"
+	if test -s "$TARGET"; then
+		_confirm "Overwrite existing file $PDIR/$TARGET?" 1
+		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if test -d "$BASE"; then
-		_confirm "Remove $BASE"
-		test "$CONFIRM" = "y" || return
-		_rm "$BASE"
+	if ! test -z "$2"; then
+		local PBASE=`basename "$2"`
+		local PASS="$2"
+		if test "${PBASE:0:1}" = "." && test -s "$PASS"; then
+			_msg "decrypt $1 (use password from $2)"
+			PASS=`cat "$2"`
+		else
+			_msg "decrypt $1 (use supplied password)"
+		fi
+
+		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -d "$1" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -d '$1'"
+	else
+		_msg "decrypt $1 - Please input password"
+		ccrypt -f -d "$1" || _abort "ccrypt -d '$1'"
 	fi
 
-	_cp "$1" "_$BASE.tgz.cpt" 
-	ccrypt -d "_$BASE.tgz.cpt"
-	_mv "_$BASE.tgz" "$BASE.tgz"
-	tar -xzf "$BASE.tgz"
+	_require_file "$PDIR/$TARGET"
+
+	if test "${TARGET: -4}" = ".tgz"; then
+		_extract_tgz "$PDIR/$TARGET"
+		_rm "$PDIR/$TARGET" >/dev/null
+	fi
 }
 
 
@@ -1417,74 +1433,89 @@ function _encrypt {
 
 
 #--
-# Encrypt file $1 (as $1.cpt) or directory (as $1.tgz.cpt). 
-# Use $RKSCRIPT_DIR/crypt.key
+# Encrypt file $1 (as $1.cpt) or directory (as $1.tgz.cpt). Remove source. 
+# Second parameter is either empty (=ask password), password or password-file (basename must start with dot).
 #
 # @param file or directory path
 # @param crypt key path (optional)
-# @require _abort
+# @require _abort _confirm _create_tgz _msg _rm _require_program
 #--
 function _encrypt {
+	test -z "$1" && _abort "_encrypt: first parameter (path/to/source) missing"
+	_require_program ccrypt
+
+	local SRC="$1"
+	local PASS="$2"
+
 	if test -d "$1"; then
-		tar -czf "$1.tgz" "$1"
-	elif test -f "$1"; then
-		IS_DIR=0
-	else
-		_abort "no such file or directory [$1]"
+		SRC="$1.tgz"
+		_create_tgz "$SRC" "$1"
 	fi
 
+	test -s "$SRC" || _abort "_encrypt: no such file [$SRC]"
 
-	local BASE=`basename "$1"`
-	local TGZ_CPT=`_get "$BASE.TGZ_CPT"`
+	local IS_CPT_FILE=`echo "$1" | grep -E '\.cpt$'`
+	test -z "$IS_CPT_FILE" || _abort "$SRC has already suffix .cpt"
+	
+	if test -s "$SRC.cpt"; then
+		_confirm "Overwrite existing $SRC.cpt?" 1
+		test "$CONFIRM" = "y" || _abort "user abort"
+	fi
 
-	test -s "$TGZ_CPT" || _abort "no such file $TGZ_CPT"
-	test -s "$1.tgz" || _abort "no such file $1.tgz"
-
-	gunzip "$1.tgz"
-	local DIFF=`tar --compare --file="$1.tar" "$1"`
-
-	if ! test -z "$DIFF"; then
-		_confirm "Update archive $TGZ_CPT" 1
-		if test "$CONFIRM" = "y"; then
-			tar -czf "$1.tgz" "$1"
-			ccrypt -e "$1.tgz"
-			_mv "$1.tgz.cpt" "$TGZ_CPT"
+	if ! test -z "$PASS"; then
+		local BASE=`basename "$2"`
+		if test "${BASE:0:1}" = "." && test -s "$2"; then
+			_msg "encrypt '$SRC' as *.cpt (use password from '$2')"
+			PASS=`cat "$2"`
+		else
+			_msg "encrypt '$SRC' as *.cpt (use supplied password)"
 		fi
+
+		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -e "$SRC" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -e '$SRC'"
+	else
+		_msg "encrypt '$SRC' as *.cpt - Please input password"
+		ccrypt -f -e "$SRC" || _abort "ccrypt -e '$SRC'"
 	fi
 
-	_rm "$1 $1.tar"
+	test -s "$SRC.cpt" || _abort "no such file $SRC.cpt"
+
+	_rm "$SRC" >/dev/null
+	if test -d "$1"; then
+		_confirm "Remove source directory $1?" 1
+		test "$CONFIRM" = "y" && _rm "$1" >/dev/null
+	fi
 }
 
 
 #--
-# Extract tgz archive $1. If second parameter is existing directory, remove
-# before extraction.
+# Extract tgz archive $1. If second parameter is existing file or directory, 
+# remove before extraction.
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
 # @require _abort _rm
 #--
 function _extract_tgz {
+	test -s "$1" || _abort "_extract_tgz: Invalid archive path [$1]"
+	local TARGET="$2"
 
-	if ! test -f "$1"; then
-		_abort "Invalid archive path [$1]"
+	if test -z "$TARGET" && test "${1: -4}" = ".tgz"; then
+		TARGET="${1:0:-4}"
 	fi
 
-	if ! test -z "$2" && test -d $2; then
-		_rm "$2"
+	if ! test -z "$TARGET" && test -d $TARGET; then
+		_rm "$TARGET"
 	fi
+
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "_extract_tgz: invalid archive '$1'" 
 
   echo "extract archive $1"
   SECONDS=0
-  tar -xzf $1 || _abort "tar -xzf $1 failed"
+  tar -xzf $1 >/dev/null || _abort "tar -xzf $1 failed"
   echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
-	tar -tzf $1 > /dev/null || _abort "invalid archive $1" 
-
-	if ! test -z "$2"; then
-		if ! test -d "$2" && ! test -f "$2"; then
-			_abort "Path $2 was not created"
-		fi
+	if ! test -z "$TARGET" && ! test -d "$TARGET" && ! test -f "$TARGET"; then
+		_abort "$TAREGET was not created"
 	fi
 }
 
@@ -4005,26 +4036,20 @@ function _rkscript {
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require _abort
+# @require _abort _msg
 #--
 function _rm {
+	test -z "$1" && _abort "Empty remove path list"
 
-	if test -z "$1"; then
-		_abort "Empty remove path list"
-	fi
-
-	local a=; for a in $1
-	do
-		if ! test -f $a && ! test -d $a
-		then
-			if ! test -z "$2"; then
-				_abort "No such file or directory $a"
-			fi
+	local a
+	while read a; do
+		if ! test -f "$a" && ! test -d "$a"; then
+			test -z "$2" || _abort "No such file or directory '$a'"
 		else
-			echo "remove $a"
-			rm -rf $a
+			_msg "remove '$a'"
+			rm -rf "$a" || _abort "rm -rf '$a'"
 		fi
-	done
+	done <<< `echo -e "$1"`
 }
 
 
