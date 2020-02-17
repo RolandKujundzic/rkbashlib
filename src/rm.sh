@@ -1,23 +1,20 @@
 #!/bin/bash
 
 #--
-# Remove files/directories.
+# Remove file or directory.
 #
-# @param path_list
+# @param path/to/entry
 # @param int (optional - abort if set and path is invalid)
 # @require _abort _msg
 #--
 function _rm {
-	test -z "$1" && _abort "Empty remove path list"
+	test -z "$1" && _abort "Empty remove path"
 
-	local a
-	while read a; do
-		if ! test -f "$a" && ! test -d "$a"; then
-			test -z "$2" || _abort "No such file or directory '$a'"
-		else
-			_msg "remove '$a'"
-			rm -rf "$a" || _abort "rm -rf '$a'"
-		fi
-	done <<< `echo -e "$1"`
+	if ! test -f "$1" && ! test -d "$1"; then
+		test -z "$2" || _abort "No such file or directory '$1'"
+	else
+		_msg "remove '$1'"
+		rm -rf "$1" || _abort "rm -rf '$1'"
+	fi
 }
 
