@@ -8,7 +8,7 @@
 # @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
-	[ -z "$1" || -z "$2" ] && return
+	[[ -z "$1" || -z "$2" ]] && return
 
 	_run_as_root
 	_require_file '/etc/shadow'

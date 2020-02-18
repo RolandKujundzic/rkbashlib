@@ -488,9 +488,7 @@ function _cert_domain {
 # @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_fullname {
-	if test -z "$1" || test -z "$2"; then
-		return
-	fi
+	[[ -z "$1" || -z "$2" ]] && return
 	
 	_run_as_root
 	_require_file '/etc/passwd'
@@ -562,7 +560,7 @@ function _change_login {
 # @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
-	[ -z "$1" || -z "$2" ] && return
+	[[ -z "$1" || -z "$2" ]] && return
 
 	_run_as_root
 	_require_file '/etc/shadow'
