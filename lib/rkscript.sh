@@ -542,11 +542,11 @@ function _change_password {
 
 	_run_as_root
 	_require_file '/etc/shadow'
-	local HAS_PASS=`grep -E "^$1:$2" '/etc/shadow'`
+	local HAS_PASS=`grep -E "^$1:$3" '/etc/shadow'`
 	test -z "$HAS_PASS" || return
 	_require_program 'passwd'
 	_msg "change $1 password"
-	{ echo "$2" | passwd -q $1; } || _abort "password change failed for '$1'"
+	{ echo "$2" | passwd -q --stdin $1; } || _abort "password change failed for '$1'"
 }
 
 #--
