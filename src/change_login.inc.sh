@@ -10,14 +10,16 @@
 function _change_login {
 	local OLD="$1"
 	local NEW="$2"
-	test "$OLD" = "$NEW" || return
+	test "$OLD" = "$NEW" && return
 
 	_run_as_root
 	_require_file '/etc/passwd'
-	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
+
 	local HAS_NEW=`grep -E "^$NEW:" '/etc/passwd'`
-	test -z "$HAS_OLD" || _abort "no such user $OLD"
 	test -z "$HAS_NEW" || return
+
+	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
+	test -z "$HAS_OLD" && _abort "no such user $OLD"
 
 	_require_program usermod
 	usermod -l "$NEW" "$OLD" || _abort "usermod -l '$NEW' '$OLD'"
