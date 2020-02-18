@@ -4,23 +4,23 @@
 # Abort if program (function) $1 does not exist (and $2 is not 1).
 #
 # @param program
-# @param return_bool (default = 0)
-# @require _abort
+# @param string default='' (abort if missing), 1=return false, apt:xxx (install xxx if missing)
 # @return bool (if $2==1)
 #--
 function _require_program {
 	local TYPE=`type -t "$1"`
-	local ERROR=0
-	local CHECK=$2
+	local CHECK="$2"
 
-	test "$TYPE" = "function" && return $ERROR
+	test "$TYPE" = "function" && return
+	command -v "$1" >/dev/null 2>&1 && return
 
-	command -v "$1" >/dev/null 2>&1 || ERROR=1
-
-	if ((!CHECK && ERROR)); then
-		echo "No such program [$1]" && exit 1
+	if test "${2:0:4}" = "apt:"; then
+		apt -y install "${2:4}"
+	elif test -z "$2"; then
+		echo "No such program [$1]"
+		exit 1
+	else
+		return 1
 	fi
-
-	return $ERROR
 }
 
