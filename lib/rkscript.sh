@@ -481,6 +481,73 @@ function _cert_domain {
 
 
 #--
+# Change hostname if hostname != $1.
+#
+# @param hostname
+# @require _abort _require_program _msg _run_as_root
+#--
+function _change_hostname {
+	local NEW_HNAME="$1"
+	test -z "$NEW_HNAME" && return
+
+	_run_as_root
+	_require_program hostname
+	local CURR_HNAME=`hostname`
+	test "$NEW_HNAME" = "$CURR_HNAME" && return
+
+	_require_program hostnamectl
+	_msg "change hostname '$CURR_HNAME' to '$NEW_HNAME'"
+	hostnamectl set-hostname "$NEW_HNAME" || _abort "hostnamectl set-hostname '$NEW_HNAME'"
+}
+
+
+#--
+# Change old_login into new_login. If login is same or both exist do nothing.
+#
+# @param old_login
+# @param new_login
+# @require _abort _require_program _require_file _run_as_root
+#--
+function _change_login {
+	local OLD="$1"
+	local NEW="$2"
+	test "$OLD" = "$NEW" || return
+
+	_run_as_root
+	_require_file '/etc/passwd'
+	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
+	local HAS_NEW=`grep -E "^$NEW:" '/etc/passwd'`
+	test -z "$HAS_OLD" || _abort "no such user $OLD"
+	test -z "$HAS_NEW" || return
+
+	_require_program usermod
+	usermod -l "$NEW" "$OLD" || _abort "usermod -l '$NEW' '$OLD'"
+}
+
+
+#--
+# Change password $2 of user $1 if crypted password $3 is not used.
+#
+# @param user
+# @param password
+# @param crypted password
+# @require _abort _msg _require_progam _require_file _run_as_root
+#--
+function _change_password {
+	if test -z "$1" || test -z "$2" || test -z "$3"; then
+		return
+	fi
+
+	_run_as_root
+	_require_file '/etc/shadow'
+	local HAS_PASS=`grep -E "^$1:$2" '/etc/shadow'`
+	test -z "$HAS_PASS" || return
+	_require_program 'passwd'
+	_msg "change $1 password"
+	{ echo "$2" | passwd -q $1; } || _abort "password change failed for '$1'"
+}
+
+#--
 # Abort if ip_address of domain does not point to IP_ADDRESS.
 # Call _ip_address first.
 #
@@ -3972,15 +4039,15 @@ function _require_priv {
 function _require_program {
 	local TYPE=`type -t "$1"`
 	local ERROR=0
-  local CHECK=$2
+	local CHECK=$2
 
 	test "$TYPE" = "function" && return $ERROR
 
 	command -v "$1" >/dev/null 2>&1 || ERROR=1
 
-  if ((!CHECK && ERROR)); then
-    echo "No such program [$1]" && exit 1
-  fi
+	if ((!CHECK && ERROR)); then
+		echo "No such program [$1]" && exit 1
+	fi
 
 	return $ERROR
 }
