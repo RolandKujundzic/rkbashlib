@@ -6,13 +6,14 @@
 # @param user
 # @param password
 # @param crypted password
-# @require _abort _msg _require_progam _require_file
+# @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
 	if test -z "$1" || test -z "$2" || test -z "$3"; then
 		return
 	fi
 
+	_run_as_root
 	_require_file '/etc/shadow'
 	local HAS_PASS=`grep -E "^$1:$2" '/etc/shadow'`
 	test -z "$HAS_PASS" || return
