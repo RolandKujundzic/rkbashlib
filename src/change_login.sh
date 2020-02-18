@@ -5,7 +5,7 @@
 #
 # @param old_login
 # @param new_login
-# @require _abort _require_program _require_file _run_as_root
+# @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_login {
 	local OLD="$1"
@@ -22,6 +22,7 @@ function _change_login {
 	test -z "$HAS_OLD" && _abort "no such user $OLD"
 
 	_require_program usermod
+	_msg "change login '$OLD' to '$NEW'"
 	usermod -l "$NEW" "$OLD" || _abort "usermod -l '$NEW' '$OLD'"
 }
 
