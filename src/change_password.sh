@@ -5,19 +5,23 @@
 #
 # @param user
 # @param password
-# @param crypted password
 # @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
-	if test -z "$1" || test -z "$2" || test -z "$3"; then
-		return
-	fi
+	[ -z "$1" || -z "$2" ] && return
 
 	_run_as_root
 	_require_file '/etc/shadow'
-	local HAS_PASS=`grep -E "^$1:$3" '/etc/shadow'`
-	test -z "$HAS_PASS" || return
+	_require_program 'getent'
+
+	local SALT=`getent shadow "$1" | cut -d'$' -f3`
+	local EPASS=`getent shadow "$1" | cut -d':' -f2`
+	MATCH=`python -c 'import crypt; print crypt.crypt("'"$2"'", "$6$'"$SALT"'")'`
+
+	[ ${MATCH} == ${EPASS} ] && return
+
 	_require_program 'chpasswd'
 	_msg "change $1 password"
 	{ echo "$1:$2" | chpasswd; } || _abort "password change failed for '$1'"
 }
+
