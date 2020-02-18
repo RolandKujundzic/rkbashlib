@@ -13,7 +13,7 @@ function _crontab {
 	log "install $1 crontab: $2 $3"
 	_mkdir "$CRONTAB_DIR" >/dev/null
 
-	grep "$3" "$CRONTAB_DIR/$1" && { echo "already installed - skip"; return; }
+	grep "$3" "$CRONTAB_DIR/$1" 2>/dev/null && { echo "already installed - skip"; return; }
 	echo "$2 $3" >>"$CRONTAB_DIR/$1" || _abort "failed to create $1 cron"
 }
 
