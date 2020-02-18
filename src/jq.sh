@@ -9,7 +9,7 @@
 #--
 function _jq {
 	local KEY="$1"
-	local FILE="{$2:-$JQ_FILE}"
+	local FILE="${2:-$JQ_FILE}"
 
 	test -z "$KEY" && _abort "empty json key"
 	_require_file "$FILE"
