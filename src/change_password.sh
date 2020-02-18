@@ -17,7 +17,7 @@ function _change_password {
 	_require_file '/etc/shadow'
 	local HAS_PASS=`grep -E "^$1:$3" '/etc/shadow'`
 	test -z "$HAS_PASS" || return
-	_require_program 'passwd'
+	_require_program 'chpasswd'
 	_msg "change $1 password"
-	{ echo "$2" | passwd -q --stdin $1; } || _abort "password change failed for '$1'"
+	{ echo "$1:$2" | chpasswd; } || _abort "password change failed for '$1'"
 }
