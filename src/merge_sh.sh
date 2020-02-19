@@ -22,14 +22,18 @@ function _merge_sh {
 	local TMP_APP="$SH_DIR"'_'
 
 	local MD5_OLD=`_md5 "$APP"`
-  echo -n "merge $SH_DIR into $APP ... "
+	echo -n "merge $SH_DIR into $APP ... "
 
 	echo '#!/bin/bash' > "$TMP_APP"
 
 	local a
 	for a in "$SH_DIR"/*.inc.sh; do
 		tail -n+2 "$a" >> "$TMP_APP"
-  done
+	done
+
+	for a in "$SH_DIR"/*/*.inc.sh; do
+		tail -n+2 "$a" >> "$TMP_APP"
+	done
 
 	local MD5_NEW=`_md5 "$TMP_APP"`
 
@@ -39,7 +43,7 @@ function _merge_sh {
 	else
 		echo "update"
 		_mv "$TMP_APP" "$APP"
-  	_chmod 755 "$APP"
+		_chmod 755 "$APP"
 	fi
 
 	exit 0
