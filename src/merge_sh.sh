@@ -26,12 +26,9 @@ function _merge_sh {
 
 	echo '#!/bin/bash' > "$TMP_APP"
 
+	local INC_SH=`ls "$SH_DIR"/*.inc.sh "$SH_DIR"/*/*.inc.sh "$SH_DIR"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
-	for a in "$SH_DIR"/*/*.inc.sh; do
-		tail -n+2 "$a" >> "$TMP_APP"
-	done
-
-	for a in "$SH_DIR"/*.inc.sh; do
+	for a in $INC_SH; do
 		tail -n+2 "$a" >> "$TMP_APP"
 	done
 

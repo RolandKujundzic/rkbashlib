@@ -2367,11 +2367,17 @@ function _kill_process {
 
 	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
 	if test -z "$FOUND_PID"; then
-		if ! test -z "$2"; then
-			_abort "no such pid $MY_PID"
+		local MSG="no such pid $MY_PID"
+
+		if test "${1:0:5}" = "file:"; then
+			MSG="$MSG - update ${1:5}" 
 		fi
 
-		echo "no such pid $MY_PID"
+		if ! test -z "$2"; then
+			_abort "$MSG"
+		fi
+
+		echo "$MSG"
 	else
 		echo "kill $MY_PID"
 		kill "$MY_PID" || _abort "kill '$MY_PID'"
@@ -2623,12 +2629,9 @@ function _merge_sh {
 
 	echo '#!/bin/bash' > "$TMP_APP"
 
+	local INC_SH=`ls "$SH_DIR"/*.inc.sh "$SH_DIR"/*/*.inc.sh "$SH_DIR"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
-	for a in "$SH_DIR"/*/*.inc.sh; do
-		tail -n+2 "$a" >> "$TMP_APP"
-	done
-
-	for a in "$SH_DIR"/*.inc.sh; do
+	for a in $INC_SH; do
 		tail -n+2 "$a" >> "$TMP_APP"
 	done
 
