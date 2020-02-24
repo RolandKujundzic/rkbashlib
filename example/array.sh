@@ -15,6 +15,11 @@ function hash_test {
 }
 
 
+function sub() {
+	echo "sub A: ${A[@]} ${!A[@]}"
+}
+
+
 #
 # M A I N
 #
@@ -22,6 +27,8 @@ function hash_test {
 LIST="xyzuvw aa bb cc dd ee fghi"
 hash_test $LIST
 hash_test "$LIST"
+sub
+echo "main A: ${A[@]} ${!A[@]}"
 
 declare -A GLOBAL_HASH=([test]='hello')
 declare -A GLOBAL_HASH2
