@@ -42,7 +42,7 @@ function _chmod {
 		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
 			_sudo "$CMD $1 '$2'" 1
 		fi
-	else
+	elif test -d "$2"; then
 		# no stat compare because subdir entry may have changed
 		_sudo "$CMD $1 '$2'" 1
 	fi

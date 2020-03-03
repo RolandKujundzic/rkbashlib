@@ -704,7 +704,7 @@ function _chmod {
 		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
 			_sudo "$CMD $1 '$2'" 1
 		fi
-	else
+	elif test -d "$2"; then
 		# no stat compare because subdir entry may have changed
 		_sudo "$CMD $1 '$2'" 1
 	fi
@@ -756,7 +756,7 @@ function _chown {
 
 		[[ -z "$CURR_OWNER" || -z "$CURR_GROUP" ]] && _abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
 		[[ "$CURR_OWNER" != "$2" || "$CURR_GROUP" != "$3" ]] && MODIFY=1
-	else
+	elif test -d "$1"; then
 		# no stat compare because subdir entry may have changed
 		MODIFY=1
 	fi
