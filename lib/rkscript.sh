@@ -719,18 +719,22 @@ function _chmod {
 # @param group 
 # @sudo
 # @global CHOWN (default chown -R)
-# @require _abort
+# @require _abort _sudo _require_program _msg
 #--
 function _chown {
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
+	_require_program stat
+
 	local CMD="chown -R"
 	if ! test -z "$CHOWN"; then
 		CMD="$CHOWN"
 		CHOWN=
 	fi
+
+	local MODIFY=
 
 	if test -z "$1"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
@@ -750,17 +754,26 @@ function _chown {
 		local CURR_OWNER=$(stat -c '%U' "$1")
 		local CURR_GROUP=$(stat -c '%G' "$1")
 
-		if test -z "$CURR_OWNER" || test -z "$CURR_GROUP"; then
-			_abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
-		fi
-
-		if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
-			_sudo "$CMD '$2.$3' '$1'" 1
-		fi
+		[[ -z "$CURR_OWNER" || -z "$CURR_GROUP" ]] && _abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
+		[[ "$CURR_OWNER" != "$2" || "$CURR_GROUP" != "$3" ]] && MODIFY=1
 	else
 		# no stat compare because subdir entry may have changed
-		_sudo "$CMD $2.$3 '$1'" 1
+		MODIFY=1
 	fi
+
+	test -z "$MODIFY" && return
+
+	local ME=`basename "$HOME"`
+	if test "$ME" = "$2"; then
+		local HAS_GROUP=`groups $ME | grep " $3 "`
+		if ! test -z "$HAS_GROUP"; then
+			_msg "$CMD $2.$3. '$1'"
+			$CMD "$2.$3" "$1" || _abort "$CMD $2.$3. '$1'"
+			return
+		fi
+	fi
+
+	_sudo "$CMD '$2.$3' '$1'" 1
 }
 
 
