@@ -6,7 +6,7 @@ declare -A _SQL_PARAM
 declare -A _SQL_COL
 
 #--
-# Run sql select or execute query. Query is either $2 or _SQL_QUERY[$2] (if set). 
+# Run _sql[_list|execute|select]. Query is either $2 or _SQL_QUERY[$2] (if set). 
 # If $1=select save result of select query to _SQL_COL. Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
 # If $1=execute ask if query $2 should be execute (default=y) or skip. Set _SQL 
 # (default _SQL="rks-db_connect query") and _SQL_QUERY (optional).
@@ -18,7 +18,7 @@ declare -A _SQL_COL
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
-# @require _abort _confirm _sql_echo
+# @require _abort _confirm _sql_echo _sql_execute
 # @return boolean (if type=select - false = no result)
 #--
 function _sql {
@@ -69,15 +69,9 @@ function _sql {
 			_abort "ToDo: _sql select multi line result ($LNUM lines)\nQUERY: $QUERY"
 		fi
 	elif test "$1" = "execute"; then
-		if test "$3" = "1"; then
-			echo "execute sql query: $(_sql_echo "$QUERY")"
-			$_SQL "$QUERY" || _abort "$QUERY"
-		else
-			_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-			test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
-		fi
+		_sql_execute "$2" $3
 	else
-		_abort "_sql(...) invalid first parameter [$1] - use select|execute"
+		_abort "_sql(...) invalid first parameter [$1] - use select|execute|list"
 	fi
 }
 
