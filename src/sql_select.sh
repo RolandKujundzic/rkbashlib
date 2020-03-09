@@ -3,7 +3,7 @@
 #--
 # Run sql select query. Save result of select query to _SQL_COL. 
 # Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
-#d
+#
 # BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
 #
 # @global _SQL _SQL_PARAM (hash) _SQL_COL (hash)
@@ -16,7 +16,7 @@
 #--
 function _sql_select {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_select $1"
+	test -z "$QUERY" && _abort "empty query in _sql_select"
 	_require_global "_SQL"
 
 	local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
@@ -42,7 +42,7 @@ function _sql_select {
 	elif test $LNUM -lt 2; then
 		return 1  # false = no result
 	else
-		_abort "ToDo: _sql select multi line result ($LNUM lines)\nQUERY: $QUERY"
+		_abort "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
 	fi
 }
 
