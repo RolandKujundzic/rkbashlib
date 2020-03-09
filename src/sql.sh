@@ -40,13 +40,14 @@ function _sql {
 		done
 	fi
 
-
-	test -z "$QUERY" && _abort "empty query in _sql $1"
+	test -z "$QUERY" && _abort "empty query in _sql"
 
 	if test "$1" = "select"; then
 		_sql_select "$QUERY"
 	elif test "$1" = "execute"; then
 		_sql_execute "$QUERY" $3
+	elif test "$1" = "list"; then
+		_sql_list "$QUERY"
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute|list"
 	fi
