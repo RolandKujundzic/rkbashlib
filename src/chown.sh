@@ -57,8 +57,8 @@ function _chown {
 		local HAS_GROUP=`groups $ME | grep " $3 "`
 		if ! test -z "$HAS_GROUP"; then
 			_msg "$CMD $2.$3 '$1'"
-			$CMD "$2.$3" "$1" || _abort "$CMD $2.$3 '$1'"
-			return
+			$CMD "$2.$3" "$1" && return
+			_msg "$CMD '$2.$3' '$1' failed - try as root"
 		fi
 	fi
 
