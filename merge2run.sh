@@ -7,27 +7,16 @@ SCRIPT_NAME="$0"
 command -v realpath > /dev/null 2>&1 && SCRIPT_NAME=`realpath "$0"`
 
 SCRIPT_SRC=`dirname "$SCRIPT_NAME"`"/src"
+LOAD_FUNC="abort msg osx syntax confirm require_global required_rkscript scan_rkscript_src cache mkdir cd rm"
 
-. "$SCRIPT_SRC/abort.sh"
-. "$SCRIPT_SRC/msg.sh"
-. "$SCRIPT_SRC/osx.sh"
-. "$SCRIPT_SRC/syntax.sh"
-. "$SCRIPT_SRC/confirm.sh"
-. "$SCRIPT_SRC/require_global.sh"
-. "$SCRIPT_SRC/required_rkscript.sh"
-. "$SCRIPT_SRC/scan_rkscript_src.sh"
-. "$SCRIPT_SRC/cache.sh"
-. "$SCRIPT_SRC/mkdir.sh"
-. "$SCRIPT_SRC/cd.sh"
-. "$SCRIPT_SRC/rm.sh"
+for a in $LOAD_FUNC; do
+	. "$SCRIPT_SRC/$a.sh"
+done
 
-if test -z "$RKSCRIPT_PATH"; then
-	RKSCRIPT_PATH=`dirname "$SCRIPT_NAME"`
-fi
+test -z "$RKSCRIPT_PATH" && RKSCRIPT_PATH=`dirname "$SCRIPT_NAME"`
 
 APP=$0
 OUT=run.sh
-
 export APP_PID="$APP_PID $$"
 
 echo
@@ -87,6 +76,9 @@ MERGE2RUN=`echo "$MERGE2RUN" | sed -e 's/ /\n/g' | sort -u - | tr '\n' ' '`
 # put main function last
 MAIN_FUNC=${M2R_LIST[-1]}
 MERGE2RUN=`echo "$MERGE2RUN" | sed -e "s/ $MAIN_FUNC//"`" $MAIN_FUNC"
+
+# put copyright first
+test "${M2R_LIST[0]}" = "copyright" && MERGE2RUN="copyright "`echo "$MERGE2RUN" | sed -e "s/ copyright//"`
 
 echo "Create $OUT ($MERGE2RUN)"
 
