@@ -8,21 +8,29 @@
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
 #
 # @global APP
+# @param split dir (optional if $APP is used)
+# @param output file (optional if $APP is used)
 # @require _require_file _require_dir _chmod _md5 _rm
-# @exit
+# @exit unless $2 is empty
 #--
 function _merge_sh {
-	_require_file "$APP"
-	local SH_DIR="$APP"'_'
+	local MAPP="${1:-$APP}"
 
-	test -d "$SH_DIR" || { test -d `basename $APP` && SH_DIR=`basename $APP`; }
+	if ! test -z "$2"; then
+    MAPP="$2"
+		SH_DIR="$1"
+	else
+		_require_file "$MAPP"
+		local SH_DIR="$MAPP"'_'
+		test -d "$SH_DIR" || { test -d `basename $MAPP` && SH_DIR=`basename $MAPP`; }
+	fi
 
 	_require_dir "$SH_DIR"
 
 	local TMP_APP="$SH_DIR"'_'
 
-	local MD5_OLD=`_md5 "$APP"`
-	echo -n "merge $SH_DIR into $APP ... "
+	local MD5_OLD=`_md5 "$MAPP"`
+	echo -n "merge $SH_DIR into $MAPP ... "
 
 	echo '#!/bin/bash' > "$TMP_APP"
 
@@ -39,10 +47,10 @@ function _merge_sh {
 		_rm "$TMP_APP" >/dev/null
 	else
 		echo "update"
-		_mv "$TMP_APP" "$APP"
-		_chmod 755 "$APP"
+		_mv "$TMP_APP" "$MAPP"
+		_chmod 755 "$MAPP"
 	fi
 
-	exit 0
+	test -z "$2" || exit 0
 }
 
