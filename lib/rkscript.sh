@@ -2667,7 +2667,7 @@ function _merge_sh {
 		_chmod 755 "$MAPP"
 	fi
 
-	test -z "$2" || exit 0
+	test -z "$2" && exit 0
 }
 
 
