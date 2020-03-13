@@ -13,6 +13,7 @@ function _require_program {
 
 	test "$TYPE" = "function" && return
 	command -v "$1" >/dev/null 2>&1 && return
+	command -v "./$1" >/dev/null 2>&1 && return
 
 	if test "${2:0:4}" = "apt:"; then
 		apt -y install "${2:4}"
