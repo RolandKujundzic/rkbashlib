@@ -303,10 +303,18 @@ function _apt_remove {
 # Ask question.
 #
 # @param string label
+# @param default answer
 #--
 function _ask {
-	echo -n "$1  "
+	local LABEL="$1  "
+	test -z "$2" || LABEL="$1  [$2]  "
+
+	echo -n "$LABEL"
 	read ANSWER
+
+	if test -z "$ANSWER" && ! test -z "$2"; then
+		ANSWER="$2"
+	fi
 }
 
 #--
@@ -3874,6 +3882,22 @@ EOF
 #--
 function _php_version {
 	PHP_VERSION=`php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/'`
+}
+
+
+#--
+# Check if port $2 on server $1 is reachable
+#
+# @param string ip or server name
+# @param port
+# @return bool
+#--
+function _port_reachable {
+	if nc -zv -w2 $1 $2 2>/dev/null; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 
