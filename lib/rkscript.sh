@@ -300,11 +300,14 @@ function _apt_remove {
 
 
 #--
-# Ask question.
+# Ask question. Skip default answer with SPACE. Loop max. 3 times
+# until answered if $3=1. 
 #
-# @export ANSWER
 # @param string label
 # @param default answer
+# @param bool required 1|[] (default empty)
+# @export ANSWER
+# @required _abort
 #--
 function _ask {
 	local LABEL="$1  "
@@ -319,6 +322,12 @@ function _ask {
 		ANSWER="$2"
 	else
 		ANSWER="$REPLY"
+	fi
+
+	if test -z "$ANSWER" && test "$3" -gt 0; then
+		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
+		local RECURSION=$(($3 + 1))
+		_ask "$1" "$2" "$RECURSION"
 	fi
 }
 
