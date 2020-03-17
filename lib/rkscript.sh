@@ -300,6 +300,16 @@ function _apt_remove {
 
 
 #--
+# Ask question.
+#
+# @param string label
+#--
+function _ask {
+	echo -n "$1  "
+	read ANSWER
+}
+
+#--
 # Install Amazon AWS PHP SDK
 #
 # @require _composer _composer_pkg 
