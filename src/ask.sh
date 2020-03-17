@@ -3,6 +3,7 @@
 #--
 # Ask question.
 #
+# @export ANSWER
 # @param string label
 # @param default answer
 #--
@@ -11,9 +12,13 @@ function _ask {
 	test -z "$2" || LABEL="$1  [$2]  "
 
 	echo -n "$LABEL"
-	read ANSWER
+	read
 
-	if test -z "$ANSWER" && ! test -z "$2"; then
+	if test "$REPLY" = " "; then
+		ANSWER=
+	elif test -z "$REPLY" && ! test -z "$2"; then
 		ANSWER="$2"
+	else
+		ANSWER="$REPLY"
 	fi
 }
