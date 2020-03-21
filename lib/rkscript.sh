@@ -300,6 +300,38 @@ function _apt_remove {
 
 
 #--
+# Ask question. Skip default answer with SPACE. Loop max. 3 times
+# until answered if $3=1. 
+#
+# @param string label
+# @param default answer
+# @param bool required 1|[] (default empty)
+# @export ANSWER
+# @required _abort
+#--
+function _ask {
+	local LABEL="$1  "
+	test -z "$2" || LABEL="$1  [$2]  "
+
+	echo -n "$LABEL"
+	read
+
+	if test "$REPLY" = " "; then
+		ANSWER=
+	elif test -z "$REPLY" && ! test -z "$2"; then
+		ANSWER="$2"
+	else
+		ANSWER="$REPLY"
+	fi
+
+	if test -z "$ANSWER" && test "$3" -gt 0; then
+		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
+		local RECURSION=$(($3 + 1))
+		_ask "$1" "$2" "$RECURSION"
+	fi
+}
+
+#--
 # Install Amazon AWS PHP SDK
 #
 # @require _composer _composer_pkg 
@@ -3864,6 +3896,22 @@ EOF
 #--
 function _php_version {
 	PHP_VERSION=`php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/'`
+}
+
+
+#--
+# Check if port $2 on server $1 is reachable
+#
+# @param string ip or server name
+# @param port
+# @return bool
+#--
+function _port_reachable {
+	if nc -zv -w2 $1 $2 2>/dev/null; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 
