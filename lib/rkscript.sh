@@ -19,16 +19,25 @@ done
 #
 # @exit
 # @global APP NO_ABORT
-# @param abort message
+# @param string abort message|line number
+# @param abort message (optional - use if $1 = line number)
 #--
 function _abort {
+	local MSG="$1"
+	local LINE=
+
+	if ! test -z "$2"; then
+		MSG="$2"
+		LINE="[$1]"
+	fi
+
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "WARNING: $1"
+		echo "WARNING$LINE: $MSG"
 		return 1
 	fi
 
-	echo -e "\nABORT: $1\n\n" 1>&2
+	echo -e "\nABORT$LINE: $MSG\n\n" 1>&2
 
 	local other_pid=
 
@@ -47,6 +56,35 @@ function _abort {
 	fi
 
 	exit 1
+}
+
+
+#--
+# Add linenumber to $1 after _abort.
+#
+# @param string file 
+# @require _cp _mkdir _abort
+#--
+function _add_abort_linenum {
+	local LINES
+	local NEW_LINE
+
+	_mkdir "$RKSCRIPT_DIR/add_abort_linenum" >/dev/null
+	local TMP_FILE="$RKSCRIPT_DIR/add_abort_linenum/"`basename "$1"`
+	test -f "$TMP_FILE" && _abort 74 "$TMP_FILE already exists"
+
+	echo -n "add line number to _abort in $1"
+	local CHANGES=0
+
+	readarray -t LINES < "$1"
+	for ((i = 0; i < ${#LINES[@]}; i++)); do
+		FIX_LINE=`echo "${LINES[$i]}" | grep -E -e ' (\|\||&&) _abort ' -e '^\s*_abort ' | grep -vE -e '^\s*#' -e '^\s*function ' -e ' _abort [0-9]+ '`
+		test -z "$FIX_LINE" && echo "${LINES[$i]}" >> $TMP_FILE || \
+			{ CHANGES=$((CHANGES+1)); echo "${LINES[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g'; } >> "$TMP_FILE"
+	done
+
+	echo " ($CHANGES)"
+	_cp "$TMP_FILE" "$1" >/dev/null
 }
 
 
@@ -155,8 +193,8 @@ declare -A API_QUERY
 # @global API_QUERY
 #--
 function _api_query {
-	test -z "$1" && _abort "missing query type - use curl|func|wget"
-	test -z "$2" && _abort "missing query string"
+	test -z "$1" && _abort 196 "missing query type - use curl|func|wget"
+	test -z "$2" && _abort 197 "missing query string"
 
 	local OUT_F="$RKSCRIPT_DIR/api_query.res"	
 	local LOG_F="$RKSCRIPT_DIR/api_query.log"	
@@ -169,15 +207,15 @@ function _api_query {
 
 	if test "$1" = "wget"; then
 		_msg "wget ${API_QUERY[url]}/$2"
-		wget -q -O "$OUT_F" "${API_QUERY[url]}/$2" >"$LOG_F" 2>"$ERR_F" || _abort "wget failed"
-		test -s "$OUT_F" || _abort "no result"
+		wget -q -O "$OUT_F" "${API_QUERY[url]}/$2" >"$LOG_F" 2>"$ERR_F" || _abort 210 "wget failed"
+		test -s "$OUT_F" || _abort 211 "no result"
 	else
-		_abort "$1 api query not implemented"
+		_abort 213 "$1 api query not implemented"
 	fi
 
 	test -s "$OUT_F" && API_QUERY[out]=`cat "$OUT_F"`
 	test -s "$LOG_F" && API_QUERY[log]=`cat "$LOG_F"`
-	test -z "$ERR_F" || _abort "non-empty error log"
+	test -z "$ERR_F" || _abort 218 "non-empty error log"
 }
 
 
@@ -190,12 +228,12 @@ function _api_query {
 #--
 function _append_file {
 	local FOUND=
-	test -f "$2" || _abort "no such file [$2]"
+	test -f "$2" || _abort 231 "no such file [$2]"
 	test -s "$1" && FOUND=$(grep "`head -3 \"$2\"`" "$1")
 	test -z "$FOUND" || { _msg "$2 was already appended to $1"; return; }
 
 	_msg "append file '$2' to '$1'"
-	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
+	cat "$2" >> "$1" || _abort 236 "cat '$2' >> '$1'"
 }
 
 
@@ -228,9 +266,9 @@ function _append_txt {
 
 	_msg "append text '$2' to '$1'"
 	if test -w "$1"; then
-		echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
+		echo "$2" >> "$1" || _abort 269 "echo '$2' >> '$1'"
 	else
-		{ echo "$2" | sudo tee -a "$1" >/dev/null; } || _abort "echo '$2' | sudo tee -a '$1'"
+		{ echo "$2" | sudo tee -a "$1" >/dev/null; } || _abort 271 "echo '$2' | sudo tee -a '$1'"
 	fi
 }
 
@@ -242,10 +280,10 @@ function _append_txt {
 #--
 function _apt_clean {
 	_run_as_root
-	apt -y clean || _abort "apt -y clean"
-	apt -y autoclean || _abort "apt -y autoclean"
-	apt -y install -f || _abort "apt -y install -f"
-	apt -y autoremove || _abort "apt -y autoremove"
+	apt -y clean || _abort 283 "apt -y clean"
+	apt -y autoclean || _abort 284 "apt -y autoclean"
+	apt -y install -f || _abort 285 "apt -y install -f"
+	apt -y autoremove || _abort 286 "apt -y autoremove"
 }
 
 
@@ -267,7 +305,7 @@ function _apt_install {
 		if test -d "$RKSCRIPT_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
-			sudo apt -y install $a || _abort "apt -y install $a"
+			sudo apt -y install $a || _abort 308 "apt -y install $a"
 			_log "apt -y install $a" apt/$a
 		fi
 	done
@@ -290,7 +328,7 @@ function _apt_remove {
 	for a in $1; do
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
-			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
+			apt -y remove --purge $a || _abort 331 "apt -y remove --purge $a"
 			_rm "$RKSCRIPT_DIR/apt/$a"
 		fi
 	done
@@ -325,7 +363,7 @@ function _ask {
 	fi
 
 	if test -z "$ANSWER" && test "$3" -gt 0; then
-		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
+		test "$3" -ge 3 && _abort 366 "you failed to answer the question 3 times"
 		local RECURSION=$(($3 + 1))
 		_ask "$1" "$2" "$RECURSION"
 	fi
@@ -471,17 +509,17 @@ function _cd {
 			_cd "$LAST_DIR"
 			return
 		else
-			_abort "empty directory path"
+			_abort 512 "empty directory path"
 		fi
 	fi
 
 	if ! test -d "$1"; then
-		_abort "no such directory [$1]"
+		_abort 517 "no such directory [$1]"
 	fi
 
 	LAST_DIR="$PWD"
 
-	cd "$1" || _abort "cd '$1' failed"
+	cd "$1" || _abort 522 "cd '$1' failed"
 }
 
 
@@ -500,12 +538,12 @@ function _cert_domain {
 	fi
 
 	if ! test -f "$CERT_FILE"; then
-		_abort "no such file $CERT_FILE"
+		_abort 541 "no such file $CERT_FILE"
 	else   
 		local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
          
 		if test -z "$HAS_DOMAIN"; then
-			_abort "missing domain $1 in $CERT_FILE"
+			_abort 546 "missing domain $1 in $CERT_FILE"
 		fi
  	fi
 }
@@ -532,7 +570,7 @@ function _change_fullname {
 	test "$2" = "$FULLNAME" && return
 
 	_msg "Change full name of $1 to $2"
-	chfn -f "$2" "$1" || _abort "chfn -f '$2' '$1'"
+	chfn -f "$2" "$1" || _abort 573 "chfn -f '$2' '$1'"
 }
 
 
@@ -553,7 +591,7 @@ function _change_hostname {
 
 	_require_program hostnamectl
 	_msg "change hostname '$CURR_HNAME' to '$NEW_HNAME'"
-	hostnamectl set-hostname "$NEW_HNAME" || _abort "hostnamectl set-hostname '$NEW_HNAME'"
+	hostnamectl set-hostname "$NEW_HNAME" || _abort 594 "hostnamectl set-hostname '$NEW_HNAME'"
 }
 
 
@@ -577,7 +615,7 @@ function _change_login {
 	test -z "$HAS_NEW" || return
 
 	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
-	test -z "$HAS_OLD" && _abort "no such user $OLD"
+	test -z "$HAS_OLD" && _abort 618 "no such user $OLD"
 
 	local OLD_GNAME=`id -g -n "$OLD"`
 
@@ -586,13 +624,13 @@ function _change_login {
 	_require_program usermod
 	_require_program groupmod
 
-	usermod -l "$NEW" "$OLD" && _msg "changed login '$OLD' to '$NEW'" || _abort "usermod -l '$NEW' '$OLD'"
+	usermod -l "$NEW" "$OLD" && _msg "changed login '$OLD' to '$NEW'" || _abort 627 "usermod -l '$NEW' '$OLD'"
 
 	{ test "$OLD_GNAME" = "$OLD" && groupmod --new-name "$NEW" "$OLD"; } \
-		&& _msg "changed group '$OLD' to '$NEW'" || _abort "groupmod --new-name '$NEW' '$OLD'"
+		&& _msg "changed group '$OLD' to '$NEW'" || _abort 630 "groupmod --new-name '$NEW' '$OLD'"
 
 	{ [[ -d "/home/$OLD" && ! -d "/home/$NEW" ]] && usermod -d "/home/$NEW" -m "$NEW"; } \
-		&& _msg "moved '/home/$OLD' to '/home/$NEW'" || _abort "usermod -d '/home/$NEW' -m '$NEW'"
+		&& _msg "moved '/home/$OLD' to '/home/$NEW'" || _abort 633 "usermod -d '/home/$NEW' -m '$NEW'"
 }
 
 
@@ -618,7 +656,7 @@ function _change_password {
 
 	_require_program 'chpasswd'
 	_msg "change $1 password"
-	{ echo "$1:$2" | chpasswd; } || _abort "password change failed for '$1'"
+	{ echo "$1:$2" | chpasswd; } || _abort 659 "password change failed for '$1'"
 }
 
 
@@ -635,7 +673,7 @@ function _check_ip {
 
 	local IP_OK=`ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS"`
 	if test -z "$IP_OK"; then
-		_abort "$1 does not point to server ip $IP_ADDRESS"
+		_abort 676 "$1 does not point to server ip $IP_ADDRESS"
 	fi
 }
 
@@ -678,7 +716,7 @@ function _chmod_df {
 	local MDPRIV=$4
 
 	if ! test -d "$CHMOD_PATH" && ! test -f "$CHMOD_PATH"; then
-		_abort "no such directory or file: [$CHMOD_PATH]"
+		_abort 719 "no such directory or file: [$CHMOD_PATH]"
 	fi
 
 	test -z "$FPRIV" && FPRIV=644
@@ -689,7 +727,7 @@ function _chmod_df {
 
 	if ! test -z "$MDPRIV" && test "$MDPRIV" != $"$DPRIV"; then
 		echo "chmod $MDPRIV '$CHMOD_PATH'"
-		chmod "$MDPRIV" "$CHMOD_PATH" || _abort "chmod $MDPRIV '$CHMOD_PATH'"
+		chmod "$MDPRIV" "$CHMOD_PATH" || _abort 730 "chmod $MDPRIV '$CHMOD_PATH'"
 	fi
 }
 
@@ -704,11 +742,11 @@ function _chmod_df {
 # @require _abort _sudo
 #--
 function _chmod {
-	test -z "$1" && _abort "empty privileges parameter"
-	test -z "$2" && _abort "empty path"
+	test -z "$1" && _abort 745 "empty privileges parameter"
+	test -z "$2" && _abort 746 "empty path"
 
 	local tmp=`echo "$1" | sed -e 's/[012345678]*//'`
-	test -z "$tmp" || _abort "invalid octal privileges '$1'"
+	test -z "$tmp" || _abort 749 "invalid octal privileges '$1'"
 
 	local CMD="chmod -R"
 	if ! test -z "$CHMOD"; then
@@ -755,7 +793,7 @@ function _chmod {
 #--
 function _chown {
 	if test -z "$2" || test -z "$3"; then
-		_abort "owner [$2] or group [$3] is empty"
+		_abort 796 "owner [$2] or group [$3] is empty"
 	fi
 
 	_require_program stat
@@ -786,7 +824,7 @@ function _chown {
 		local CURR_OWNER=$(stat -c '%U' "$1")
 		local CURR_GROUP=$(stat -c '%G' "$1")
 
-		[[ -z "$CURR_OWNER" || -z "$CURR_GROUP" ]] && _abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
+		[[ -z "$CURR_OWNER" || -z "$CURR_GROUP" ]] && _abort 827 "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
 		[[ "$CURR_OWNER" != "$2" || "$CURR_GROUP" != "$3" ]] && MODIFY=1
 	elif test -d "$1"; then
 		# no stat compare because subdir entry may have changed
@@ -828,7 +866,7 @@ function _cmd {
 	test $((FLAG & 1)) = 1 && LOG_NO_ECHO=1
 
 	_log "$EXEC" cmd
-	eval "$EXEC ${LOG_CMD[cmd]}" || _abort "command failed"
+	eval "$EXEC ${LOG_CMD[cmd]}" || _abort 869 "command failed"
 	
 	if test $((FLAG & 2)) = 2; then
 		tail -n +5 "${LOG_FILE[cmd]}"
@@ -848,7 +886,7 @@ function _cmd {
 #--
 function _composer_json {
 	if test -z "$1"; then
-		_abort "empty project name use e.g. rklib/NAME"
+		_abort 889 "empty project name use e.g. rklib/NAME"
 	fi
 
 	if test -f "composer.json"; then
@@ -905,7 +943,7 @@ function _composer_phar {
 
   if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]; then
     _rm composer-setup.php
-    _abort 'Invalid installer signature'
+    _abort 946 'Invalid installer signature'
   fi
 
 	local INSTALL_AS="$1"
@@ -920,7 +958,7 @@ function _composer_phar {
   local RESULT=$?
 
 	if ! test "$RESULT" = "0" || ! test -s "$INSTALL_AS"; then
-		_abort "composer installation failed"
+		_abort 961 "composer installation failed"
 	fi
 
 	_rm composer-setup.php
@@ -935,7 +973,7 @@ function _composer_phar {
 #--
 function _composer_pkg {
 	if ! test -f composer.phar; then
-		_abort "Install composer first"
+		_abort 976 "Install composer first"
 	fi
 
 	if test -d "vendor/$1" && test -f composer.json && ! test -z `grep "$1" composer.json`; then
@@ -1179,7 +1217,7 @@ function _cordova_add_ios {
 #--
 function _cordova_create {
 	if test -d "app/$1"; then
-		_abort "Cordova project app/$1 already exists"
+		_abort 1220 "Cordova project app/$1 already exists"
 	fi
 
 	test -d app || _mkdir app
@@ -1218,7 +1256,7 @@ function _cp {
 	LOG_NO_ECHO=1
 
 	local TARGET_DIR=`dirname "$2"`
-	test -d "$TARGET_DIR" || _abort "no such directory [$TARGET_DIR]"
+	test -d "$TARGET_DIR" || _abort 1259 "no such directory [$TARGET_DIR]"
 
 	if test "$3" = "md5" && test -f "$1" && test -f "$2"; then
 		local MD1=`_md5 "$1"`
@@ -1254,7 +1292,7 @@ function _cp {
 			_sudo "cp -r '$1' '$2'" 1
 		fi
 	else
-		_abort "No such file or directory [$1]"
+		_abort 1295 "No such file or directory [$1]"
 	fi
 
 	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
@@ -1270,12 +1308,12 @@ function _cp {
 # @require _abort _confirm _msg
 #--
 function _create_tgz {
-	test -z "$1" && _abort "Empty archive path"
+	test -z "$1" && _abort 1311 "Empty archive path"
 
 	local a
 	for a in $2; do
 		if ! test -f $a && ! test -d $a; then
-			_abort "No such file or directory $a"
+			_abort 1316 "No such file or directory $a"
 		fi
 	done
 
@@ -1285,16 +1323,16 @@ function _create_tgz {
 			return
 		else
 			_confirm "Update archive $1?" 1
-			test "$CONFIRM" = "y" || _abort "user abort"
+			test "$CONFIRM" = "y" || _abort 1326 "user abort"
 		fi
 	fi
 
   _msg "create archive $1"
   SECONDS=0
-  tar -czf "$1" $2 >/dev/null 2>/dev/null || _abort "tar -czf '$1' $2 failed"
+  tar -czf "$1" $2 >/dev/null 2>/dev/null || _abort 1332 "tar -czf '$1' $2 failed"
   _msg "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
-	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "invalid archive '$1'" 
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort 1335 "invalid archive '$1'" 
 }
 
 	
@@ -1327,8 +1365,8 @@ function _crontab {
 # @require _abort _require_program _require_file _confirm _extract_tgz _msg
 #--
 function _decrypt {
-	test -z "$1" && _abort "_decrypt: empty filepath"
-	test -s "$1" || _abort "no such file '$1'"
+	test -z "$1" && _abort 1368 "_decrypt: empty filepath"
+	test -s "$1" || _abort 1369 "no such file '$1'"
 	_require_program ccrypt
 
 	local TARGET=`basename "$1" | sed -E 's/\.cpt$//'`
@@ -1336,7 +1374,7 @@ function _decrypt {
 
 	if test -s "$TARGET"; then
 		_confirm "Overwrite existing file $PDIR/$TARGET?" 1
-		test "$CONFIRM" = "y" || _abort "user abort"
+		test "$CONFIRM" = "y" || _abort 1377 "user abort"
 	fi
 
 	if ! test -z "$2"; then
@@ -1349,10 +1387,10 @@ function _decrypt {
 			_msg "decrypt $1 (use supplied password)"
 		fi
 
-		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -d "$1" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -d '$1'"
+		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -d "$1" || _abort 1390 "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -d '$1'"
 	else
 		_msg "decrypt $1 - Please input password"
-		ccrypt -f -d "$1" || _abort "ccrypt -d '$1'"
+		ccrypt -f -d "$1" || _abort 1393 "ccrypt -d '$1'"
 	fi
 
 	_require_file "$PDIR/$TARGET"
@@ -1376,7 +1414,7 @@ function _dir_priv {
 	_require_program realpath
 
 	local DIR=`realpath "$1"`
-	test -d "$DIR" || _abort "no such directory [$DIR]"
+	test -d "$DIR" || _abort 1417 "no such directory [$DIR]"
 
 	local PRIV="$2"
 	if test -z "$PRIV"; then
@@ -1396,7 +1434,7 @@ function _dir_priv {
   fi
 
 	_msg "$MSG"
-	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
+	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort 1437 "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
 }
 
 
@@ -1422,7 +1460,7 @@ function _dl_unpack {
 	fi
 
 	if ! test -f "$ARCHIVE"; then
-		_abort "No such archive $ARCHIVE - download of $2 failed"
+		_abort 1463 "No such archive $ARCHIVE - download of $2 failed"
 	fi
 
 	local EXTENSION="${ARCHIVE##*.}"
@@ -1454,7 +1492,7 @@ function _dl_unpack {
 		if test -d $BASE; then
 			_mv "$BASE" "$1"
 		else
-			_abort "$UNPACK_CMD $ARCHIVE failed"
+			_abort 1495 "$UNPACK_CMD $ARCHIVE failed"
 		fi
   fi
 }
@@ -1490,7 +1528,7 @@ function _docker_run {
 	if ! test -z "$WORKSPACE" && ! test -z "$CURR" && test -d "$WORKSPACE/linux/rkdocker"; then
 		_cd "$WORKSPACE/linux/rkdocker"
 	else
-		_abort "Export WORKSPACE (where $WORKSPACE/linux/rkdocker exists) and CURR=path/current/directory"
+		_abort 1531 "Export WORKSPACE (where $WORKSPACE/linux/rkdocker exists) and CURR=path/current/directory"
 	fi
 
 	local CONFIG=
@@ -1500,7 +1538,7 @@ function _docker_run {
 	elif test -f "$2"; then
 		CONFIG="$2"
 	else
-		_abort "No such configuration $CURR/$2 ($PWD/$2)"
+		_abort 1541 "No such configuration $CURR/$2 ($PWD/$2)"
 	fi
 	
   echo "DOCKER_NAME=$1 ./run.sh $CONFIG start"
@@ -1535,11 +1573,11 @@ function _docker_stop {
 #--
 function _download {
 	if test -z "$2"; then
-		_abort "Download target path is empty"
+		_abort 1576 "Download target path is empty"
 	fi
 
 	if test -z "$1"; then
-		_abort "Download url is empty"
+		_abort 1580 "Download url is empty"
 	fi
 
 	local PDIR=`dirname "$2"`
@@ -1552,7 +1590,7 @@ function _download {
 	_wget "$1" "$2"
 
 	if test -z "$3" && ! test -s "$2"; then
-		_abort "Download of $2 as $1 failed"
+		_abort 1593 "Download of $2 as $1 failed"
 	fi
 
 	if ! test -z "$3"; then
@@ -1598,7 +1636,7 @@ function _encrypt {
 # @require _abort _confirm _create_tgz _msg _rm _require_program
 #--
 function _encrypt {
-	test -z "$1" && _abort "_encrypt: first parameter (path/to/source) missing"
+	test -z "$1" && _abort 1639 "_encrypt: first parameter (path/to/source) missing"
 	_require_program ccrypt
 
 	local SRC="$1"
@@ -1609,14 +1647,14 @@ function _encrypt {
 		_create_tgz "$SRC" "$1"
 	fi
 
-	test -s "$SRC" || _abort "_encrypt: no such file [$SRC]"
+	test -s "$SRC" || _abort 1650 "_encrypt: no such file [$SRC]"
 
 	local IS_CPT_FILE=`echo "$1" | grep -E '\.cpt$'`
-	test -z "$IS_CPT_FILE" || _abort "$SRC has already suffix .cpt"
+	test -z "$IS_CPT_FILE" || _abort 1653 "$SRC has already suffix .cpt"
 	
 	if test -s "$SRC.cpt"; then
 		_confirm "Overwrite existing $SRC.cpt?" 1
-		test "$CONFIRM" = "y" || _abort "user abort"
+		test "$CONFIRM" = "y" || _abort 1657 "user abort"
 	fi
 
 	if ! test -z "$PASS"; then
@@ -1628,13 +1666,13 @@ function _encrypt {
 			_msg "encrypt '$SRC' as *.cpt (use supplied password)"
 		fi
 
-		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -e "$SRC" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -e '$SRC'"
+		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -e "$SRC" || _abort 1669 "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -e '$SRC'"
 	else
 		_msg "encrypt '$SRC' as *.cpt - Please input password"
-		ccrypt -f -e "$SRC" || _abort "ccrypt -e '$SRC'"
+		ccrypt -f -e "$SRC" || _abort 1672 "ccrypt -e '$SRC'"
 	fi
 
-	test -s "$SRC.cpt" || _abort "no such file $SRC.cpt"
+	test -s "$SRC.cpt" || _abort 1675 "no such file $SRC.cpt"
 
 	_rm "$SRC" >/dev/null
 	if test -d "$1"; then
@@ -1653,7 +1691,7 @@ function _encrypt {
 # @require _abort _rm
 #--
 function _extract_tgz {
-	test -s "$1" || _abort "_extract_tgz: Invalid archive path [$1]"
+	test -s "$1" || _abort 1694 "_extract_tgz: Invalid archive path [$1]"
 	local TARGET="$2"
 
 	if test -z "$TARGET" && test "${1: -4}" = ".tgz"; then
@@ -1664,15 +1702,15 @@ function _extract_tgz {
 		_rm "$TARGET"
 	fi
 
-	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "_extract_tgz: invalid archive '$1'" 
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort 1705 "_extract_tgz: invalid archive '$1'" 
 
   echo "extract archive $1"
   SECONDS=0
-  tar -xzf $1 >/dev/null || _abort "tar -xzf $1 failed"
+  tar -xzf $1 >/dev/null || _abort 1709 "tar -xzf $1 failed"
   echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -z "$TARGET" && ! test -d "$TARGET" && ! test -f "$TARGET"; then
-		_abort "$TAREGET was not created"
+		_abort 1713 "$TAREGET was not created"
 	fi
 }
 
@@ -1689,7 +1727,7 @@ function _file_priv {
 	_require_program realpath
 
 	local DIR=`realpath "$1"`
-	test -d "$DIR" || _abort "no such directory [$DIR]"
+	test -d "$DIR" || _abort 1730 "no such directory [$DIR]"
 
 	local PRIV="$2"
 	if test -z "$PRIV"; then
@@ -1709,7 +1747,7 @@ function _file_priv {
 	fi
 
 	_msg "$MSG"
-	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
+	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort 1750 "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
 }
 
 
@@ -1730,7 +1768,7 @@ function _find_docroot {
 	if ! test -z "$DOCROOT"; then
 		DOCROOT=`realpath $DOCROOT`
 		_msg "use existing DOCROOT=$DOCROOT"
-		test -z "$DOCROOT" && { test -z "$2" && _abort "invalid DOCROOT" || return 1; }
+		test -z "$DOCROOT" && { test -z "$2" && _abort 1771 "invalid DOCROOT" || return 1; }
 		return 0
 	fi
 
@@ -1753,14 +1791,14 @@ function _find_docroot {
 		DIR=$(dirname "$DIR")
 
 		if test "$DIR" = "$LAST_DIR" || ! test -d "$DIR"; then
-			test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
+			test -z "$2" && _abort 1794 "failed to find DOCROOT of [$1]" || return 1
 		fi
 	done
 
 	if test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data"); then
 		DOCROOT="$DIR"
 	else
-		test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
+		test -z "$2" && _abort 1801 "failed to find DOCROOT of [$1]" || return 1
 	fi
 
 	return 0
@@ -1796,7 +1834,7 @@ function _get {
 	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
 	DIR="$DIR/"`basename "$APP"`
 
-	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
+	test -f "$DIR/$1.nfo" || _abort 1837 "no such file $DIR/$1.nfo"
 
 	cat "$DIR/$1.nfo"
 }
@@ -1847,7 +1885,7 @@ function _git_checkout {
 		git clone $GIT_PARAMETER "$1" "$GIT_DIR"
 
 		if ! test -d "$GIT_DIR/.git"; then
-			_abort "git clone failed - no $GIT_DIR/.git directory"
+			_abort 1888 "git clone failed - no $GIT_DIR/.git directory"
 		fi
 
 		if test -s "$GIT_DIR/.gitmodules"; then
@@ -1938,7 +1976,7 @@ function _git_update {
 function _gunzip {
 
 	if ! test -f "$1"; then
-		_abort "no such gzip file [$1]"
+		_abort 1979 "no such gzip file [$1]"
 	fi
 
 	local REAL_FILE=`realpath "$1"`
@@ -1946,7 +1984,7 @@ function _gunzip {
 
 	if test -z "$IS_GZIP"; then
 		if test -z "$2"; then
-			_abort "invalid gzip file [$1]"
+			_abort 1987 "invalid gzip file [$1]"
 		else 
 			echo "$1 is not in gzip format - skip gunzip"
 			return
@@ -1964,7 +2002,7 @@ function _gunzip {
 	fi
 
 	if ! test -f "$TARGET"; then
-		_abort "gunzip failed - no such file $TARGET"
+		_abort 2005 "gunzip failed - no such file $TARGET"
 	fi
 }
 
@@ -2012,7 +2050,7 @@ function _has_process {
 	fi
 
 	if test $((flag & 2)) = 2 && ! test -f "${PROCESS[log]}"; then
-		_abort "no such logfile ${PROCESS[log]}"
+		_abort 2053 "no such logfile ${PROCESS[log]}"
 	fi
 
 	if test $((flag & 16)) = 16; then
@@ -2024,7 +2062,7 @@ function _has_process {
 			fi
 
 			if test -z "$logfile_pid"; then
-				_abort "missing PID of [$1] in logfile ${PROCESS[log]}"
+				_abort 2065 "missing PID of [$1] in logfile ${PROCESS[log]}"
 			fi
 		else
 			logfile_pid=-1
@@ -2038,9 +2076,9 @@ function _has_process {
 	fi
 
 	if test $((flag & 4)) = 4 && test -z "$process"; then
-		_abort "no $1 process (rx=$rx, old_pid=$logfile_pid)"
+		_abort 2079 "no $1 process (rx=$rx, old_pid=$logfile_pid)"
 	elif test $((flag & 8)) = 8 && ! test -z "$process"; then
-		_abort "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
+		_abort 2081 "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
 	fi
 	
 	PROCESS[pid]=`echo "$process" | awk '{print $2}'`
@@ -2063,8 +2101,8 @@ function _htaccess {
 		_append_txt "$1/.htaccess" "Require all denied"
 	elif test "${2:0:5}" = "auth:"; then
 		_split ":" "$2" >/dev/null
-		test -z "${_SPLIT[1]}" && _abort "empty username"
-		test -z "${_SPLIT[2]}" && _abort "empty password"
+		test -z "${_SPLIT[1]}" && _abort 2104 "empty username"
+		test -z "${_SPLIT[2]}" && _abort 2105 "empty password"
 
 		local HTPASSWD=`realpath "$1"`"/.htpasswd"
 		local BASIC_AUTH="AuthType Basic
@@ -2079,7 +2117,7 @@ require valid-user"
 		_chown "$1/.htpasswd" rk www-data
 		_chmod 660 "$1/.htpasswd"
 	else
-		_abort "invalid second parameter use deny|auth:user:pass"
+		_abort 2120 "invalid second parameter use deny|auth:user:pass"
 	fi
 
 	_chown "$1/.htaccess" rk www-data
@@ -2097,7 +2135,7 @@ require valid-user"
 function _install_app {
 
 	if test -z "$1"; then
-		_abort "use _install_app . $2"
+		_abort 2138 "use _install_app . $2"
 	fi
 
 	if ! test -z "$2"; then 
@@ -2159,7 +2197,7 @@ function _install_node {
 
 		SUDO=$CURR_SUDO
 	else
-		_abort "Update node.js to version >= $NODE_VERSION - see https://nodejs.org/"
+		_abort 2200 "Update node.js to version >= $NODE_VERSION - see https://nodejs.org/"
 	fi
 }
 
@@ -2193,7 +2231,7 @@ function _ip_address {
 		ping_ok=`ping -4 -c 1 "$host" 2>/dev/null | grep "127.0."`
 
 		if test -z "$ping_ok"; then
-			_abort "failed to detect IP_ADDRESS (ping -4 -c 1 $host != $IP_ADDRESS)"
+			_abort 2234 "failed to detect IP_ADDRESS (ping -4 -c 1 $host != $IP_ADDRESS)"
 		fi
 	fi
 }
@@ -2224,7 +2262,7 @@ function _is_integer {
 	local re='^[0-9]+$'
 
 	if ! [[ $1 =~ $re ]] ; then
-		_abort "[$1] is not integer"
+		_abort 2265 "[$1] is not integer"
 	fi
 }
 
@@ -2245,7 +2283,7 @@ function _is_ip4 {
 	local is_ip4=`echo "$1" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'`
 
 	if test -z "$is_ip4"; then
-		_abort "Invalid ip4 address [$1] use e.g. 32.123.7.38"
+		_abort 2286 "Invalid ip4 address [$1] use e.g. 32.123.7.38"
 	fi
 }
 
@@ -2267,7 +2305,7 @@ function _is_ip6 {
 		grep -E '^[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}$'`
 
 	if test -z "$is_ip6"; then
-		_abort "Invalid ip6 [$1] use e.g. 2001:4dd1:4fa3:0:95b2:572a:1d5e:4df5"
+		_abort 2308 "Invalid ip6 [$1] use e.g. 2001:4dd1:4fa3:0:95b2:572a:1d5e:4df5"
 	fi
 }
 
@@ -2294,7 +2332,7 @@ function _is_ip6 {
 function _is_running {
 	_os_type linux
 
-	test -z "$1" && _abort "no process name"
+	test -z "$1" && _abort 2335 "no process name"
 
 	# use [a] = a to ignore "grep process"
 	local APACHE2='[a]pache2.*k start'
@@ -2310,7 +2348,7 @@ function _is_running {
 			IS_RUNNING=$(netstat -tulpn 2>/dev/null | grep -E ":$2 .+:* .+LISTEN.*")
 		fi
 	elif test -z "${!1}"; then
-		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
+		_abort 2351 "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
 	else
 		IS_RUNNING=$(ps aux 2>/dev/null | grep -E "${!1}")
 	fi
@@ -2365,11 +2403,11 @@ function _jq {
 	local KEY="$1"
 	local FILE="${2:-$JQ_FILE}"
 
-	test -z "$KEY" && _abort "empty json key"
+	test -z "$KEY" && _abort 2406 "empty json key"
 	_require_file "$FILE"
 	_require_program "jq" "jq"
 
-	jq -r ".$KEY" "$FILE" || _abort "jq -r '.$KEY' '$FILE'"
+	jq -r ".$KEY" "$FILE" || _abort 2410 "jq -r '.$KEY' '$FILE'"
 }
 
 
@@ -2390,7 +2428,7 @@ function _kill_process {
 			local PID_FILE="${1#*:}"
 
 			if ! test -s "$PID_FILE"; then
-				_abort "no such pid file $PID_FILE"
+				_abort 2431 "no such pid file $PID_FILE"
 			fi
 
 			MY_PID=`head -3 "$PID_FILE" | grep "PID=" | sed -e "s/PID=//"`
@@ -2407,7 +2445,7 @@ function _kill_process {
 	esac
 
 	if test -z "$MY_PID"; then
-		_abort "no pid found ($1)"
+		_abort 2448 "no pid found ($1)"
 	fi
 
 	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
@@ -2419,13 +2457,13 @@ function _kill_process {
 		fi
 
 		if ! test -z "$2"; then
-			_abort "$MSG"
+			_abort 2460 "$MSG"
 		fi
 
 		echo "$MSG"
 	else
 		echo "kill $MY_PID"
-		kill "$MY_PID" || _abort "kill '$MY_PID'"
+		kill "$MY_PID" || _abort 2466 "kill '$MY_PID'"
 	fi
 }
 
@@ -2451,7 +2489,7 @@ function _label {
 #--
 function _license {
 	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
-		_abort "unknown license [$1] use [gpl-3.0]"
+		_abort 2492 "unknown license [$1] use [gpl-3.0]"
 	fi
 
 	LICENSE=$1
@@ -2492,7 +2530,7 @@ function _ln {
 	local target=`realpath "$1"`
 
 	if test "$PWD" = "$target"; then
-		_abort "ln -s '$taget' '$2' # in $PWD"
+		_abort 2533 "ln -s '$taget' '$2' # in $PWD"
 	fi
 
 	if test -L "$2"; then
@@ -2516,7 +2554,7 @@ function _ln {
 		local tname=`basename "$1"`
 		local lname=`basename "$2"`
 		echo "ln -s '$tname' '$lname' # in $PWD"
-		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
+		ln -s "$tname" "$lname" || _abort 2557 "ln -s '$tname' '$lname' # in $PWD"
 		_cd "$cwd"
 	else
 		_mkdir "$link_dir"
@@ -2525,7 +2563,7 @@ function _ln {
 	fi
 
 	if ! test -L "$2"; then
-		_abort "ln -s '$target' '$2'"
+		_abort 2566 "ln -s '$target' '$2'"
 	fi
 }
 
@@ -2559,9 +2597,9 @@ function _log {
 	if ! test -d "$RKSCRIPT_DIR/$2"; then
 		mkdir -p "$RKSCRIPT_DIR/$2"
 		if ! test -z "$SUDO_USER"; then
-			chown -R $SUDO_USER.$SUDO_USER "$RKSCRIPT_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKSCRIPT_DIR'"
+			chown -R $SUDO_USER.$SUDO_USER "$RKSCRIPT_DIR" || _abort 2600 "chown -R $SUDO_USER.$SUDO_USER '$RKSCRIPT_DIR'"
 		elif test "$UID" = "0"; then
-			chmod -R 777 "$RKSCRIPT_DIR" || _abort "chmod -R 777 '$RKSCRIPT_DIR'"
+			chmod -R 777 "$RKSCRIPT_DIR" || _abort 2602 "chmod -R 777 '$RKSCRIPT_DIR'"
 		fi
 	fi
 
@@ -2569,9 +2607,9 @@ function _log {
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
 	if ! test -z "$SUDO_USER"; then
-		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"
+		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort 2610 "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"
 	elif test "$UID" = "0"; then
-		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"
+		chmod 666 "${LOG_FILE[$2]}" || _abort 2612 "chmod 666 '${LOG_FILE[$2]}'"
 	fi
 
 	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
@@ -2589,7 +2627,7 @@ function _lynx {
 	_require_program lynx
 
 	if test -z "$1"; then
-		_abort "url parameter missing"
+		_abort 2630 "url parameter missing"
 	fi
 
 	if ! test -z "$2" && test -s "$2"; then
@@ -2637,13 +2675,13 @@ function _md5 {
 	_require_program md5sum
 	
 	if test -z "$1"; then
-		_abort "Empty parameter"
+		_abort 2678 "Empty parameter"
 	elif test -f "$1"; then
 		md5sum "$1" | awk '{print $1}'
 	elif test "$2" = "1"; then
 		echo -n "$1" | md5sum | awk '{print $1}'
 	else
-		_abort "No such file [$1]"
+		_abort 2684 "No such file [$1]"
 	fi
 }
 
@@ -2665,7 +2703,7 @@ function _merge_sh {
 	local MAPP="${1:-$APP}"
 
 	if ! test -z "$2"; then
-    MAPP="$2"
+		MAPP="$2"
 		SH_DIR="$1"
 	else
 		_require_file "$MAPP"
@@ -2714,16 +2752,16 @@ function _merge_sh {
 function _mkdir {
 
 	if test -z "$1"; then	
-		_abort "Empty directory path"
+		_abort 2755 "Empty directory path"
 	fi
 
 	local FLAG=$(($2 + 0))
 
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
-		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
+		$SUDO mkdir -p $1 || _abort 2762 "mkdir -p '$1'"
 	else
-		test $((FLAG & 1)) = 1 && _abort "directory $1 already exists"
+		test $((FLAG & 1)) = 1 && _abort 2764 "directory $1 already exists"
 		echo "directory $1 already exists"
 	fi
 
@@ -2744,7 +2782,7 @@ function _mount {
 		# check if fat32 boot
 		HAS_FS=`file -sL $1 | grep 'MBR boot sector'`
 
-		test -z "$HAS_FS" && _abort "no filesystem on $1"
+		test -z "$HAS_FS" && _abort 2785 "no filesystem on $1"
 	fi
 
 	local HAS_MOUNT=`mount | grep -E "^$1 on $2"`
@@ -2753,17 +2791,17 @@ function _mount {
 		HAS_MOUNT=`mount | grep -E "^$1 on "`
 		if ! test -z "$HAS_MOUNT"; then
 			_confirm "umount $1 (and re-mount as $2)" 1
-			test "$CONFIRM" = "y" || _abort "user abort"
-			umount /dev/sdb2 || _abort "umount /dev/sdb2"
+			test "$CONFIRM" = "y" || _abort 2794 "user abort"
+			umount /dev/sdb2 || _abort 2795 "umount /dev/sdb2"
 		fi
 
 		_confirm "Mount $1 as $2"
 		if test "$CONFIRM" = "y"; then
-			mount $1 "$2" || _abort "mount $1 '$2'"
+			mount $1 "$2" || _abort 2800 "mount $1 '$2'"
 		fi
 
 		HAS_MOUNT=`mount | grep -E "^$1 on $2"`
-		test -z "$HAS_MOUNT" && _abort "failed to mount $1 as $2"
+		test -z "$HAS_MOUNT" && _abort 2804 "failed to mount $1 as $2"
 	else
 		echo "$1 is already mounted as $2"
 	fi
@@ -2790,16 +2828,16 @@ function _msg {
 function _mv {
 
 	if test -z "$1"; then
-		_abort "Empty source path"
+		_abort 2831 "Empty source path"
 	fi
 
 	if test -z "$2"; then
-		_abort "Empty target path"
+		_abort 2835 "Empty target path"
 	fi
 
 	local PDIR=`dirname "$2"`
 	if ! test -d "$PDIR"; then
-		_abort "No such directory [$PDIR]"
+		_abort 2840 "No such directory [$PDIR]"
 	fi
 
 	local AFTER_LAST_SLASH=${1##*/}
@@ -2807,10 +2845,10 @@ function _mv {
 	if test "$AFTER_LAST_SLASH" = "*"
 	then
 		echo "mv $1 $2"
-		mv $1 $2 || _abort "mv $1 $2 failed"
+		mv $1 $2 || _abort 2848 "mv $1 $2 failed"
 	else
 		echo "mv '$1' '$2'"
-		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
+		mv "$1" "$2" || _abort 2851 "mv '$1' '$2' failed"
 	fi
 }
 
@@ -2862,7 +2900,7 @@ function _mysql_backup {
 	local FILES="tables.txt"
 
 	if test -f "tables.txt"; then
-		_abort "last dump failed or is still running"
+		_abort 2903 "last dump failed or is still running"
 	fi
 
 	_cd $1
@@ -2904,15 +2942,15 @@ function _mysql_conn {
 
 	# if $1=1 DB_NAME might not exist yet
 	if test -z "$1"; then
-		test -z "$DB_NAME" && _abort "$DB_NAME is not set"
+		test -z "$DB_NAME" && _abort 2945 "$DB_NAME is not set"
 
 		if test -z "$MYSQL_CONN"; then
-			test -z "$DB_PASS" && _abort "neither MYSQL_CONN nor DB_NAME and DB_PASS are set"
+			test -z "$DB_PASS" && _abort 2948 "neither MYSQL_CONN nor DB_NAME and DB_PASS are set"
 			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
 
 		TRY_MYSQL=`{ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045'`
-		test -z "$TRY_MYSQL" || _abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
+		test -z "$TRY_MYSQL" || _abort 2953 "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
 
 		return
 	fi
@@ -2929,7 +2967,7 @@ function _mysql_conn {
 	fi
 
 	TRY_MYSQL=`{ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045'`
-	test -z "$TRY_MYSQL" || _abort "admin access to mysql database failed: $MYSQL"
+	test -z "$TRY_MYSQL" || _abort 2970 "admin access to mysql database failed: $MYSQL"
 }
 
 
@@ -2958,7 +2996,7 @@ function _mysql_create_db {
 		local HAS_USER=`echo "SELECT user FROM user WHERE user='$DB_NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
 		if test -z "$HAS_USER"; then
 			{ echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL; } || \
-				_abort "create database user $DB_NAME@localhost failed"
+				_abort 2999 "create database user $DB_NAME@localhost failed"
 		fi
 
 		return
@@ -2978,10 +3016,10 @@ function _mysql_create_db {
 	fi
 
 	_msg "create mysql database $DB_NAME"
-	{ echo "CREATE DATABASE $DB_NAME $CHARSET" | $MYSQL; } || _abort "create database $DB_NAME failed"
+	{ echo "CREATE DATABASE $DB_NAME $CHARSET" | $MYSQL; } || _abort 3019 "create database $DB_NAME failed"
 	_msg "create mysql database user $DB_NAME"
 	{ echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL; } || \
-		_abort "create database user $DB_NAME@localhost failed"
+		_abort 3022 "create database user $DB_NAME@localhost failed"
 }
 
 
@@ -3002,12 +3040,12 @@ function _mysql_drop_db {
 
 	if { echo "SHOW CREATE DATABASE $NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
 		_confirm "Drop database $NAME?" 1
-		test "$CONFIRM" = "y" || _abort "user abort"
+		test "$CONFIRM" = "y" || _abort 3043 "user abort"
 
 		# drop user too if DB_NAME=DB_USER and DB_HOST=localhost
 		local DROP_USER=`echo "SELECT db FROM db WHERE user='$NAME' AND db='$NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
 
-		{ echo "DROP DATABASE $NAME" | $MYSQL; } || _abort "drop database $NAME failed"
+		{ echo "DROP DATABASE $NAME" | $MYSQL; } || _abort 3048 "drop database $NAME failed"
 
 		test -z "$DROP_USER" || _mysql_drop_user $NAME
 	else
@@ -3040,8 +3078,8 @@ function _mysql_drop_user {
 		return
 	else
 		_confirm "Drop user $NAME@$HOST?" 1
-		test "$CONFIRM" = "y" || _abort "user abort"
-		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort "drop user '$NAME'@'$HOST' failed"
+		test "$CONFIRM" = "y" || _abort 3081 "user abort"
+		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort 3082 "drop user '$NAME'@'$HOST' failed"
 	fi
 }
 
@@ -3058,21 +3096,21 @@ function _mysql_drop_user {
 function _mysql_dump {
 
 	if test -z "$MYSQL_CONN"; then
-		_abort "mysql connection string MYSQL_CONN is empty"
+		_abort 3099 "mysql connection string MYSQL_CONN is empty"
 	fi
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	nice -n 10 ionice -c2 -n 7 mysqldump --single-transaction --quick $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
+	nice -n 10 ionice -c2 -n 7 mysqldump --single-transaction --quick $MYSQL_CONN $2 > "$1" || _abort 3104 "mysqldump ... $2 > $1 failed"
 	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
-		_abort "no such dump [$1]"
+		_abort 3108 "no such dump [$1]"
 	fi
 
 	local DUMP_OK=`tail -1 "$1" | grep "Dump completed"`
 	if test -z "$DUMP_OK"; then
-		_abort "invalid mysql dump [$1]"
+		_abort 3113 "invalid mysql dump [$1]"
 	fi
 }
 
@@ -3096,7 +3134,7 @@ function _mysql_load {
 		elif test -s "setup/mysqlfulldump.sql"; then
 			DUMP=setup/mysqlfulldump.sql
 		else
-			_abort "no such mysql dump [$DUMP]"
+			_abort 3137 "no such mysql dump [$DUMP]"
 		fi
 
 		_confirm "Load $DUMP?"
@@ -3108,7 +3146,7 @@ function _mysql_load {
 
 	local DUMP_OK=`tail -1 "$DUMP" | grep "Dump completed"`
 	if test -z "$DUMP_OK"; then
-		_abort "invalid mysql dump [$DUMP]"
+		_abort 3149 "invalid mysql dump [$DUMP]"
 	fi
 
 	if ! test -z "$FIX_MYSQL_DUMP"; then
@@ -3128,7 +3166,7 @@ function _mysql_load {
 		_mysql_conn
 		echo "mysql ... < $DUMP"
 		SECONDS=0
-		mysql $MYSQL_CONN < "$DUMP" || _abort "mysql ... < $DUMP failed"
+		mysql $MYSQL_CONN < "$DUMP" || _abort 3169 "mysql ... < $DUMP failed"
 		echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
 	fi
 }
@@ -3243,7 +3281,7 @@ function _mysql_split_dsn {
 			_mysql_split_dsn "$DOCROOT/index.php" "$2" && return 0 || return 1
 		fi
 
-		test -z "$2" && _abort "no such file [$1]" || return 1
+		test -z "$2" && _abort 3284 "no such file [$1]" || return 1
 	fi
 
 	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
@@ -3270,14 +3308,14 @@ function _mysql_split_dsn {
 	fi
 
 	if test -z "$SETTINGS_DSN"; then
-		test -z "$2" && _abort "autodetect SETTINGS_DSN failed" || return 1
+		test -z "$2" && _abort 3311 "autodetect SETTINGS_DSN failed" || return 1
 	fi
  
 	if test -z "$PATH_RKPHPLIB"; then
 		if test -d "/home/rk/Desktop/workspace/rkphplib/src"; then
 			PATH_RKPHPLIB="/home/rk/Desktop/workspace/rkphplib/src/"
 		else
-			test -z "$2" && _abort "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/" || return 1
+			test -z "$2" && _abort 3318 "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/" || return 1
 		fi
 	fi
 
@@ -3290,7 +3328,7 @@ function _mysql_split_dsn {
 	DB_PASS=`php -r "$PHP_CODE"`
 
 	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
-		test -z "$2" && _abort "database name [$DB_NAME] or password [$DB_PASS] is empty" || return 1
+		test -z "$2" && _abort 3331 "database name [$DB_NAME] or password [$DB_PASS] is empty" || return 1
 	fi
 }
 
@@ -3349,11 +3387,11 @@ function _node_version {
 function _npm2js {
 
 	if test -z "$2"; then
-		_abort "empty module path"
+		_abort 3390 "empty module path"
 	fi
 
 	if ! test -f "node_modules/$2" && ! test -d "node_modules/$2"; then
-		_abort "missing node_modules/$2"
+		_abort 3394 "missing node_modules/$2"
 	fi
 
 	_cp "node_modules/$2" "$1" md5
@@ -3426,7 +3464,7 @@ function _orig {
 	local RET=0
 
 	if ! test -f "$1" && ! test -d "$1"; then
-		test -z "$2" && _abort "missing $1"
+		test -z "$2" && _abort 3467 "missing $1"
 		RET=1
 	fi
 
@@ -3469,7 +3507,7 @@ function _os_type {
 	if test -z "$1"; then
 		echo $os
 	elif test "$1" != "$os"; then
-		_abort "$1 required (this is $os)"
+		_abort 3510 "$1 required (this is $os)"
 	fi
 
 	return 0
@@ -3514,7 +3552,7 @@ function stat {
 			/usr/bin/stat -f %A "$3"
 		fi
 	else
-		_abort "ToDo: stat $@"
+		_abort 3555 "ToDo: stat $@"
 	fi
 }
 
@@ -3694,18 +3732,21 @@ function _patch {
 	if test -s "$1"; then
 		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
 		PATCH_SOURCE_DIR=`dirname "$1"`
-		PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
-		test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
+		if test -z "$PATCH_DIR"; then
+			PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
+			test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
+		fi
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=`dirname "$1"`
-		. "$1/patch.sh" || _abort ". $1/patch.sh"
+		. "$1/patch.sh" || _abort 3741 ". $1/patch.sh"
 	elif ! test -z "$1" && test -d "$1"; then
 		PATCH_SOURCE_DIR="$1"
 	fi
 
 	_require_program patch
-	_require_global "PATCH_LIST PATCH_DIR PATCH_SOURCE_DIR"
 	_require_dir "$PATCH_DIR"
+	_require_dir "$PATCH_SOURCE_DIR"
+	_require_global PATCH_LIST
 
 	local a; local TARGET;
 	for a in $PATCH_LIST; do
@@ -3718,8 +3759,10 @@ function _patch {
 
 			if test "$CONFIRM" = "y"; then
 				_msg "patch '$TARGET' '$PATCH_SOURCE_DIR/$a.patch'"
-				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
+				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort 3762 "patch '$a.patch' failed"
 			fi
+		else
+			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $TARGET"
 		fi
 	done
 }
@@ -3846,7 +3889,7 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
+	test -z "${ARG[0]}" && _abort 3892 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
 		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
@@ -3861,24 +3904,24 @@ EOF
 
 	if _is_running "PORT" "${ARG[port]}"; then
 		local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'`
-		test -z "$SERVER_PID" && _abort "Port ${ARG[port]} is already used" || \
-			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
+		test -z "$SERVER_PID" && _abort 3907 "Port ${ARG[port]} is already used" || \
+			_abort 3908 "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
 	fi
 
 	_confirm "Start buildin PHP standalone Webserver" 1
-	test "$CONFIRM" = "y" || _abort "user abort"
+	test "$CONFIRM" = "y" || _abort 3912 "user abort"
 
 	if test -z "${ARG[user]}"; then
 		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
-			_abort "PHP Server failed - see: $LOG"; } &
+			_abort 3916 "PHP Server failed - see: $LOG"; } &
 	else
 		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
-			_abort "PHP Server failed - see: $LOG"; } &
+			_abort 3919 "PHP Server failed - see: $LOG"; } &
 		sleep 1
 	fi
 
 	local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'` 
-	test -z "$SERVER_PID" && _abort "Could not determine Server PID"
+	test -z "$SERVER_PID" && _abort 3924 "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
 	echo "URL: http://${ARG[host]}:${ARG[port]}"
@@ -4031,7 +4074,7 @@ function _remote_ip {
 # @require _abort _require_priv _require_owner
 #--
 function _require_dir {
-	test -d "$1" || _abort "no such directory '$1'"
+	test -d "$1" || _abort 4077 "no such directory '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4112,7 +4155,7 @@ function _required_rkscript {
 # @require _abort _require_owner _require_priv
 #--
 function _require_file {
-	test -f "$1" || _abort "no such file '$1'"
+	test -f "$1" || _abort 4158 "no such file '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4136,10 +4179,10 @@ function _require_global {
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
-				_abort "no such global variable $a"
+				_abort 4182 "no such global variable $a"
 			fi
 		elif test -z "${a}" && test -z "${has_hash}"; then
-			_abort "no such global variable $a - add HAS_HASH_$a if necessary"
+			_abort 4185 "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
@@ -4153,21 +4196,21 @@ function _require_global {
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
-		_abort "no such file or directory '$1'"
+		_abort 4199 "no such file or directory '$1'"
 	fi
 
 	local arr=( ${2//:/ } )
 	local owner=`stat -c '%U' "$1" 2>/dev/null`
-	test -z "$owner" && _abort "stat -c '%U' '$1'"
+	test -z "$owner" && _abort 4204 "stat -c '%U' '$1'"
 	local group=`stat -c '%G' "$1" 2>/dev/null`
-	test -z "$group" && _abort "stat -c '%G' '$1'"
+	test -z "$group" && _abort 4206 "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
-		_abort "invalid owner - chown ${arr[0]} '$1'"
+		_abort 4209 "invalid owner - chown ${arr[0]} '$1'"
 	fi
 
 	if ! test -z "${arr[1]}" && ! test "${arr[1]}" = "$group"; then
-		_abort "invalid group - chgrp ${arr[1]} '$1'"
+		_abort 4213 "invalid group - chgrp ${arr[1]} '$1'"
 	fi
 }
 
@@ -4180,10 +4223,10 @@ function _require_owner {
 # @require _abort
 #--
 function _require_priv {
-	test -z "$2" && _abort "empty privileges"
+	test -z "$2" && _abort 4226 "empty privileges"
 	local priv=`stat -c '%a' "$1" 2>/dev/null`
-	test -z "$priv" && _abort "stat -c '%a' '$1'"
-	test "$2" = "$priv" || _abort "invalid privileges [$priv] - chmod -R $2 '$1'"
+	test -z "$priv" && _abort 4228 "stat -c '%a' '$1'"
+	test "$2" = "$priv" || _abort 4229 "invalid privileges [$priv] - chmod -R $2 '$1'"
 }
 
 
@@ -4266,13 +4309,13 @@ function _rkscript {
 # @require _abort _msg
 #--
 function _rm {
-	test -z "$1" && _abort "Empty remove path"
+	test -z "$1" && _abort 4312 "Empty remove path"
 
 	if ! test -f "$1" && ! test -d "$1"; then
-		test -z "$2" || _abort "No such file or directory '$1'"
+		test -z "$2" || _abort 4315 "No such file or directory '$1'"
 	else
 		_msg "remove '$1'"
-		rm -rf "$1" || _abort "rm -rf '$1'"
+		rm -rf "$1" || _abort 4318 "rm -rf '$1'"
 	fi
 }
 
@@ -4293,11 +4336,11 @@ function _rsync {
 	fi
 
 	if test -z "$1"; then
-		_abort "Empty rsync source"
+		_abort 4339 "Empty rsync source"
 	fi
 
 	if ! test -d "$TARGET"; then
-		_abort "No such directory [$TARGET]"
+		_abort 4343 "No such directory [$TARGET]"
 	fi
 
 	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"; local error=
@@ -4308,7 +4351,7 @@ function _rsync {
 		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
 
 		if test -z "$sync_finished"; then
-			_abort "$RSYNC"
+			_abort 4354 "$RSYNC"
 		fi
 	fi
 }
@@ -4324,10 +4367,10 @@ function _run_as_root {
 	test "$UID" = "0" && return
 
 	if test -z "$1"; then
-		_abort "Please change into root and try again"
+		_abort 4370 "Please change into root and try again"
 	else
 		echo "sudo true - Please type in your password"
-		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
+		sudo true 2>/dev/null || _abort 4373 "sudo true failed - Please change into root and try again"
 	fi
 }
 
@@ -4387,7 +4430,7 @@ function _set {
 	DIR="$DIR/"`basename "$APP"`
 
 	test -d "$DIR" || _mkdir "$DIR" >/dev/null
-	test -z "$1" && _abort "empty name"
+	test -z "$1" && _abort 4433 "empty name"
 
 	echo -e "$2" > "$DIR/$1.nfo"
 }
@@ -4520,14 +4563,14 @@ function _sql_echo {
 #--
 function _sql_execute {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty sql execute query"
+	test -z "$QUERY" && _abort 4566 "empty sql execute query"
 	_require_global "_SQL"
 	if test "$2" = "1"; then
 		echo "execute sql query: $(_sql_echo "$QUERY")"
-		$_SQL "$QUERY" || _abort "$QUERY"
+		$_SQL "$QUERY" || _abort 4570 "$QUERY"
 	else
 		_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
+		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort 4573 "$QUERY"; }
 	fi
 }
 
@@ -4541,10 +4584,10 @@ function _sql_execute {
 #--
 function _sql_list {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_list"
+	test -z "$QUERY" && _abort 4587 "empty query in _sql_list"
 	_require_global "_SQL"
 
-	$_SQL "$QUERY" || _abort "$QUERY"
+	$_SQL "$QUERY" || _abort 4590 "$QUERY"
 }
 
 
@@ -4581,10 +4624,10 @@ function _sql_load {
 #--
 function _sql_select {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_select"
+	test -z "$QUERY" && _abort 4627 "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
+	local DBOUT=`$_SQL "$QUERY" || _abort 4630 "$QUERY"`
 	local LNUM=`echo "$DBOUT" | wc -l`
 
 	_SQL_COL=()
@@ -4607,7 +4650,7 @@ function _sql_select {
 	elif test $LNUM -lt 2; then
 		return 1  # false = no result
 	else
-		_abort "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
+		_abort 4653 "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
 	fi
 }
 
@@ -4639,7 +4682,7 @@ function _sql {
 		if test -s "/usr/local/bin/rks-db_connect"; then
 			_SQL='rks-db_connect query'
 		else
-			_abort "set _SQL="
+			_abort 4685 "set _SQL="
 		fi
 	fi
 
@@ -4649,7 +4692,7 @@ function _sql {
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
 		local ACTION="${BASH_REMATCH[1]}"
 		local QUERY="$1"
-		test -z "${_SQL_QUERY[$QUERY]}" && _abort "invalid action $ACTION - no such query key $QUERY"
+		test -z "${_SQL_QUERY[$QUERY]}" && _abort 4695 "invalid action $ACTION - no such query key $QUERY"
 	fi
 
 	if ! test -z "${_SQL_QUERY[$QUERY]}"; then
@@ -4670,7 +4713,7 @@ function _sql {
 		QUERY="${QUERY//$a/}"
 	done
 
-	test -z "$QUERY" && _abort "empty query in _sql"
+	test -z "$QUERY" && _abort 4716 "empty query in _sql"
 
 	if test "$ACTION" = "select"; then
 		_sql_select "$QUERY"
@@ -4679,7 +4722,7 @@ function _sql {
 	elif test "$ACTION" = "list"; then
 		_sql_list "$QUERY"
 	else
-		_abort "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
+		_abort 4725 "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
 	fi
 }
 
@@ -4716,7 +4759,7 @@ function _sql_transaction {
 		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
 	fi
 
-	test ${#TABLES[@]} -lt 1 && _abort "table list is empty"
+	test ${#TABLES[@]} -lt 1 && _abort 4762 "table list is empty"
 	test $((FLAG & 32)) -eq 32 && ACF=y
 
 	if test $((FLAG & 1)) -eq 1; then	
@@ -4916,15 +4959,15 @@ function _sudo {
 
 	if test "$USER" = "root"; then
 		_log "$EXEC" sudo
-		eval "$EXEC ${LOG_CMD[sudo]}" || _abort "$EXEC"
+		eval "$EXEC ${LOG_CMD[sudo]}" || _abort 4962 "$EXEC"
 	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
 		_log "$EXEC" sudo
 		eval "$EXEC ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC" )
+			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4966 "sudo $EXEC" )
 	else
 		SUDO=sudo
 		_log "sudo $EXEC" sudo
-		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC"
+		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4970 "sudo $EXEC"
 		SUDO=$CURR_SUDO
 	fi
 }
@@ -4938,7 +4981,7 @@ function _sudo {
 #--
 function _sync_db {
 	_msg "Create database dump in $1:$2/data/.sql with rks-db_connect dump"
-	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 
+	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 4984 "ssh $1 'cd $2 && rks-db_connect dump failed'"
 
 	_msg "Download and import dump"
 	_rsync "$1:$2/data/.sql" "data/" >/dev/null
@@ -5049,8 +5092,8 @@ function _trim {
 # @param abort message
 #--
 function _use_shell {
-	test -L "/bin/sh" || _abort "no /bin/sh link"
-	test -f "/bin/$1" || _abort "no such shell /bin/$1"
+	test -L "/bin/sh" || _abort 5095 "no /bin/sh link"
+	test -f "/bin/$1" || _abort 5096 "no such shell /bin/$1"
 
 	local USE_SHELL=`diff -u /bin/sh /bin/$1`
 	local CURR="$PWD"
@@ -5106,7 +5149,7 @@ function _webhome_php {
 			git pull
 			_cd ..
 		else
-			ln -s "/webhome/.php/$dir" "$dir" || _abort "ln -s '/webhome/.php/$dir' '$dir'"
+			ln -s "/webhome/.php/$dir" "$dir" || _abort 5152 "ln -s '/webhome/.php/$dir' '$dir'"
 		fi
 	done
 
@@ -5121,7 +5164,7 @@ function _webhome_php {
 # @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
-	test -d "$1" || _abort "no such directory $1"
+	test -d "$1" || _abort 5167 "no such directory $1"
 
 	local DIR_OWNER=`stat -c '%U' "$1"`
 	local SERVER_USER=
@@ -5152,7 +5195,7 @@ function _webserver_rw_dir {
 # @require _abort _require_program _confirm
 #--
 function _wget {
-	test -z "$1" && _abort "empty url"
+	test -z "$1" && _abort 5198 "empty url"
 	_require_program wget
 
 	local SAVE_AS=${2:-`basename "$1"`}
@@ -5166,22 +5209,22 @@ function _wget {
 
 	if test -z "$2"; then
 		echo "download $1"
-		wget -q "$1" || _abort "wget -q '$1'"
+		wget -q "$1" || _abort 5212 "wget -q '$1'"
 	elif test "$2" = "-"; then
-		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5214 "wget -q -O '$2' '$1'"
 		return
 	else
 		echo "download $1 as $2"
-		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5218 "wget -q -O '$2' '$1'"
 	fi
 
 	if test -z "$2"; then
 		if ! test -s "$SAVE_AS"; then
 			local NEW_FILES=`find . -amin 1 -type f`
-			test -z "$NEW_FILES" && _abort "Download from $1 failed"
+			test -z "$NEW_FILES" && _abort 5224 "Download from $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort "Download of $2 from $1 failed"
+		_abort 5227 "Download of $2 from $1 failed"
 	fi
 }
 
