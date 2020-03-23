@@ -17,7 +17,7 @@ function _merge_sh {
 	local MAPP="${1:-$APP}"
 
 	if ! test -z "$2"; then
-    MAPP="$2"
+		MAPP="$2"
 		SH_DIR="$1"
 	else
 		_require_file "$MAPP"
