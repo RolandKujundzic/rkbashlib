@@ -3732,21 +3732,18 @@ function _patch {
 	if test -s "$1"; then
 		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
 		PATCH_SOURCE_DIR=`dirname "$1"`
-		if test -z "$PATCH_DIR"; then
-			PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
-			test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
-		fi
+		PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
+		test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=`dirname "$1"`
-		. "$1/patch.sh" || _abort 3741 ". $1/patch.sh"
+		. "$1/patch.sh" || _abort 3739 ". $1/patch.sh"
 	elif ! test -z "$1" && test -d "$1"; then
 		PATCH_SOURCE_DIR="$1"
 	fi
 
 	_require_program patch
+	_require_global "PATCH_LIST PATCH_DIR PATCH_SOURCE_DIR"
 	_require_dir "$PATCH_DIR"
-	_require_dir "$PATCH_SOURCE_DIR"
-	_require_global PATCH_LIST
 
 	local a; local TARGET;
 	for a in $PATCH_LIST; do
@@ -3759,10 +3756,8 @@ function _patch {
 
 			if test "$CONFIRM" = "y"; then
 				_msg "patch '$TARGET' '$PATCH_SOURCE_DIR/$a.patch'"
-				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort 3762 "patch '$a.patch' failed"
+				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort 3759 "patch '$a.patch' failed"
 			fi
-		else
-			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $TARGET"
 		fi
 	done
 }
@@ -3889,7 +3884,7 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 3892 'call _parse_arg "@$" first'
+	test -z "${ARG[0]}" && _abort 3887 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
 		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
@@ -3904,24 +3899,24 @@ EOF
 
 	if _is_running "PORT" "${ARG[port]}"; then
 		local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'`
-		test -z "$SERVER_PID" && _abort 3907 "Port ${ARG[port]} is already used" || \
-			_abort 3908 "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
+		test -z "$SERVER_PID" && _abort 3902 "Port ${ARG[port]} is already used" || \
+			_abort 3903 "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
 	fi
 
 	_confirm "Start buildin PHP standalone Webserver" 1
-	test "$CONFIRM" = "y" || _abort 3912 "user abort"
+	test "$CONFIRM" = "y" || _abort 3907 "user abort"
 
 	if test -z "${ARG[user]}"; then
 		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
-			_abort 3916 "PHP Server failed - see: $LOG"; } &
+			_abort 3911 "PHP Server failed - see: $LOG"; } &
 	else
 		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
-			_abort 3919 "PHP Server failed - see: $LOG"; } &
+			_abort 3914 "PHP Server failed - see: $LOG"; } &
 		sleep 1
 	fi
 
 	local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'` 
-	test -z "$SERVER_PID" && _abort 3924 "Could not determine Server PID"
+	test -z "$SERVER_PID" && _abort 3919 "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
 	echo "URL: http://${ARG[host]}:${ARG[port]}"
@@ -4074,7 +4069,7 @@ function _remote_ip {
 # @require _abort _require_priv _require_owner
 #--
 function _require_dir {
-	test -d "$1" || _abort 4077 "no such directory '$1'"
+	test -d "$1" || _abort 4072 "no such directory '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4155,7 +4150,7 @@ function _required_rkscript {
 # @require _abort _require_owner _require_priv
 #--
 function _require_file {
-	test -f "$1" || _abort 4158 "no such file '$1'"
+	test -f "$1" || _abort 4153 "no such file '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4179,10 +4174,10 @@ function _require_global {
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
-				_abort 4182 "no such global variable $a"
+				_abort 4177 "no such global variable $a"
 			fi
 		elif test -z "${a}" && test -z "${has_hash}"; then
-			_abort 4185 "no such global variable $a - add HAS_HASH_$a if necessary"
+			_abort 4180 "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
@@ -4196,21 +4191,21 @@ function _require_global {
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
-		_abort 4199 "no such file or directory '$1'"
+		_abort 4194 "no such file or directory '$1'"
 	fi
 
 	local arr=( ${2//:/ } )
 	local owner=`stat -c '%U' "$1" 2>/dev/null`
-	test -z "$owner" && _abort 4204 "stat -c '%U' '$1'"
+	test -z "$owner" && _abort 4199 "stat -c '%U' '$1'"
 	local group=`stat -c '%G' "$1" 2>/dev/null`
-	test -z "$group" && _abort 4206 "stat -c '%G' '$1'"
+	test -z "$group" && _abort 4201 "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
-		_abort 4209 "invalid owner - chown ${arr[0]} '$1'"
+		_abort 4204 "invalid owner - chown ${arr[0]} '$1'"
 	fi
 
 	if ! test -z "${arr[1]}" && ! test "${arr[1]}" = "$group"; then
-		_abort 4213 "invalid group - chgrp ${arr[1]} '$1'"
+		_abort 4208 "invalid group - chgrp ${arr[1]} '$1'"
 	fi
 }
 
@@ -4223,10 +4218,10 @@ function _require_owner {
 # @require _abort
 #--
 function _require_priv {
-	test -z "$2" && _abort 4226 "empty privileges"
+	test -z "$2" && _abort 4221 "empty privileges"
 	local priv=`stat -c '%a' "$1" 2>/dev/null`
-	test -z "$priv" && _abort 4228 "stat -c '%a' '$1'"
-	test "$2" = "$priv" || _abort 4229 "invalid privileges [$priv] - chmod -R $2 '$1'"
+	test -z "$priv" && _abort 4223 "stat -c '%a' '$1'"
+	test "$2" = "$priv" || _abort 4224 "invalid privileges [$priv] - chmod -R $2 '$1'"
 }
 
 
@@ -4309,13 +4304,13 @@ function _rkscript {
 # @require _abort _msg
 #--
 function _rm {
-	test -z "$1" && _abort 4312 "Empty remove path"
+	test -z "$1" && _abort 4307 "Empty remove path"
 
 	if ! test -f "$1" && ! test -d "$1"; then
-		test -z "$2" || _abort 4315 "No such file or directory '$1'"
+		test -z "$2" || _abort 4310 "No such file or directory '$1'"
 	else
 		_msg "remove '$1'"
-		rm -rf "$1" || _abort 4318 "rm -rf '$1'"
+		rm -rf "$1" || _abort 4313 "rm -rf '$1'"
 	fi
 }
 
@@ -4336,11 +4331,11 @@ function _rsync {
 	fi
 
 	if test -z "$1"; then
-		_abort 4339 "Empty rsync source"
+		_abort 4334 "Empty rsync source"
 	fi
 
 	if ! test -d "$TARGET"; then
-		_abort 4343 "No such directory [$TARGET]"
+		_abort 4338 "No such directory [$TARGET]"
 	fi
 
 	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"; local error=
@@ -4351,7 +4346,7 @@ function _rsync {
 		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
 
 		if test -z "$sync_finished"; then
-			_abort 4354 "$RSYNC"
+			_abort 4349 "$RSYNC"
 		fi
 	fi
 }
@@ -4367,10 +4362,10 @@ function _run_as_root {
 	test "$UID" = "0" && return
 
 	if test -z "$1"; then
-		_abort 4370 "Please change into root and try again"
+		_abort 4365 "Please change into root and try again"
 	else
 		echo "sudo true - Please type in your password"
-		sudo true 2>/dev/null || _abort 4373 "sudo true failed - Please change into root and try again"
+		sudo true 2>/dev/null || _abort 4368 "sudo true failed - Please change into root and try again"
 	fi
 }
 
@@ -4430,7 +4425,7 @@ function _set {
 	DIR="$DIR/"`basename "$APP"`
 
 	test -d "$DIR" || _mkdir "$DIR" >/dev/null
-	test -z "$1" && _abort 4433 "empty name"
+	test -z "$1" && _abort 4428 "empty name"
 
 	echo -e "$2" > "$DIR/$1.nfo"
 }
@@ -4563,14 +4558,14 @@ function _sql_echo {
 #--
 function _sql_execute {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4566 "empty sql execute query"
+	test -z "$QUERY" && _abort 4561 "empty sql execute query"
 	_require_global "_SQL"
 	if test "$2" = "1"; then
 		echo "execute sql query: $(_sql_echo "$QUERY")"
-		$_SQL "$QUERY" || _abort 4570 "$QUERY"
+		$_SQL "$QUERY" || _abort 4565 "$QUERY"
 	else
 		_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort 4573 "$QUERY"; }
+		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort 4568 "$QUERY"; }
 	fi
 }
 
@@ -4584,10 +4579,10 @@ function _sql_execute {
 #--
 function _sql_list {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4587 "empty query in _sql_list"
+	test -z "$QUERY" && _abort 4582 "empty query in _sql_list"
 	_require_global "_SQL"
 
-	$_SQL "$QUERY" || _abort 4590 "$QUERY"
+	$_SQL "$QUERY" || _abort 4585 "$QUERY"
 }
 
 
@@ -4624,10 +4619,10 @@ function _sql_load {
 #--
 function _sql_select {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4627 "empty query in _sql_select"
+	test -z "$QUERY" && _abort 4622 "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local DBOUT=`$_SQL "$QUERY" || _abort 4630 "$QUERY"`
+	local DBOUT=`$_SQL "$QUERY" || _abort 4625 "$QUERY"`
 	local LNUM=`echo "$DBOUT" | wc -l`
 
 	_SQL_COL=()
@@ -4650,7 +4645,7 @@ function _sql_select {
 	elif test $LNUM -lt 2; then
 		return 1  # false = no result
 	else
-		_abort 4653 "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
+		_abort 4648 "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
 	fi
 }
 
@@ -4682,7 +4677,7 @@ function _sql {
 		if test -s "/usr/local/bin/rks-db_connect"; then
 			_SQL='rks-db_connect query'
 		else
-			_abort 4685 "set _SQL="
+			_abort 4680 "set _SQL="
 		fi
 	fi
 
@@ -4692,7 +4687,7 @@ function _sql {
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
 		local ACTION="${BASH_REMATCH[1]}"
 		local QUERY="$1"
-		test -z "${_SQL_QUERY[$QUERY]}" && _abort 4695 "invalid action $ACTION - no such query key $QUERY"
+		test -z "${_SQL_QUERY[$QUERY]}" && _abort 4690 "invalid action $ACTION - no such query key $QUERY"
 	fi
 
 	if ! test -z "${_SQL_QUERY[$QUERY]}"; then
@@ -4713,7 +4708,7 @@ function _sql {
 		QUERY="${QUERY//$a/}"
 	done
 
-	test -z "$QUERY" && _abort 4716 "empty query in _sql"
+	test -z "$QUERY" && _abort 4711 "empty query in _sql"
 
 	if test "$ACTION" = "select"; then
 		_sql_select "$QUERY"
@@ -4722,7 +4717,7 @@ function _sql {
 	elif test "$ACTION" = "list"; then
 		_sql_list "$QUERY"
 	else
-		_abort 4725 "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
+		_abort 4720 "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
 	fi
 }
 
@@ -4759,7 +4754,7 @@ function _sql_transaction {
 		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
 	fi
 
-	test ${#TABLES[@]} -lt 1 && _abort 4762 "table list is empty"
+	test ${#TABLES[@]} -lt 1 && _abort 4757 "table list is empty"
 	test $((FLAG & 32)) -eq 32 && ACF=y
 
 	if test $((FLAG & 1)) -eq 1; then	
@@ -4959,15 +4954,15 @@ function _sudo {
 
 	if test "$USER" = "root"; then
 		_log "$EXEC" sudo
-		eval "$EXEC ${LOG_CMD[sudo]}" || _abort 4962 "$EXEC"
+		eval "$EXEC ${LOG_CMD[sudo]}" || _abort 4957 "$EXEC"
 	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
 		_log "$EXEC" sudo
 		eval "$EXEC ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4966 "sudo $EXEC" )
+			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4961 "sudo $EXEC" )
 	else
 		SUDO=sudo
 		_log "sudo $EXEC" sudo
-		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4970 "sudo $EXEC"
+		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 4965 "sudo $EXEC"
 		SUDO=$CURR_SUDO
 	fi
 }
@@ -4981,7 +4976,7 @@ function _sudo {
 #--
 function _sync_db {
 	_msg "Create database dump in $1:$2/data/.sql with rks-db_connect dump"
-	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 4984 "ssh $1 'cd $2 && rks-db_connect dump failed'"
+	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 4979 "ssh $1 'cd $2 && rks-db_connect dump failed'"
 
 	_msg "Download and import dump"
 	_rsync "$1:$2/data/.sql" "data/" >/dev/null
@@ -5092,8 +5087,8 @@ function _trim {
 # @param abort message
 #--
 function _use_shell {
-	test -L "/bin/sh" || _abort 5095 "no /bin/sh link"
-	test -f "/bin/$1" || _abort 5096 "no such shell /bin/$1"
+	test -L "/bin/sh" || _abort 5090 "no /bin/sh link"
+	test -f "/bin/$1" || _abort 5091 "no such shell /bin/$1"
 
 	local USE_SHELL=`diff -u /bin/sh /bin/$1`
 	local CURR="$PWD"
@@ -5149,7 +5144,7 @@ function _webhome_php {
 			git pull
 			_cd ..
 		else
-			ln -s "/webhome/.php/$dir" "$dir" || _abort 5152 "ln -s '/webhome/.php/$dir' '$dir'"
+			ln -s "/webhome/.php/$dir" "$dir" || _abort 5147 "ln -s '/webhome/.php/$dir' '$dir'"
 		fi
 	done
 
@@ -5164,7 +5159,7 @@ function _webhome_php {
 # @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
-	test -d "$1" || _abort 5167 "no such directory $1"
+	test -d "$1" || _abort 5162 "no such directory $1"
 
 	local DIR_OWNER=`stat -c '%U' "$1"`
 	local SERVER_USER=
@@ -5195,7 +5190,7 @@ function _webserver_rw_dir {
 # @require _abort _require_program _confirm
 #--
 function _wget {
-	test -z "$1" && _abort 5198 "empty url"
+	test -z "$1" && _abort 5193 "empty url"
 	_require_program wget
 
 	local SAVE_AS=${2:-`basename "$1"`}
@@ -5209,22 +5204,22 @@ function _wget {
 
 	if test -z "$2"; then
 		echo "download $1"
-		wget -q "$1" || _abort 5212 "wget -q '$1'"
+		wget -q "$1" || _abort 5207 "wget -q '$1'"
 	elif test "$2" = "-"; then
-		wget -q -O "$2" "$1" || _abort 5214 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5209 "wget -q -O '$2' '$1'"
 		return
 	else
 		echo "download $1 as $2"
-		wget -q -O "$2" "$1" || _abort 5218 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5213 "wget -q -O '$2' '$1'"
 	fi
 
 	if test -z "$2"; then
 		if ! test -s "$SAVE_AS"; then
 			local NEW_FILES=`find . -amin 1 -type f`
-			test -z "$NEW_FILES" && _abort 5224 "Download from $1 failed"
+			test -z "$NEW_FILES" && _abort 5219 "Download from $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort 5227 "Download of $2 from $1 failed"
+		_abort 5222 "Download of $2 from $1 failed"
 	fi
 }
 
