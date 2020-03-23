@@ -4,9 +4,9 @@
 #
 
 
-#------------------------------------------------------------------------------
+#--
 # Build lib/rkscript.sh.
-#------------------------------------------------------------------------------
+#--
 function do_build {
 	echo "Build lib/rkscript.sh"
 
@@ -16,8 +16,6 @@ function do_build {
 	local LIB_TMP="$RKSCRIPT_DIR/rkscript.sh"
 
 	echo '#!/bin/bash' > $LIB_TMP
-	_chmod 644 "$LIB_TMP"
-
 	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n" >> $LIB_TMP
 	echo 'test -z "$APP" && APP="$0"' >> $LIB_TMP
 	echo 'test -z "$APP_PID" && export APP_PID="$APP_PID $$"' >> $LIB_TMP
@@ -30,13 +28,16 @@ function do_build {
 		tail -n+2 $a >> $LIB_TMP
 	done
 
+	_add_abort_linenum $LIB_TMP
+	_chmod 644 "$LIB_TMP"
+
 	_cp $LIB_TMP lib/rkscript.sh md5
 }
 
 
-#------------------------------------------------------------------------------
+#--
 # Install lib/rkscript.sh in $1 (= /usr/local/lib/rkscript.sh).
-#------------------------------------------------------------------------------
+#--
 function do_install {
 
 	if test -z "$1"; then
@@ -67,19 +68,20 @@ function do_install {
 }
 
 
-
-#
+#--
 # M A I N
-#
+#--
 
 APP=$0
+CWD="$PWD"
+export APP_PID="$APP_PID $$"
+
+APP_DESC="install to /usr/local/lib/rkscript.sh"
 
 command -v realpath > /dev/null 2>&1 && APP=`realpath "$0"`
 
-export APP_PID="$APP_PID $$"
-
 SCRIPT_SRC=`dirname "$APP"`"/src"
-INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh"
+INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh"
 
 for a in $INCLUDE_FUNC; do
 	. "$SCRIPT_SRC/$a"
