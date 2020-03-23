@@ -7,7 +7,7 @@ SCRIPT_NAME="$0"
 command -v realpath > /dev/null 2>&1 && SCRIPT_NAME=`realpath "$0"`
 
 SCRIPT_SRC=`dirname "$SCRIPT_NAME"`"/src"
-LOAD_FUNC="abort msg osx syntax confirm require_global required_rkscript scan_rkscript_src cache mkdir cd rm"
+LOAD_FUNC="abort msg osx syntax confirm log sudo require_global required_rkscript scan_rkscript_src cache mkdir cd cp rm add_abort_linenum"
 
 for a in $LOAD_FUNC; do
 	. "$SCRIPT_SRC/$a.sh"
@@ -16,8 +16,11 @@ done
 test -z "$RKSCRIPT_PATH" && RKSCRIPT_PATH=`dirname "$SCRIPT_NAME"`
 
 APP=$0
+CWD="$PWD"
 OUT=run.sh
 export APP_PID="$APP_PID $$"
+
+APP_DESC="merge shell code snipplets"
 
 echo
 
@@ -39,7 +42,7 @@ else
 		. sh/run/merge2$1
 
 		echo "OUT=$1"
-		OUT=$1
+		OUT="$1"
 
 		if ! test -z "$SCAN_INCLUDE"; then
 			_scan_rkscript_src
@@ -63,7 +66,7 @@ if test -f "$OUT"; then
 	_confirm "Remove existing $OUT?" 1
 
 	if test $CONFIRM = "y"; then
-		_rm $OUT
+		_rm "$OUT"
 	else
 		_abort "$OUT already exists"
 	fi
@@ -82,7 +85,7 @@ test "${M2R_LIST[0]}" = "copyright" && MERGE2RUN="copyright "`echo "$MERGE2RUN" 
 
 echo "Create $OUT ($MERGE2RUN)"
 
-echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > $OUT
+echo -e "#!/bin/bash\nMERGE2RUN=\"$MERGE2RUN\"\n" > "$OUT"
 
 for a in $MERGE2RUN
 do
@@ -92,9 +95,11 @@ do
 		FUNC="sh/run/$a.sh"
 	fi
 
-	tail -n +2 "$FUNC" >> $OUT
+	tail -n +2 "$FUNC" >> "$OUT"
 done
 
-chmod 755 $OUT
+_add_abort_linenum "$OUT"
+
+chmod 755 "$OUT"
 
 echo -e "done.\n\n"
