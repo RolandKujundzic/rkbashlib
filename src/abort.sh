@@ -11,16 +11,25 @@ done
 #
 # @exit
 # @global APP NO_ABORT
-# @param abort message
+# @param string abort message|line number
+# @param abort message (optional - use if $1 = line number)
 #--
 function _abort {
+	local MSG="$1"
+	local LINE=
+
+	if ! test -z "$2"; then
+		MSG="$2"
+		LINE="[$1]"
+	fi
+
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "WARNING: $1"
+		echo "WARNING$LINE: $MSG"
 		return 1
 	fi
 
-	echo -e "\nABORT: $1\n\n" 1>&2
+	echo -e "\nABORT$LINE: $MSG\n\n" 1>&2
 
 	local other_pid=
 
