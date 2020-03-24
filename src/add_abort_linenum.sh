@@ -19,7 +19,7 @@ function _add_abort_linenum {
 
 	readarray -t LINES < "$1"
 	for ((i = 0; i < ${#LINES[@]}; i++)); do
-		FIX_LINE=`echo "${LINES[$i]}" | grep -E -e ' (\|\||&&) _abort ' -e '^\s*_abort ' | grep -vE -e '^\s*#' -e '^\s*function ' -e ' _abort [0-9]+ '`
+		FIX_LINE=`echo "${LINES[$i]}" | grep -E -e '(;| \|\|| &&) _abort '"[\"']" -e '^\s*_abort '"[\"']" | grep -vE -e '^\s*#' -e '^\s*function '`
 		test -z "$FIX_LINE" && echo "${LINES[$i]}" >> $TMP_FILE || \
 			{ CHANGES=$((CHANGES+1)); echo "${LINES[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g'; } >> "$TMP_FILE"
 	done
