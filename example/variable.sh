@@ -32,3 +32,7 @@ declare "G"="global variable"
 eval "TEST2='eval is evil'"
 echo "G=$G TEST2=$TEST2"
 
+V="Hello"
+X="V"
+
+echo "\$V=[$V] \${V}=[${V}] indirect variable reference (\$X=[$X]): {\$!X}=[${!X}]"
