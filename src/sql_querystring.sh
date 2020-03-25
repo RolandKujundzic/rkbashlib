@@ -22,14 +22,14 @@ function _sql_querystring {
 		for key in ${!_SQL_SEARCH[@]}; do
 			val="${_SQL_SEARCH[$key]}"
 
-			if [[ -z "$val" || "$val" = "%" ]]; then
+			if [[ -z "$val" || -z "${val//%/}" || -z "${val//\*/}" ]]; then
 				:
 			elif [[ "${val: -1}" = "%" || "${val:0:1}"  = "%" ]]; then
-				SLIST_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $a LIKE '$val'" 
+				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $key LIKE '$val'"
 			elif [[ "${val: -1}" = "*" || "${val:0:1}"  = "*" ]]; then
-				SLIST_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND CONVERT($a USING utf8mb4) LIKE '${val//*/%}'" 
+				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND CONVERT($key USING utf8mb4) LIKE '${val//\*/%}'"
 			else
-				SLIST_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $a='${SLIST[$a]}'" 
+				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $key='$val'"
 			fi
 		done
 	fi
