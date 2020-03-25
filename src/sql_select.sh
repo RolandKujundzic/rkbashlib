@@ -1,12 +1,14 @@
 #!/bin/bash
 
+declare -A _SQL_COL
+
 #--
 # Run sql select query. Save result of select query to _SQL_COL. 
 # Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
 #
 # BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
 #
-# @global _SQL _SQL_PARAM (hash) _SQL_COL (hash)
+# @global _SQL _SQL_COL (hash)
 # @export SQL (=rks-db_connect query)
 # @param type select|execute
 # @param query or SQL_QUERY key

@@ -15,8 +15,10 @@ function _patch {
 	if test -s "$1"; then
 		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
 		PATCH_SOURCE_DIR=`dirname "$1"`
-		PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
-		test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
+		if test -z "$PATCH_DIR"; then
+			PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
+			test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
+		fi
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=`dirname "$1"`
 		. "$1/patch.sh" || _abort ". $1/patch.sh"
@@ -25,8 +27,9 @@ function _patch {
 	fi
 
 	_require_program patch
-	_require_global "PATCH_LIST PATCH_DIR PATCH_SOURCE_DIR"
 	_require_dir "$PATCH_DIR"
+	_require_dir "$PATCH_SOURCE_DIR"
+	_require_global PATCH_LIST
 
 	local a; local TARGET;
 	for a in $PATCH_LIST; do
@@ -41,6 +44,8 @@ function _patch {
 				_msg "patch '$TARGET' '$PATCH_SOURCE_DIR/$a.patch'"
 				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
 			fi
+		else
+			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $TARGET"
 		fi
 	done
 }
