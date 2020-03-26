@@ -19,7 +19,7 @@ function _syntax {
 	if ! test -z "${_SYNTAX_CMD[$1]}"; then
 		MSG="${_SYNTAX_CMD[$1]}\n"
 	elif test "${1: -1}" = "*" && test "${#_SYNTAX_CMD[@]}" -gt 0; then
-		test "$1" = "*" && a='^[a-zA-Z0-9_]+$' || { prefix="${1:0:-1}"; a="^${1:0:-2}"'\.[a-zA-Z0-9_]+$'; }
+		test "$1" = "*" && a='^[a-zA-Z0-9_]+$' || { prefix="${1:0:-1}"; a="^${1:0:-2}"'\.[a-zA-Z0-9_\.]+$'; }
 		local KEYS="${!_SYNTAX_CMD[@]}"
 		MSG=
 
@@ -40,10 +40,14 @@ function _syntax {
 				grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG\n$APP ${_SYNTAX_CMD[$b]}"
 			done
 		elif test "${a:0:5}" = "help:"; then
-			a="${a:5}"
-			test -z "$a" && a="$1"
+			test "$a" = "help:" && a="help:$1"
+			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
+
 			for b in ${!_SYNTAX_HELP[@]}; do
-				test "$a" = "$b" && MSG="$MSG\n${_SYNTAX_HELP[$b]}"
+				if grep -E "$a" >/dev/null <<< "$b"; then
+					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
+					MSG="$MSG\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
+				fi
 			done
 		fi
 
