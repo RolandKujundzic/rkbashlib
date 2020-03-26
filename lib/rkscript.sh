@@ -5109,7 +5109,9 @@ function _syntax {
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
 			for b in ${!_SYNTAX_HELP[@]}; do
-				if grep -E "$a" >/dev/null <<< "$b"; then
+				if test "$b" = "$1"; then
+					MSG="$MSG\n${_SYNTAX_HELP[$b]}"
+				elif grep -E "$a" >/dev/null <<< "$b"; then
 					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
 					MSG="$MSG\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
 				fi
@@ -5180,8 +5182,8 @@ function _trim {
 # @param abort message
 #--
 function _use_shell {
-	test -L "/bin/sh" || _abort 5183 "no /bin/sh link"
-	test -f "/bin/$1" || _abort 5184 "no such shell /bin/$1"
+	test -L "/bin/sh" || _abort 5185 "no /bin/sh link"
+	test -f "/bin/$1" || _abort 5186 "no such shell /bin/$1"
 
 	local USE_SHELL=`diff -u /bin/sh /bin/$1`
 	local CURR="$PWD"
@@ -5237,7 +5239,7 @@ function _webhome_php {
 			git pull
 			_cd ..
 		else
-			ln -s "/webhome/.php/$dir" "$dir" || _abort 5240 "ln -s '/webhome/.php/$dir' '$dir'"
+			ln -s "/webhome/.php/$dir" "$dir" || _abort 5242 "ln -s '/webhome/.php/$dir' '$dir'"
 		fi
 	done
 
@@ -5252,7 +5254,7 @@ function _webhome_php {
 # @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
-	test -d "$1" || _abort 5255 "no such directory $1"
+	test -d "$1" || _abort 5257 "no such directory $1"
 
 	local DIR_OWNER=`stat -c '%U' "$1"`
 	local SERVER_USER=
@@ -5283,7 +5285,7 @@ function _webserver_rw_dir {
 # @require _abort _require_program _confirm
 #--
 function _wget {
-	test -z "$1" && _abort 5286 "empty url"
+	test -z "$1" && _abort 5288 "empty url"
 	_require_program wget
 
 	local SAVE_AS=${2:-`basename "$1"`}
@@ -5297,22 +5299,22 @@ function _wget {
 
 	if test -z "$2"; then
 		echo "download $1"
-		wget -q "$1" || _abort 5300 "wget -q '$1'"
+		wget -q "$1" || _abort 5302 "wget -q '$1'"
 	elif test "$2" = "-"; then
-		wget -q -O "$2" "$1" || _abort 5302 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5304 "wget -q -O '$2' '$1'"
 		return
 	else
 		echo "download $1 as $2"
-		wget -q -O "$2" "$1" || _abort 5306 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5308 "wget -q -O '$2' '$1'"
 	fi
 
 	if test -z "$2"; then
 		if ! test -s "$SAVE_AS"; then
 			local NEW_FILES=`find . -amin 1 -type f`
-			test -z "$NEW_FILES" && _abort 5312 "Download from $1 failed"
+			test -z "$NEW_FILES" && _abort 5314 "Download from $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort 5315 "Download of $2 from $1 failed"
+		_abort 5317 "Download of $2 from $1 failed"
 	fi
 }
 

@@ -44,7 +44,9 @@ function _syntax {
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
 			for b in ${!_SYNTAX_HELP[@]}; do
-				if grep -E "$a" >/dev/null <<< "$b"; then
+				if test "$b" = "$1"; then
+					MSG="$MSG\n${_SYNTAX_HELP[$b]}"
+				elif grep -E "$a" >/dev/null <<< "$b"; then
 					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
 					MSG="$MSG\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
 				fi
