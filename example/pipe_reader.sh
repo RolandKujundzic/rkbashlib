@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pipe=/tmp/testpipe
+pipe=/dev/shm/rkscript.example.pipe
 
 trap "rm -f $pipe" EXIT
 
