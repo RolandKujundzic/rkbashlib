@@ -3976,6 +3976,58 @@ function _print {
 
 
 #--
+# Show progress bar. Set _PROGRESS_FILE to load $1 (use /dev/shm/...). 
+# Overwrite $2 and $3 with _PROGRESS_MAX and _PROGRESS_LABEL. Styles:
+#
+# 1: |----
+# 3: [###---]
+# 3: ▇▇▇
+#
+# @example for n in $(seq 1 100); do sleep 0.01; _progress_bar $n; done
+#
+# @global _PROGRESS_FILE _PROGRESS_MAX
+# @param value (<= end)
+# @param end (default = 100)
+# @param label (default = Progress:1 = Lable:Style)
+#--
+function _progress_bar {
+	local val=0
+	local end=100
+	local label_style="Progress:1"
+
+	test -z "$_PROGRESS_FILE" || val=`cat "$_PROGRESS_FILE"`
+	test -z "$_PROGRESS_MAX" || end="$_PROGRESS_MAX"
+	test -z "$_PROGRESS_LABEL" || label_style="$_PROGRESS_LABEL"
+
+	test -z "$1" || val=$1
+	test -z "$2" || end=$2
+	test -z "$3" || label_style="$3"
+
+	let local progress=($val*100/$end*100)/100
+	let local done=($progress*4)/10
+	let local left=40-$done
+
+	local fill=$(printf "%${done}s")
+	local empty=$(printf "%${left}s")
+
+	local label="${label_style:0: -2}"
+	local style=${label_style: -1}
+
+	case $style in
+		1)
+			printf "\r$label: |${fill// /-}${empty// / } ${progress}%%    "
+			;;
+		2)
+			printf "\r$label: [${fill// /\#}${empty// /-}] ${progress}%%    "
+			;;
+		3)
+			printf "\r$label: ${fill// /▇}${empty// / } ${progress}%%    "
+			;;
+	esac
+}
+
+
+#--
 # Print random string of length $1 (chars from [0-9a-zA-Z-_]).
 # 
 # @example _random_string n 10 26 = random from [a-z], length n
@@ -4076,7 +4128,7 @@ function _remote_ip {
 # @require _abort _require_priv _require_owner
 #--
 function _require_dir {
-	test -d "$1" || _abort 4079 "no such directory '$1'"
+	test -d "$1" || _abort 4131 "no such directory '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4157,7 +4209,7 @@ function _required_rkscript {
 # @require _abort _require_owner _require_priv
 #--
 function _require_file {
-	test -f "$1" || _abort 4160 "no such file '$1'"
+	test -f "$1" || _abort 4212 "no such file '$1'"
 	test -z "$2" || _require_owner "$1" "$2"
 	test -z "$3" || _require_priv "$1" "$3"
 }
@@ -4181,10 +4233,10 @@ function _require_global {
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
-				_abort 4184 "no such global variable $a"
+				_abort 4236 "no such global variable $a"
 			fi
 		elif test -z "${a}" && test -z "${has_hash}"; then
-			_abort 4187 "no such global variable $a - add HAS_HASH_$a if necessary"
+			_abort 4239 "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
@@ -4198,21 +4250,21 @@ function _require_global {
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
-		_abort 4201 "no such file or directory '$1'"
+		_abort 4253 "no such file or directory '$1'"
 	fi
 
 	local arr=( ${2//:/ } )
 	local owner=`stat -c '%U' "$1" 2>/dev/null`
-	test -z "$owner" && _abort 4206 "stat -c '%U' '$1'"
+	test -z "$owner" && _abort 4258 "stat -c '%U' '$1'"
 	local group=`stat -c '%G' "$1" 2>/dev/null`
-	test -z "$group" && _abort 4208 "stat -c '%G' '$1'"
+	test -z "$group" && _abort 4260 "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
-		_abort 4211 "invalid owner - chown ${arr[0]} '$1'"
+		_abort 4263 "invalid owner - chown ${arr[0]} '$1'"
 	fi
 
 	if ! test -z "${arr[1]}" && ! test "${arr[1]}" = "$group"; then
-		_abort 4215 "invalid group - chgrp ${arr[1]} '$1'"
+		_abort 4267 "invalid group - chgrp ${arr[1]} '$1'"
 	fi
 }
 
@@ -4225,10 +4277,10 @@ function _require_owner {
 # @require _abort
 #--
 function _require_priv {
-	test -z "$2" && _abort 4228 "empty privileges"
+	test -z "$2" && _abort 4280 "empty privileges"
 	local priv=`stat -c '%a' "$1" 2>/dev/null`
-	test -z "$priv" && _abort 4230 "stat -c '%a' '$1'"
-	test "$2" = "$priv" || _abort 4231 "invalid privileges [$priv] - chmod -R $2 '$1'"
+	test -z "$priv" && _abort 4282 "stat -c '%a' '$1'"
+	test "$2" = "$priv" || _abort 4283 "invalid privileges [$priv] - chmod -R $2 '$1'"
 }
 
 
@@ -4311,13 +4363,13 @@ function _rkscript {
 # @require _abort _msg
 #--
 function _rm {
-	test -z "$1" && _abort 4314 "Empty remove path"
+	test -z "$1" && _abort 4366 "Empty remove path"
 
 	if ! test -f "$1" && ! test -d "$1"; then
-		test -z "$2" || _abort 4317 "No such file or directory '$1'"
+		test -z "$2" || _abort 4369 "No such file or directory '$1'"
 	else
 		_msg "remove '$1'"
-		rm -rf "$1" || _abort 4320 "rm -rf '$1'"
+		rm -rf "$1" || _abort 4372 "rm -rf '$1'"
 	fi
 }
 
@@ -4338,11 +4390,11 @@ function _rsync {
 	fi
 
 	if test -z "$1"; then
-		_abort 4341 "Empty rsync source"
+		_abort 4393 "Empty rsync source"
 	fi
 
 	if ! test -d "$TARGET"; then
-		_abort 4345 "No such directory [$TARGET]"
+		_abort 4397 "No such directory [$TARGET]"
 	fi
 
 	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"; local error=
@@ -4353,7 +4405,7 @@ function _rsync {
 		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
 
 		if test -z "$sync_finished"; then
-			_abort 4356 "$RSYNC"
+			_abort 4408 "$RSYNC"
 		fi
 	fi
 }
@@ -4369,10 +4421,10 @@ function _run_as_root {
 	test "$UID" = "0" && return
 
 	if test -z "$1"; then
-		_abort 4372 "Please change into root and try again"
+		_abort 4424 "Please change into root and try again"
 	else
 		echo "sudo true - Please type in your password"
-		sudo true 2>/dev/null || _abort 4375 "sudo true failed - Please change into root and try again"
+		sudo true 2>/dev/null || _abort 4427 "sudo true failed - Please change into root and try again"
 	fi
 }
 
@@ -4432,7 +4484,7 @@ function _set {
 	DIR="$DIR/"`basename "$APP"`
 
 	test -d "$DIR" || _mkdir "$DIR" >/dev/null
-	test -z "$1" && _abort 4435 "empty name"
+	test -z "$1" && _abort 4487 "empty name"
 
 	echo -e "$2" > "$DIR/$1.nfo"
 }
@@ -4468,6 +4520,21 @@ function _show_list {
 
 	echo ""
 }
+
+#--
+#
+#--
+function _spinner {
+	_abort 4528 "ToDo ..."
+
+while :; do
+	for s in / - \\ \|; do
+		printf "\r$s"
+		sleep .1
+	done
+done
+}
+
 
 #--
 # Split string "$2" at "$1" (export as $_SPLIT[@]).
@@ -4565,14 +4632,14 @@ function _sql_echo {
 #--
 function _sql_execute {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4568 "empty sql execute query"
+	test -z "$QUERY" && _abort 4635 "empty sql execute query"
 	_require_global "_SQL"
 	if test "$2" = "1"; then
 		echo "execute sql query: $(_sql_echo "$QUERY")"
-		$_SQL "$QUERY" || _abort 4572 "$QUERY"
+		$_SQL "$QUERY" || _abort 4639 "$QUERY"
 	else
 		_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort 4575 "$QUERY"; }
+		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort 4642 "$QUERY"; }
 	fi
 }
 
@@ -4586,10 +4653,10 @@ function _sql_execute {
 #--
 function _sql_list {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4589 "empty query in _sql_list"
+	test -z "$QUERY" && _abort 4656 "empty query in _sql_list"
 	_require_global "_SQL"
 
-	$_SQL "$QUERY" || _abort 4592 "$QUERY"
+	$_SQL "$QUERY" || _abort 4659 "$QUERY"
 }
 
 
@@ -4660,7 +4727,7 @@ function _sql_querystring {
 		QUERY="${QUERY//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
 	done
 
-	test -z "$QUERY" && _abort 4663 "empty query in _sql"
+	test -z "$QUERY" && _abort 4730 "empty query in _sql"
 
 	echo "$QUERY"
 }
@@ -4684,10 +4751,10 @@ declare -A _SQL_COL
 #--
 function _sql_select {
 	local QUERY="$1"
-	test -z "$QUERY" && _abort 4687 "empty query in _sql_select"
+	test -z "$QUERY" && _abort 4754 "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local DBOUT=`$_SQL "$QUERY" || _abort 4690 "$QUERY"`
+	local DBOUT=`$_SQL "$QUERY" || _abort 4757 "$QUERY"`
 	local LNUM=`echo "$DBOUT" | wc -l`
 
 	_SQL_COL=()
@@ -4710,7 +4777,7 @@ function _sql_select {
 	elif test $LNUM -lt 2; then
 		return 1  # false = no result
 	else
-		_abort 4713 "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
+		_abort 4780 "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
 	fi
 }
 
@@ -4740,7 +4807,7 @@ function _sql {
 		if test -s "/usr/local/bin/rks-db_connect"; then
 			_SQL='rks-db_connect query'
 		else
-			_abort 4743 "set _SQL="
+			_abort 4810 "set _SQL="
 		fi
 	fi
 
@@ -4750,7 +4817,7 @@ function _sql {
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
 		ACTION="${BASH_REMATCH[1]}"
 		QUERY="$1"
-		test -z "${_SQL_QUERY[$QUERY]}" && _abort 4753 "invalid action $ACTION - no such query key $QUERY"
+		test -z "${_SQL_QUERY[$QUERY]}" && _abort 4820 "invalid action $ACTION - no such query key $QUERY"
 	fi
 
 	test -z "${_SQL_QUERY[$QUERY]}" || QUERY="${_SQL_QUERY[$QUERY]}"
@@ -4764,7 +4831,7 @@ function _sql {
 	elif test "$ACTION" = "list"; then
 		_sql_list "$QUERY"
 	else
-		_abort 4767 "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
+		_abort 4834 "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
 	fi
 }
 
@@ -4801,7 +4868,7 @@ function _sql_transaction {
 		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
 	fi
 
-	test ${#TABLES[@]} -lt 1 && _abort 4804 "table list is empty"
+	test ${#TABLES[@]} -lt 1 && _abort 4871 "table list is empty"
 	test $((FLAG & 32)) -eq 32 && ACF=y
 
 	if test $((FLAG & 1)) -eq 1; then	
@@ -5001,15 +5068,15 @@ function _sudo {
 
 	if test "$USER" = "root"; then
 		_log "$EXEC" sudo
-		eval "$EXEC ${LOG_CMD[sudo]}" || _abort 5004 "$EXEC"
+		eval "$EXEC ${LOG_CMD[sudo]}" || _abort 5071 "$EXEC"
 	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
 		_log "$EXEC" sudo
 		eval "$EXEC ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 5008 "sudo $EXEC" )
+			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 5075 "sudo $EXEC" )
 	else
 		SUDO=sudo
 		_log "sudo $EXEC" sudo
-		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 5012 "sudo $EXEC"
+		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort 5079 "sudo $EXEC"
 		SUDO=$CURR_SUDO
 	fi
 }
@@ -5023,7 +5090,7 @@ function _sudo {
 #--
 function _sync_db {
 	_msg "Create database dump in $1:$2/data/.sql with rks-db_connect dump"
-	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 5026 "ssh $1 'cd $2 && rks-db_connect dump failed'"
+	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort 5093 "ssh $1 'cd $2 && rks-db_connect dump failed'"
 
 	_msg "Download and import dump"
 	_rsync "$1:$2/data/.sql" "data/" >/dev/null
@@ -5182,8 +5249,8 @@ function _trim {
 # @param abort message
 #--
 function _use_shell {
-	test -L "/bin/sh" || _abort 5185 "no /bin/sh link"
-	test -f "/bin/$1" || _abort 5186 "no such shell /bin/$1"
+	test -L "/bin/sh" || _abort 5252 "no /bin/sh link"
+	test -f "/bin/$1" || _abort 5253 "no such shell /bin/$1"
 
 	local USE_SHELL=`diff -u /bin/sh /bin/$1`
 	local CURR="$PWD"
@@ -5239,7 +5306,7 @@ function _webhome_php {
 			git pull
 			_cd ..
 		else
-			ln -s "/webhome/.php/$dir" "$dir" || _abort 5242 "ln -s '/webhome/.php/$dir' '$dir'"
+			ln -s "/webhome/.php/$dir" "$dir" || _abort 5309 "ln -s '/webhome/.php/$dir' '$dir'"
 		fi
 	done
 
@@ -5254,7 +5321,7 @@ function _webhome_php {
 # @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
-	test -d "$1" || _abort 5257 "no such directory $1"
+	test -d "$1" || _abort 5324 "no such directory $1"
 
 	local DIR_OWNER=`stat -c '%U' "$1"`
 	local SERVER_USER=
@@ -5285,7 +5352,7 @@ function _webserver_rw_dir {
 # @require _abort _require_program _confirm
 #--
 function _wget {
-	test -z "$1" && _abort 5288 "empty url"
+	test -z "$1" && _abort 5355 "empty url"
 	_require_program wget
 
 	local SAVE_AS=${2:-`basename "$1"`}
@@ -5299,22 +5366,22 @@ function _wget {
 
 	if test -z "$2"; then
 		echo "download $1"
-		wget -q "$1" || _abort 5302 "wget -q '$1'"
+		wget -q "$1" || _abort 5369 "wget -q '$1'"
 	elif test "$2" = "-"; then
-		wget -q -O "$2" "$1" || _abort 5304 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5371 "wget -q -O '$2' '$1'"
 		return
 	else
 		echo "download $1 as $2"
-		wget -q -O "$2" "$1" || _abort 5308 "wget -q -O '$2' '$1'"
+		wget -q -O "$2" "$1" || _abort 5375 "wget -q -O '$2' '$1'"
 	fi
 
 	if test -z "$2"; then
 		if ! test -s "$SAVE_AS"; then
 			local NEW_FILES=`find . -amin 1 -type f`
-			test -z "$NEW_FILES" && _abort 5314 "Download from $1 failed"
+			test -z "$NEW_FILES" && _abort 5381 "Download from $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort 5317 "Download of $2 from $1 failed"
+		_abort 5384 "Download of $2 from $1 failed"
 	fi
 }
 
