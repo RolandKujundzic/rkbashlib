@@ -19,20 +19,15 @@ function createProgressSequence {
 #--
 #
 #--
-function createProgressPipe {
+function readProgressPipe {
+	trap "rm -f $1" EXIT
 	test -p "$1" || mkfifo "$1"
-	# test -f "$1" && rm $1
 
-	for n in $(seq 1 100); do 
-		echo -e "\rcreateProgressPipe: n=$n"
-		sleep 0.1
-
-		if test "$2" = "1"; then
-			echo -e "XXX\n$n\nMessage 1\nMessage 2\nXXX" >> $1 &
-		elif test "$2" = "2"; then
-			echo "$n" >> $1 &
-		else
-			echo -e "XXX\n$n\nLabel\n\nMessage 1\nMessage 2\nXXX" >> $1 &
+	local line
+	while true; do
+		if read line <"$1"; then
+			test "$line" = 'done.' && break
+			echo "$line"
 		fi
 	done
 }
@@ -41,9 +36,33 @@ function createProgressPipe {
 #--
 #
 #--
+function writeProgressPipe {
+	test -p "$1" || { echo -e "\nERROR: no such pipe $1\n"; exit 1; }
+
+	for n in $(seq 1 100); do 
+		sleep 0.1
+
+		if test "$2" = "1"; then
+			echo -e "XXX\n$n\nMessage 1\nMessage 2\nXXX" > "$1" &
+		elif test "$2" = "2"; then
+			echo "$n" > "$1" &
+		else
+			echo -e "XXX\n$n\nLabel\n\nMessage 1\nMessage 2\nXXX" > "$1" &
+		fi
+	done
+	
+	echo "done." > "$1"
+}
+
+
+#--
+#
+#--
 function fifo_test {
-	createProgressPipe /dev/shm/progress_bar 2 &
-#	cat /dev/shm/progress_bar | dialog --gauge "" 10 70 0
+	local FIFO="/dev/shm/rkscript.example.progress_bar"
+	readProgressPipe "$FIFO" | dialog --gauge "" 10 70 0 &
+	writeProgressPipe "$FIFO" &
+	exit 0
 }
 
 
@@ -51,7 +70,7 @@ function fifo_test {
 # M A I N
 #--
 
-# fifo_test
+#fifo_test
 
 createProgressSequence | dialog --gauge "" 10 70 0
 
