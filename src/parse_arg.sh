@@ -7,6 +7,7 @@ declare ARGV
 # Set ARG[name]=value if --name=value or name=value.
 # If --name set ARG[name]=1. Set ARG[0], ARG[1], ... otherwise.
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
+# Use _parse_arg "$@" to preserve whitespace.
 #
 # @parameter any
 # @global ARG (hash)
