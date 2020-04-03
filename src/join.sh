@@ -4,6 +4,9 @@
 # Join parameter ($2 or shift; echo "$*") with first parameter as delimiter ($1).
 # If parameter count is 2 try if $2 is array.
 #
+# @example _join ';' 'a' 'x y' 83
+# @example K=( a 'x y' 83); _join ';' K
+#
 # @param delimiter
 # @param array|array parts 
 # @echo 
