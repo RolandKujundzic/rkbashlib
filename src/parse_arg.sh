@@ -5,7 +5,7 @@ declare ARGV
 
 #--
 # Set ARG[name]=value if --name=value or name=value.
-# If --name set ARG[name]=1. Set ARG[0], ARG[1], ... otherwise.
+# If --name set ARG[name]=1. Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
 # Use _parse_arg "$@" to preserve whitespace.
 #
@@ -40,5 +40,7 @@ function _parse_arg {
 			ARG[$key]="$val"
 		fi
 	done
+
+	ARG[#]=$n
 }
 
