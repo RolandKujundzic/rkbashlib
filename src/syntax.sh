@@ -6,9 +6,10 @@ declare -A _SYNTAX_HELP
 #--
 # Abort with SYNTAX: message. Usually APP=$0.
 # If $1 = "*" show join('|', ${!_SYNTAX_CMD[@]}).
+# If APP_DESC(_2|_3|_4) is set output APP_DESC\n\n(APP_DESC_2\n\n ...).
 #
 # @export _SYNTAX_CMD _SYNTAX_HELP
-# @global APP APP_DESC $APP_PREFIX 
+# @global APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
 #--
@@ -62,11 +63,11 @@ function _syntax {
 		echo -e "\nSYNTAX: $APP $MSG" 1>&2
 	fi
 
-	if ! test -z "$APP_DESC"; then
-		echo -e "$APP_DESC\n\n" 1>&2
-	else
-		echo 1>&2
-	fi
+	local DESC=""
+	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
+		test -z "${!a}" || DESC="$DESC${!a}\n\n"
+	done
+	echo -e "$DESC" 1>&2
 
 	exit 1
 }
