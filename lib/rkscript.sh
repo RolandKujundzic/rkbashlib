@@ -2384,14 +2384,12 @@ function _join {
 	local OUT=""
 
 	if test $# -eq 2; then
-		if local -n array=$2 2>/dev/null; then
+		if test "$2" != '_' && local -n array=$2 2>/dev/null; then
 			OUT="${array[0]}"
-
 			local i
 			for (( i=1; i < ${#array[@]}; i++ )); do
 				OUT="$OUT$1${array[i]}"
 			done
-
 		else
 			OUT="${*:2}"
 		fi
