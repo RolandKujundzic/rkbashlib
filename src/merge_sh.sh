@@ -28,8 +28,8 @@ function _merge_sh {
 	_require_dir "$SH_DIR"
 
 	local TMP_APP="$SH_DIR"'_'
-
-	local MD5_OLD=`_md5 "$MAPP"`
+	local MD5_OLD=
+	test -s "$MAPP" && MD5_OLD=`_md5 "$MAPP"`
 	echo -n "merge $SH_DIR into $MAPP ... "
 
 	echo '#!/bin/bash' > "$TMP_APP"
