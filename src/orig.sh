@@ -9,12 +9,12 @@
 # @return bool
 #--
 function _orig {
-	local RET=0
-
 	if ! test -f "$1" && ! test -d "$1"; then
 		test -z "$2" && _abort "missing $1"
-		RET=1
+		return 1
 	fi
+
+	local RET=0
 
 	if test -f "$1.orig"; then
 		_msg "$1.orig already exists"
