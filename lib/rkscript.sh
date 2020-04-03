@@ -2372,6 +2372,9 @@ function _is_running {
 # Join parameter ($2 or shift; echo "$*") with first parameter as delimiter ($1).
 # If parameter count is 2 try if $2 is array.
 #
+# @example _join ';' 'a' 'x y' 83
+# @example K=( a 'x y' 83); _join ';' K
+#
 # @param delimiter
 # @param array|array parts 
 # @echo 
@@ -4592,6 +4595,21 @@ function _show_list {
 }
 
 #--
+#
+#--
+function _spinner {
+	_abort "ToDo ..."
+
+while :; do
+	for s in / - \\ \|; do
+		printf "\r$s"
+		sleep .1
+	done
+done
+}
+
+
+#--
 # Split string "$2" at "$1" (export as $_SPLIT[@]).
 # @param delimter
 # @param string
@@ -5193,9 +5211,10 @@ declare -A _SYNTAX_HELP
 #--
 # Abort with SYNTAX: message. Usually APP=$0.
 # If $1 = "*" show join('|', ${!_SYNTAX_CMD[@]}).
+# If APP_DESC(_2|_3|_4) is set output APP_DESC\n\n(APP_DESC_2\n\n ...).
 #
 # @export _SYNTAX_CMD _SYNTAX_HELP
-# @global APP APP_DESC $APP_PREFIX 
+# @global APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
 #--
@@ -5249,11 +5268,11 @@ function _syntax {
 		echo -e "\nSYNTAX: $APP $MSG" 1>&2
 	fi
 
-	if ! test -z "$APP_DESC"; then
-		echo -e "$APP_DESC\n\n" 1>&2
-	else
-		echo 1>&2
-	fi
+	local DESC=""
+	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
+		test -z "${!a}" || DESC="$DESC${!a}\n\n"
+	done
+	echo -e "$DESC" 1>&2
 
 	exit 1
 }
