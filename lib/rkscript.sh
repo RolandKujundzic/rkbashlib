@@ -2372,6 +2372,8 @@ function _is_running {
 # Join parameter ($2 or shift; echo "$*") with first parameter as delimiter ($1).
 # If parameter count is 2 try if $2 is array.
 #
+# @beware no whitespace allowed, only single char delimiter 
+#
 # @example _join ';' 'a' 'x y' 83
 # @example K=( a 'x y' 83); _join ';' K
 #
