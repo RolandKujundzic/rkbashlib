@@ -11,10 +11,8 @@ function _ln {
 	_require_program realpath
 
 	local target=`realpath "$1"`
-
-	if test "$PWD" = "$target"; then
-		_abort "ln -s '$taget' '$2' # in $PWD"
-	fi
+	test -z "$target" && _abort "no such directory [$1]"
+	test "$2" = "$target" && _abort "ln -s '$target' '$2' # source=target"
 
 	if test -L "$2"; then
 		local old_target=`realpath "$2"`
