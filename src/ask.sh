@@ -11,16 +11,29 @@
 # @required _abort
 #--
 function _ask {
-	local LABEL="$1  "
-	test -z "$2" || LABEL="$1  [$2]  "
+	local default
+	local allow
+	local label
+	
+	if test -z "$2"; then
+		label="$1  "
+	elif [[ "${2:0:1}" == "<" && "${2: -1}" == ">" ]]; then
+		label="$1  $2  "
+ 		allow="|${2:1: -1}|"
+	else 
+		label="$1  [$2]  "
+ 		default="$2"
+	fi
 
-	echo -n "$LABEL"
+	echo -n "$label"
 	read
 
 	if test "$REPLY" = " "; then
 		ANSWER=
-	elif test -z "$REPLY" && ! test -z "$2"; then
-		ANSWER="$2"
+	elif [[ -z "$REPLY" && ! -z "$default" ]]; then
+		ANSWER="$default"
+	elif ! test -z "$allow"; then
+		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=
 	else
 		ANSWER="$REPLY"
 	fi
