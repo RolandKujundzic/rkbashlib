@@ -347,11 +347,13 @@ function _apt_remove {
 
 #--
 # Ask question. Skip default answer with SPACE. Loop max. 3 times
-# until answered if $3=1. 
+# until answered if $3=1. Use _ASK_DEFAULT=aK if answer selection 
+# <a1|...|an> is used.
 #
 # @param string label
-# @param default answer
+# @param default answer or answer selection
 # @param bool required 1|[] (default empty)
+# @global _ASK_DEFAULT
 # @export ANSWER
 # @required _abort
 #--
@@ -365,6 +367,12 @@ function _ask {
 	elif [[ "${2:0:1}" == "<" && "${2: -1}" == ">" ]]; then
 		label="$1  $2  "
  		allow="|${2:1: -1}|"
+
+		if ! test -z "$_ASK_DEFAULT"; then
+			default="$_ASK_DEFAULT"
+			label="$label [$default]"
+			_ASK_DEFAULT=
+		fi
 	else 
 		label="$1  [$2]  "
  		default="$2"
@@ -5212,7 +5220,7 @@ declare -A _SYNTAX_HELP
 # If APP_DESC(_2|_3|_4) is set output APP_DESC\n\n(APP_DESC_2\n\n ...).
 #
 # @export _SYNTAX_CMD _SYNTAX_HELP
-# @global APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
+# @global _SYNTAX_CMD _SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
 #--
