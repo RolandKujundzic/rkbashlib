@@ -1472,59 +1472,43 @@ function _dir_priv {
 #
 # @param string directory name
 # @param string download url
-# @require _abort _mv _mkdir _wget
+# @require _abort _msg _mv _mkdir _wget _cd
 #--
 function _dl_unpack {
-
 	if test -d "$1"; then
-		echo "Use existing unpacked directory $1"
+		_msg "Use existing unpacked directory $1"
 		return
 	fi
 
-	local ARCHIVE=`basename $2`
-
-	if ! test -f "$ARCHIVE"; then
-		echo "Download $2"
+	local archive=`basename $2`
+	if ! test -f "$archive"; then
+		_msg "Download $2"
 		_wget "$2"
 	fi
 
-	if ! test -f "$ARCHIVE"; then
-		_abort "No such archive $ARCHIVE - download of $2 failed"
-	fi
+	test -f "$archive" || _abort "missing $archive - $2 download failed"
 
-	local EXTENSION="${ARCHIVE##*.}"
-	local UNPACK_CMD=
+	local extension="${archive##*.}"
+	if test "$extension" = "zip"; then
+		_msg "Unpack zip: unzip '$archive'"
 
-	if test "$EXTENSION" = "zip"; then
-		UNPACK_CMD="unzip"
-		echo "Unpack zip: $UNPACK_CMD '$ARCHIVE'"
-
-		local HAS_DIR=`unzip -l "$ARCHIVE" | grep "$1\$"`
-
-		if test -z "$HAS_DIR"; then
+		local has_dir=`unzip -l "$archive" | grep "$1\$"`
+		if test -z "$has_dir"; then
 			_mkdir "$1"
-			cd "$1"
-			unzip "../$ARCHIVE"
-			cd ..
+			_cd "$1"
+			unzip "../$archive" || _abort "unzip '../$archive'"
+			_cd ..
 		else
-			unzip "$ARCHIVE"
+			unzip "$archive"
 		fi
 	else
-		UNPACK_CMD="tar -xf"
-		echo "Unpack tar: $UNPACK_CMD '$ARCHIVE'"
-		tar -xf "$ARCHIVE"
+		_msg "Unpack tar: tar -xf '$archive'"
+		tar -xf "$archive" 2>/dev/null >/dev/null || _abort "tar -xf '$archive'"
 	fi
 
-	if ! test -d "$1"; then
-		local BASE="${ARCHIVE%.*}"
-
-		if test -d $BASE; then
-			_mv "$BASE" "$1"
-		else
-			_abort "$UNPACK_CMD $ARCHIVE failed"
-		fi
-  fi
+	test -d "$1" || _mv "${archive%.*}" "$1"
 }
+
 
 #--
 # Remove stopped docker container (if found).
