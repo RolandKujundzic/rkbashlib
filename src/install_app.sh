@@ -6,40 +6,34 @@
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _abort _mkdir _cp _dl_unpack _rm _require_global
+# @require _abort _mkdir _cp _dl_unpack _rm _require_global _require_dir
 #--
 function _install_app {
+	test -z "$1" && _abort "use _install_app . $2"
+	test -z "$2" || _dl_unpack $1 $2
 
-	if test -z "$1"; then
-		_abort "use _install_app . $2"
-	fi
+	_require_dir "$1"
+	_require_global APP_PREFIX
 
-	if ! test -z "$2"; then 
-		#_require_global "APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC"
-		_dl_unpack $1 $2
-	fi
+	test -d $APP_PREFIX || _mkdir $APP_PREFIX
 
-  if ! test -d $APP_PREFIX; then
-    _mkdir $APP_PREFIX
- 	fi
-
-	local DIR=; for DIR in $APP_DIR_LIST
-  do
-    _mkdir `dirname $APP_PREFIX/$DIR`
-    _cp $1/$DIR $APP_PREFIX/$DIR
-  done
-
-	local FILE=; for FILE in $APP_FILE_LIST
-  do
-    _mkdir `dirname $APP_PREFIX/$FILE`
-		_cp $1/$FILE $APP_PREFIX/$FILE md5
-  done
-
-	local ENTRY=; for ENTRY in $APP_SYNC
-	do
-		$SUDO rsync -av $1/$ENTRY $APP_PREFIX/
+	local dir
+	for dir in $APP_DIR_LIST; do
+		_mkdir `dirname "$APP_PREFIX/$dir"`
+		_cp "$1/$dir" "$APP_PREFIX/$dir"
 	done
 
-	_rm $1
+	local file
+	for file in $APP_FILE_LIST; do
+		_mkdir `dirname "$APP_PREFIX/$file"`
+		_cp "$1/$file" "$APP_PREFIX/$file" md5
+	done
+
+	local entry
+	for entry in $APP_SYNC; do
+		$SUDO rsync -av "$1/$entry" "$APP_PREFIX"/
+	done
+
+	_rm "$1"
 }
 

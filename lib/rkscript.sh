@@ -2159,75 +2159,59 @@ require valid-user"
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _abort _mkdir _cp _dl_unpack _rm _require_global
+# @require _abort _mkdir _cp _dl_unpack _rm _require_global _require_dir
 #--
 function _install_app {
+	test -z "$1" && _abort "use _install_app . $2"
+	test -z "$2" || _dl_unpack $1 $2
 
-	if test -z "$1"; then
-		_abort "use _install_app . $2"
-	fi
+	_require_dir "$1"
+	_require_global APP_PREFIX
 
-	if ! test -z "$2"; then 
-		#_require_global "APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC"
-		_dl_unpack $1 $2
-	fi
+	test -d $APP_PREFIX || _mkdir $APP_PREFIX
 
-  if ! test -d $APP_PREFIX; then
-    _mkdir $APP_PREFIX
- 	fi
-
-	local DIR=; for DIR in $APP_DIR_LIST
-  do
-    _mkdir `dirname $APP_PREFIX/$DIR`
-    _cp $1/$DIR $APP_PREFIX/$DIR
-  done
-
-	local FILE=; for FILE in $APP_FILE_LIST
-  do
-    _mkdir `dirname $APP_PREFIX/$FILE`
-		_cp $1/$FILE $APP_PREFIX/$FILE md5
-  done
-
-	local ENTRY=; for ENTRY in $APP_SYNC
-	do
-		$SUDO rsync -av $1/$ENTRY $APP_PREFIX/
+	local dir
+	for dir in $APP_DIR_LIST; do
+		_mkdir `dirname "$APP_PREFIX/$dir"`
+		_cp "$1/$dir" "$APP_PREFIX/$dir"
 	done
 
-	_rm $1
+	local file
+	for file in $APP_FILE_LIST; do
+		_mkdir `dirname "$APP_PREFIX/$file"`
+		_cp "$1/$file" "$APP_PREFIX/$file" md5
+	done
+
+	local entry
+	for entry in $APP_SYNC; do
+		$SUDO rsync -av "$1/$entry" "$APP_PREFIX"/
+	done
+
+	_rm "$1"
 }
 
 
 #--
-# Install NODE_VERSION from latest binary package.
+# Install node NODE_VERSION from latest binary package. 
+# If you want to install|update node/npm use _node_version instead.
 #
-# @global NODE_VERSION 
-# @require _abort _os_type _require_global _install_app
+# @see _node_version
+# @global NODE_VERSION
+# @require _abort _require_global _msg _os_type _install_app
 #--
 function _install_node {
-
-	if test -z "$NODE_VERSION"; then
-		NODE_VERSION=v12.14.0
-	fi
-
 	_require_global "NODE_VERSION"
+	local os_type=$(_os_type)
+	test "$os_type" = "linux" || _abort "Update node to version >= $NODE_VERSION - see https://nodejs.org/"
 
-	local OS_TYPE=$(_os_type)
+	_msg "Install node $NODE_VERSION"
+	APP_SYNC="bin include lib share"
+	APP_PREFIX="/usr/local"
 
-	if test -d /usr/local/bin && test "$OS_TYPE" = "linux"
-	then
-		APP_SYNC="bin include lib share"
-		APP_PREFIX="/usr/local"
-
-		local CURR_SUDO=$SUDO
-		SUDO=sudo
-
-		echo "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
-		_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
-
-		SUDO=$CURR_SUDO
-	else
-		_abort "Update node.js to version >= $NODE_VERSION - see https://nodejs.org/"
-	fi
+	local curr_sudo=$SUDO
+	SUDO=sudo
+	_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
+	SUDO=$curr_sudo
 }
 
 
@@ -3368,41 +3352,25 @@ function _mysql_split_dsn {
 #--
 # Check node.js version. Install node and npm if missing. 
 # Update to NODE_VERSION and NPM_VERSION if necessary.
-# Use NODE_VERSION=v12.14.0 and NPM_VERSION=6.13.4 as default.
+# Use NODE_VERSION=v12.16.2 and NPM_VERSION=6.13.4 as default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _ver3 _require_global _install_node _sudo
+# @require _ver3 _msg _install_node _sudo
 #--
 function _node_version {
+	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2
+	test -z "$NPM_VERSION" && NPM_VERSION=6.14.4
 
-	if test -z "$NODE_VERSION"; then
-		NODE_VERSION=v12.14.1
-	fi
+	local has_node=`which node`
+	local has_npm=`which npm`
+	[[ -z "$has_node" || -z "$has_npm" ]] && _install_node 
 
-	if test -z "$NPM_VERSION"; then
-		NPM_VERSION=6.13.6
-	fi
+	local curr_node_version=`node --version || _abort "node --version failed"`
+	[[ $(_ver3 $curr_node_version) -lt $(_ver3 $NODE_VERSION) ]] && _install_node
 
-	local HAS_NODE=`which node`
-	local HAS_NPM=`which npm`
-
-	if test -z "$HAS_NODE" || test -z "$HAS_NPM"; then
-		_install_node
-	fi
-
-	_require_global "NODE_VERSION NPM_VERSION"
-
-	local CURR_NODE_VERSION=`node --version`
-
-	if [ $(_ver3 $CURR_NODE_VERSION) -lt $(_ver3 $NODE_VERSION) ]
-	then
-		_install_node
-	fi
-
-	local CURR_NPM_VERSION=`npm --version`
-	if [ $(_ver3 $CURR_NPM_VERSION) -lt $(_ver3 $NPM_VERSION) ]
-	then
-		echo -e "Update npm from $CURR_NPM_VERSION to latest"
+	local curr_npm_version=`npm --version || _abort "npm --version failed"`
+	if [[ $(_ver3 $curr_npm_version) -lt $(_ver3 $NPM_VERSION) ]]; then
+		_msg "Update npm from $CURR_NPM_VERSION to latest"
 		_sudo "npm i -g npm"
 	fi
 }

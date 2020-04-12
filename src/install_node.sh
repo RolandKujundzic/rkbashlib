@@ -1,35 +1,25 @@
 #!/bin/bash
 
 #--
-# Install NODE_VERSION from latest binary package.
+# Install node NODE_VERSION from latest binary package. 
+# If you want to install|update node/npm use _node_version instead.
 #
-# @global NODE_VERSION 
-# @require _abort _os_type _require_global _install_app
+# @see _node_version
+# @global NODE_VERSION
+# @require _abort _require_global _msg _os_type _install_app
 #--
 function _install_node {
-
-	if test -z "$NODE_VERSION"; then
-		NODE_VERSION=v12.14.0
-	fi
-
 	_require_global "NODE_VERSION"
+	local os_type=$(_os_type)
+	test "$os_type" = "linux" || _abort "Update node to version >= $NODE_VERSION - see https://nodejs.org/"
 
-	local OS_TYPE=$(_os_type)
+	_msg "Install node $NODE_VERSION"
+	APP_SYNC="bin include lib share"
+	APP_PREFIX="/usr/local"
 
-	if test -d /usr/local/bin && test "$OS_TYPE" = "linux"
-	then
-		APP_SYNC="bin include lib share"
-		APP_PREFIX="/usr/local"
-
-		local CURR_SUDO=$SUDO
-		SUDO=sudo
-
-		echo "Update node from $CURR_NODE_VERSION to $NODE_VERSION"
-		_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
-
-		SUDO=$CURR_SUDO
-	else
-		_abort "Update node.js to version >= $NODE_VERSION - see https://nodejs.org/"
-	fi
+	local curr_sudo=$SUDO
+	SUDO=sudo
+	_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
+	SUDO=$curr_sudo
 }
 
