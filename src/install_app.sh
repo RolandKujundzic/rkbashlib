@@ -31,7 +31,8 @@ function _install_app {
 
 	local entry
 	for entry in $APP_SYNC; do
-		$SUDO rsync -av "$1/$entry" "$APP_PREFIX"/
+		_msg "rsync -av '$1/$entry' '$APP_PREFIX'/"
+		$SUDO rsync -av "$1/$entry" "$APP_PREFIX"/ >/dev/null 2>/dev/null
 	done
 
 	_rm "$1"

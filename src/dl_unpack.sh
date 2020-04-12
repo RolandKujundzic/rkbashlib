@@ -36,7 +36,7 @@ function _dl_unpack {
 		fi
 	else
 		_msg "Unpack tar: tar -xf '$archive'"
-		tar -xf "$archive" 2>/dev/null >/dev/null || _abort "tar -xf '$archive'"
+		tar -xf "$archive" || _abort "tar -xf '$archive'"
 	fi
 
 	test -d "$1" || _mv "${archive%.*}" "$1"
