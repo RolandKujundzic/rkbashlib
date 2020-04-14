@@ -44,14 +44,17 @@ function _syntax {
 			test "$a" = "help:" && a="help:$1"
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
+			local shelp=""
 			for b in ${!_SYNTAX_HELP[@]}; do
 				if test "$b" = "$1"; then
-					MSG="$MSG\n${_SYNTAX_HELP[$b]}"
+					shelp="$shelp\n${_SYNTAX_HELP[$b]}"
 				elif grep -E "$a" >/dev/null <<< "$b"; then
 					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
-					MSG="$MSG\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
+					shelp="$shelp\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
 				fi
 			done
+
+			[[ ! -z "$shelp" && "$shelp" != "\n$APP_DESC" ]] && MSG="$MSG$shelp"
 		fi
 
 		test "$OLD_MSG" != "$MSG" && MSG="$MSG\n"

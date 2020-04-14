@@ -4358,6 +4358,38 @@ function _require_program {
 
 
 #--
+# Prepare rks-app.
+#
+# parameter $0 $@
+#--
+function _rks_app {
+	local me="$1"
+	test -z "$me" && _abort "call _rks_app '$0' $@"
+	shift
+
+	if ! test -z "$APP" && ! test -z "$CURR" && test -z "$APP_PID"; then
+		APP="$me"
+		CURR="$PWD"
+		export APP_PID="$APP_PID $$"
+	fi
+
+	test -z "$APP_DESC" && _abort "APP_DESC is empty"
+	test -z "${#_SYNTAX_CMD[@]}" && _abort "_SYNTAX_CMD is empty"
+	test -z "${#_SYNTAX_HELP[@]}" && _abort "_SYNTAX_HELP is empty"
+
+	if [[ ! -z "$_SYNTAX_CMD[$1]" && ("$2" = '?' || "$2" = 'help') ]]; then
+		test -z "${_SYNTAX_HELP[$1]}" || APP_DESC="${_SYNTAX_HELP[$1]}" 
+		_syntax "$1" "help:"
+	fi
+
+	if [[ ! -z "$_SYNTAX_CMD[$1_$2]" && ("$3" = '?' || "$3" = 'help') ]]; then
+		test -z "${_SYNTAX_HELP[$1_$2]}" || APP_DESC="${_SYNTAX_HELP[$1_$2]}"
+		_syntax "$1_$2" "help:"
+	fi
+}
+
+
+#--
 function __abort {
 	echo -e "\nABORT: $1\n\n"
 	exit 1
@@ -5208,14 +5240,17 @@ function _syntax {
 			test "$a" = "help:" && a="help:$1"
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
+			local shelp=""
 			for b in ${!_SYNTAX_HELP[@]}; do
 				if test "$b" = "$1"; then
-					MSG="$MSG\n${_SYNTAX_HELP[$b]}"
+					shelp="$shelp\n${_SYNTAX_HELP[$b]}"
 				elif grep -E "$a" >/dev/null <<< "$b"; then
 					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
-					MSG="$MSG\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
+					shelp="$shelp\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
 				fi
 			done
+
+			[[ ! -z "$shelp" && "$shelp" != "\n$APP_DESC" ]] && MSG="$MSG$shelp"
 		fi
 
 		test "$OLD_MSG" != "$MSG" && MSG="$MSG\n"
