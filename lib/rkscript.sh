@@ -3057,6 +3057,29 @@ function _mysql_drop_db {
 
 
 #--
+# Drop all tables in database.
+#
+# @global 
+#--
+function _mysql_drop_tables {
+	_require_global DB_NAME DB_PASS
+	_confirm "Drop all tables in $DB_NAME" 1
+  test "$CONFIRM" = "y" || return
+
+	local tmp_dir="$RKSCRIPT_DIR/load_dump"
+	local drop_sql="$tmp_dir/$DB_NAME.sql"
+
+	_mkdir "$tmpdir"
+	echo "SET FOREIGN_KEY_CHECKS = 0;" > $drop_sql
+	echo "SELECT concat('DROP TABLE IF EXISTS ', table_name, ';') FROM information_schema.tables WHERE table_schema = '$DB_NAME';" | \
+		mysql -N -u $DB_NAME -p$DB_PASS $DB_NAME >> $drop_sql || _abort "create '$drop_sql' failed"
+	echo "SET FOREIGN_KEY_CHECKS = 1;" >> $drop_sql
+	mysql -u $DB_NAME -p$DB_PASS $DB_NAME < $drop_sql || _abort "drop all tables in $DB_NAME failed - see $drop_sql"
+	_rm $drop_sql	
+}
+
+
+#--
 # Drop Mysql User $1. Set MYSQL otherwise "mysql -u root" is used.
 #
 # @param name
@@ -4266,14 +4289,14 @@ function _require_file {
 # Abort if global variable is empty. With bash version >= 4.4 check works even
 # for arrays. If bash version < 4.4 export HAS_HASH_$1
 #
-# @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
+# @param name list (e.g. "GLOBAL", "GLOB1 GLOB2 ...", GLOB1 GLOB2 ...)
 # @require _abort
 #--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 
 	local a=; local has_hash=; 
-	for a in $1; do
+	for a in $@; do
 		has_hash="HAS_HASH_$a"
 
 		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
