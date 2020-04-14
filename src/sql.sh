@@ -6,14 +6,14 @@ declare -A _SQL_QUERY
 #--
 # Run _sql[list|execute|select]. Query is either $2 or _SQL_QUERY[$2] (if set). 
 # If $1=execute ask if query $2 should be execute (default=y) or skip. 
-# Set _SQL (default _SQL="rks-db_connect query") and _SQL_QUERY (optional).
+# Set _SQL (default _SQL="rks-db query") and _SQL_QUERY (optional).
 # See _sql_querystring for parameter and search parameter replace.
 # See _sql_select for _SQL_COL results.
 #
 # BEWARE: don't use `_sql select ...` or $(_sql select) - _SQL_COL will be empty (subshell execution)
 #
 # @global _SQL _SQL_QUERY (hash)
-# @export SQL (=rks-db_connect query)
+# @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
@@ -22,8 +22,8 @@ declare -A _SQL_QUERY
 #--
 function _sql {
 	if test -z "$_SQL"; then
-		if test -s "/usr/local/bin/rks-db_connect"; then
-			_SQL='rks-db_connect query'
+		if test -s "/usr/local/bin/rks-db"; then
+			_SQL='rks-db query'
 		else
 			_abort "set _SQL="
 		fi

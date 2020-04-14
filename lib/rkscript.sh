@@ -4725,7 +4725,7 @@ function _sql_list {
 
 
 #--
-# Load sql dump $1 (ask). Based on rks-db_connect - implement custom _sql_load if missing.
+# Load sql dump $1 (ask). Based on rks-db - implement custom _sql_load if missing.
 # If flag=1 load dump without confirmation.
 #
 # @param sql dump
@@ -4733,12 +4733,12 @@ function _sql_list {
 # @require _require_program _require_file _confirm
 #--
 function _sql_load {
-	_require_program "rks-db_connect"
+	_require_program "rks-db"
 	_require_file "$1"
 
 	test "$2" = "1" && AUTOCONFIRM=y
 	_confirm "load sql dump '$1'?" 1
-	test "$CONFIRM" = "y" && rks-db_connect load >/dev/null "$1" --q1=n --q2=y
+	test "$CONFIRM" = "y" && rks-db load >/dev/null "$1" --q1=n --q2=y
 }
 
 declare -A _SQL_PARAM
@@ -4806,7 +4806,7 @@ declare -A _SQL_COL
 # BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
 #
 # @global _SQL _SQL_COL (hash)
-# @export SQL (=rks-db_connect query)
+# @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
@@ -4852,14 +4852,14 @@ declare -A _SQL_QUERY
 #--
 # Run _sql[list|execute|select]. Query is either $2 or _SQL_QUERY[$2] (if set). 
 # If $1=execute ask if query $2 should be execute (default=y) or skip. 
-# Set _SQL (default _SQL="rks-db_connect query") and _SQL_QUERY (optional).
+# Set _SQL (default _SQL="rks-db query") and _SQL_QUERY (optional).
 # See _sql_querystring for parameter and search parameter replace.
 # See _sql_select for _SQL_COL results.
 #
 # BEWARE: don't use `_sql select ...` or $(_sql select) - _SQL_COL will be empty (subshell execution)
 #
 # @global _SQL _SQL_QUERY (hash)
-# @export SQL (=rks-db_connect query)
+# @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
@@ -4868,8 +4868,8 @@ declare -A _SQL_QUERY
 #--
 function _sql {
 	if test -z "$_SQL"; then
-		if test -s "/usr/local/bin/rks-db_connect"; then
-			_SQL='rks-db_connect query'
+		if test -s "/usr/local/bin/rks-db"; then
+			_SQL='rks-db query'
 		else
 			_abort "set _SQL="
 		fi
@@ -5147,14 +5147,14 @@ function _sudo {
 
 
 #--
-# Dump database on $1:$2. Require rks-db_connect on both server.
+# Dump database on $1:$2. Require rks-db on both server.
 # @param ssh e.g. user@domain.tld
 # @param docroot
 # @require _abort _require_program _msg
 #--
 function _sync_db {
-	_msg "Create database dump in $1:$2/data/.sql with rks-db_connect dump"
-	ssh $1 "cd $2 && rks-db_connect dump >/dev/null" || _abort "ssh $1 'cd $2 && rks-db_connect dump failed'"
+	_msg "Create database dump in $1:$2/data/.sql with rks-db dump"
+	ssh $1 "cd $2 && rks-db dump >/dev/null" || _abort "ssh $1 'cd $2 && rks-db dump failed'"
 
 	_msg "Download and import dump"
 	_rsync "$1:$2/data/.sql" "data/" >/dev/null
@@ -5162,8 +5162,8 @@ function _sync_db {
 	local LS_LAST_DUMP="data/.sql/mysql_dump_"`date +'%Y%m%d'`
 	local LAST_DUMP=`ls "$LS_LAST_DUMP"* | tail -1`
 
-	_require_program rks-db_connect
-	rks-db_connect load "$LAST_DUMP" >/dev/null
+	_require_program rks-db
+	rks-db load "$LAST_DUMP" >/dev/null
 }
 
 #--

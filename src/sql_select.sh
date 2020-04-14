@@ -9,7 +9,7 @@ declare -A _SQL_COL
 # BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
 #
 # @global _SQL _SQL_COL (hash)
-# @export SQL (=rks-db_connect query)
+# @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
