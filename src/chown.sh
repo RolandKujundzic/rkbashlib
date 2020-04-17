@@ -17,51 +17,51 @@ function _chown {
 
 	_require_program stat
 
-	local CMD="chown -R"
+	local cmd="chown -R"
 	if ! test -z "$CHOWN"; then
-		CMD="$CHOWN"
+		cmd="$CHOWN"
 		CHOWN=
 	fi
 
-	local MODIFY=
+	local modify
 
 	if test -z "$1"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
-			local CURR_OWNER=
-			local CURR_GROUP=
+			local curr_owner=
+			local curr_group=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				CURR_OWNER=$(stat -c '%U' "${FOUND[$i]}")
-				CURR_GROUP=$(stat -c '%G' "${FOUND[$i]}")
+				curr_owner=$(stat -c '%U' "${FOUND[$i]}")
+				curr_group=$(stat -c '%G' "${FOUND[$i]}")
 			fi
 
-			if test "$CURR_OWNER" != "$2" || test "$CURR_GROUP" != "$3"; then
-				_sudo "$CMD '$2.$3' '${FOUND[$i]}'" 1
+			if test "$curr_owner" != "$2" || test "$curr_group" != "$3"; then
+				_sudo "$cmd '$2.$3' '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$1"; then
-		local CURR_OWNER=$(stat -c '%U' "$1")
-		local CURR_GROUP=$(stat -c '%G' "$1")
+		local curr_owner=$(stat -c '%U' "$1")
+		local curr_group=$(stat -c '%G' "$1")
 
-		[[ -z "$CURR_OWNER" || -z "$CURR_GROUP" ]] && _abort "stat owner [$CURR_OWNER] or group [$CURR_GROUP] of [$1] failed"
-		[[ "$CURR_OWNER" != "$2" || "$CURR_GROUP" != "$3" ]] && MODIFY=1
+		[[ -z "$curr_owner" || -z "$curr_group" ]] && _abort "stat owner [$curr_owner] or group [$curr_group] of [$1] failed"
+		[[ "$curr_owner" != "$2" || "$curr_group" != "$3" ]] && modify=1
 	elif test -d "$1"; then
 		# no stat compare because subdir entry may have changed
-		MODIFY=1
+		modify=1
 	fi
 
-	test -z "$MODIFY" && return
+	test -z "$modify" && return
 
-	local ME=`basename "$HOME"`
-	if test "$ME" = "$2"; then
-		local HAS_GROUP=`groups $ME | grep " $3 "`
-		if ! test -z "$HAS_GROUP"; then
-			_msg "$CMD $2.$3 '$1'"
-			$CMD "$2.$3" "$1" && return
-			_msg "$CMD '$2.$3' '$1' failed - try as root"
+	local me=`basename "$HOME"`
+	if test "$me" = "$2"; then
+		local has_group=`groups $me | grep " $3 "`
+		if ! test -z "$has_group"; then
+			_msg "$cmd $2.$3 '$1'"
+			$cmd "$2.$3" "$1" 2>/dev/null && return
+			_msg "$cmd '$2.$3' '$1' failed - try as root"
 		fi
 	fi
 
-	_sudo "$CMD '$2.$3' '$1'" 1
+	_sudo "$cmd '$2.$3' '$1'" 1
 }
 
