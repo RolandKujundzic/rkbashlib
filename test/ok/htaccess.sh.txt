@@ -1,10 +1,21 @@
 append text 'Require all denied' to 'out/.htaccess'
+append [Require all denied] to [out/.htaccess]
+chown -R rk.www-data 'out/.htaccess'
+chown -R 'rk.www-data' 'out/.htaccess' failed - try as root
+try sudo chown -R 'rk.www-data' 'out/.htaccess'
 Require all denied was already appended to out/.htaccess
 append text 'AuthType Basic
 AuthName "Require Authentication"
 AuthUserFile "/home/rk/Schreibtisch/workspace/shell/rkscript/test/out/.htpasswd"
 require valid-user' to 'out/.htaccess'
+append [AuthType Basic
+AuthName "Require Authentication"
+AuthUserFile "/home/rk/Schreibtisch/workspace/shell/rkscript/test/out/.htpasswd"
+require valid-user] to [out/.htaccess]
 add user john to out/.htpasswd
+chown -R rk.www-data 'out/.htpasswd'
+chown -R 'rk.www-data' 'out/.htpasswd' failed - try as root
+try sudo chown -R 'rk.www-data' 'out/.htpasswd'
 AuthType Basic
 AuthName "Require Authentication"
 AuthUserFile "/home/rk/Schreibtisch/workspace/shell/rkscript/test/out/.htpasswd"
