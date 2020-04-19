@@ -12,7 +12,9 @@
 # @require _abort _msg _require_program _require_global _require_dir _orig
 #--
 function _patch {
-	if test -s "$1"; then
+	if ! test -z "$1" && test -d "$1"; then
+		PATCH_SOURCE_DIR="$1"
+	elif test -s "$1"; then
 		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
 		PATCH_SOURCE_DIR=`dirname "$1"`
 		if test -z "$PATCH_DIR"; then
@@ -22,8 +24,6 @@ function _patch {
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=`dirname "$1"`
 		. "$1/patch.sh" || _abort ". $1/patch.sh"
-	elif ! test -z "$1" && test -d "$1"; then
-		PATCH_SOURCE_DIR="$1"
 	fi
 
 	_require_program patch
@@ -31,21 +31,19 @@ function _patch {
 	_require_dir "$PATCH_SOURCE_DIR"
 	_require_global PATCH_LIST
 
-	local a; local TARGET;
+	local a; local target;
 	for a in $PATCH_LIST; do
-		TARGET=`find $PATCH_DIR -name "$a"`
+		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=`find $PATCH_DIR -name "$a"`
 
-		if test -f "$PATCH_SOURCE_DIR/$a.patch" && test -f "$TARGET"; then
+		if test -f "$PATCH_SOURCE_DIR/$a.patch" && test -f "$target"; then
 			CONFIRM="y"
-
-			_orig "$TARGET" || _confirm "$TARGET.orig already exists patch anyway?"
-
+			_orig "$target" >/dev/null || _confirm "$target.orig already exists patch anyway?"
 			if test "$CONFIRM" = "y"; then
-				_msg "patch '$TARGET' '$PATCH_SOURCE_DIR/$a.patch'"
-				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
+				_msg "patch '$target' '$PATCH_SOURCE_DIR/$a.patch'"
+				patch "$target" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
 			fi
 		else
-			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $TARGET"
+			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $target"
 		fi
 	done
 }

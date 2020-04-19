@@ -9,22 +9,14 @@
 # @require _abort _cp _patch
 #--
 function _npm2js {
-
-	if test -z "$2"; then
-		_abort "empty module path"
-	fi
-
-	if ! test -f "node_modules/$2" && ! test -d "node_modules/$2"; then
-		_abort "missing node_modules/$2"
-	fi
+	test -z "$2" && _abort "empty module path"
+	[[ -f "node_modules/$2" || -d "node_modules/$2" ]] || _abort "missing node_modules/$2"
 
 	_cp "node_modules/$2" "$1" md5
 
-	local BASE=`basename "$1"`
-	local PATCH="$BASE"".patch"
-
-	if test -f patch/npm2js/$PATCH; then
-		PATCH_LIST="$BASE"
+	local base=`basename "$1"`
+	if test -f "patch/npm2js/$base.patch"; then
+		PATCH_LIST="$base"
 		PATCH_DIR=`dirname "$1"`
 		_patch patch/npm2js
 	fi

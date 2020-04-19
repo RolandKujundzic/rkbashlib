@@ -3395,22 +3395,14 @@ function _node_version {
 # @require _abort _cp _patch
 #--
 function _npm2js {
-
-	if test -z "$2"; then
-		_abort "empty module path"
-	fi
-
-	if ! test -f "node_modules/$2" && ! test -d "node_modules/$2"; then
-		_abort "missing node_modules/$2"
-	fi
+	test -z "$2" && _abort "empty module path"
+	[[ -f "node_modules/$2" || -d "node_modules/$2" ]] || _abort "missing node_modules/$2"
 
 	_cp "node_modules/$2" "$1" md5
 
-	local BASE=`basename "$1"`
-	local PATCH="$BASE"".patch"
-
-	if test -f patch/npm2js/$PATCH; then
-		PATCH_LIST="$BASE"
+	local base=`basename "$1"`
+	if test -f "patch/npm2js/$base.patch"; then
+		PATCH_LIST="$base"
 		PATCH_DIR=`dirname "$1"`
 		_patch patch/npm2js
 	fi
@@ -3754,7 +3746,9 @@ function _parse_arg {
 # @require _abort _msg _require_program _require_global _require_dir _orig
 #--
 function _patch {
-	if test -s "$1"; then
+	if ! test -z "$1" && test -d "$1"; then
+		PATCH_SOURCE_DIR="$1"
+	elif test -s "$1"; then
 		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
 		PATCH_SOURCE_DIR=`dirname "$1"`
 		if test -z "$PATCH_DIR"; then
@@ -3764,8 +3758,6 @@ function _patch {
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=`dirname "$1"`
 		. "$1/patch.sh" || _abort ". $1/patch.sh"
-	elif ! test -z "$1" && test -d "$1"; then
-		PATCH_SOURCE_DIR="$1"
 	fi
 
 	_require_program patch
@@ -3773,21 +3765,19 @@ function _patch {
 	_require_dir "$PATCH_SOURCE_DIR"
 	_require_global PATCH_LIST
 
-	local a; local TARGET;
+	local a; local target;
 	for a in $PATCH_LIST; do
-		TARGET=`find $PATCH_DIR -name "$a"`
+		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=`find $PATCH_DIR -name "$a"`
 
-		if test -f "$PATCH_SOURCE_DIR/$a.patch" && test -f "$TARGET"; then
+		if test -f "$PATCH_SOURCE_DIR/$a.patch" && test -f "$target"; then
 			CONFIRM="y"
-
-			_orig "$TARGET" || _confirm "$TARGET.orig already exists patch anyway?"
-
+			_orig "$target" >/dev/null || _confirm "$target.orig already exists patch anyway?"
 			if test "$CONFIRM" = "y"; then
-				_msg "patch '$TARGET' '$PATCH_SOURCE_DIR/$a.patch'"
-				patch "$TARGET" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
+				_msg "patch '$target' '$PATCH_SOURCE_DIR/$a.patch'"
+				patch "$target" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
 			fi
 		else
-			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $TARGET"
+			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $target"
 		fi
 	done
 }
