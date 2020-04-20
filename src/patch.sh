@@ -43,8 +43,10 @@ function _patch {
 				patch "$target" "$PATCH_SOURCE_DIR/$a.patch" || _abort "patch '$a.patch' failed"
 			fi
 		else
-			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or $target"
+			_msg "skip $a.patch - missing either $PATCH_SOURCE_DIR/$a.patch or [$target]"
 		fi
 	done
+
+	PATCH_DIR=
 }
 
