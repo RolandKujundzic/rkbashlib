@@ -10,9 +10,11 @@ test -z "$CURR" && CURR="$PWD"
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
-for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
-  command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
-done
+if test "${@: -1}" = 'help'; then
+	for a in ps tr xargs head grep awk find sed sudo cd chown chmod mkdir rm ls; do
+		command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
+	done
+fi
 
 #--
 # Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
@@ -5234,22 +5236,22 @@ declare -A _SYNTAX_HELP
 # @global _SYNTAX_CMD _SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
+# @require _sort
 #--
 function _syntax {
 	local MSG="$1\n"
 	local a; local b; local prefix; local i;
+	local keys=`_sort ${!_SYNTAX_CMD[@]}`
 
 	if ! test -z "${_SYNTAX_CMD[$1]}"; then
 		MSG="${_SYNTAX_CMD[$1]}\n"
 	elif test "${1: -1}" = "*" && test "${#_SYNTAX_CMD[@]}" -gt 0; then
 		test "$1" = "*" && a='^[a-zA-Z0-9_]+$' || { prefix="${1:0:-1}"; a="^${1:0:-2}"'\.[a-zA-Z0-9_\.]+$'; }
-		local KEYS="${!_SYNTAX_CMD[@]}"
-		MSG=
 
-		for b in $KEYS; do
+		MSG=
+		for b in $keys; do
 			grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG|${b/$prefix/}"
 		done
-
 		MSG="${MSG:1}\n"
 	fi
 
@@ -5259,7 +5261,7 @@ function _syntax {
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
 			test "${a:4}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:4:-2}"'\.[a-zA-Z0-9_]+$'
-			for b in ${!_SYNTAX_CMD[@]}; do
+			for b in $keys; do
 				grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG\n$APP ${_SYNTAX_CMD[$b]}"
 			done
 		elif test "${a:0:5}" = "help:"; then
@@ -5267,7 +5269,7 @@ function _syntax {
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
 			local shelp=""
-			for b in ${!_SYNTAX_HELP[@]}; do
+			for b in `_sort ${!_SYNTAX_HELP[@]}`; do
 				if test "$b" = "$1"; then
 					shelp="$shelp\n${_SYNTAX_HELP[$b]}"
 				elif grep -E "$a" >/dev/null <<< "$b"; then
