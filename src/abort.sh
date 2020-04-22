@@ -2,9 +2,11 @@
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
-for a in ps head grep awk find sed sudo cd chown chmod mkdir rm ls; do
-  command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
-done
+if test "${@: -1}" = 'help'; then
+	for a in ps tr xargs head grep awk find sed sudo cd chown chmod mkdir rm ls; do
+		command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
+	done
+fi
 
 #--
 # Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
