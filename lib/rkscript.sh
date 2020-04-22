@@ -39,10 +39,10 @@ function _abort {
 		return 1
 	fi
 
-  if type -t caller >/dev/null 2>/dev/null; then
-    local frame=0
-    local trace=$(while caller $frame; do ((frame++)); done)
-    MSG="$MSG\n\n$trace"
+	if type -t caller >/dev/null 2>/dev/null; then
+		local frame=0
+		local trace=$(while caller $frame; do ((frame++)); done)
+		MSG="$MSG\n\n$trace"
 	fi
 
 	echo -e "\nABORT$LINE: $MSG\n" 1>&2
@@ -413,52 +413,54 @@ function _aws {
 }
 
 
-test -z "$RKSCRIPT_CACHE" && RKSCRIPT_CACHE="$HOME/.rkscript/cache"
+test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkscript/cache"
+test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkscript/src"
+CACHE_OFF=
+CACHE=
 
 #--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
-# modification of cache file $RKSCRIPT_CACHE/$1 with sh/run and ../rkscript/src.
+# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkscript/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
+# Use CACHE_DIR/$1.sh as cache. Use last modification of entries in CACHE_REF
+# for cache invalidation.
 #
 # @param variable name
 # @param variable value
-# @global RKSCRIPT_CACHE
-# @require _mkdir
+# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
+# @export CACHE CACHE_FILE
+# @return bool
 #--
 function _cache {
-	test -z "$CACHE_OFF" || return
+	CACHE_FILE=
+	CACHE=
 
-	# bash 4.3.* does not support ${2@Q} expression
-	local BASH43=`/bin/bash --version | grep 'ersion 4.3.'`
-	test -z "$BASH43" || return
+	test -z "$CACHE_OFF" || return 1
 
-	# bash 3.* does not support ${2@Q} expression
-	local BASH3X=`/bin/bash --version | grep 'ersion 3.'`
-	test -z "$BASH3X" || return
+	# $1 = abc.xyz.uvw -> prefix=abc key=xyz.uvw
+	local key="${1#*.}"
+	local prefix="${1%%.*}"
+	local cdir="$CACHE_DIR/$prefix"
+	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
-	_mkdir "$RKSCRIPT_CACHE"
+	CACHE_FILE="$cdir/$key"
+	_mkdir "$cdir" >/dev/null
 
-	local CACHE="$RKSCRIPT_CACHE/$1.sh"
+	# if pameter $2 is set update CACHE_FILE
+	[ -z ${2+x} ] || echo "$2" > "$CACHE_FILE"
 
-	if ! test -z "$2"; then
-		# update cache value - ${2@Q} = escaped value of $2
-		echo "$1=${2@Q}" > "$CACHE"
-		echo "update cached value of $1 ($CACHE)"
-	fi
+	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
+	test -z "$cache_lm" && return 1
 
-	if test -f "$CACHE" && test -d "sh/run" && test -d "../rkscript/src"; then
-		# last modification unix ts local source
-		local SH_LM=`stat -c %Y sh/run`
-		# last modification unix ts include source
-		local SRC_LM=`stat -c %Y ../rkscript/src`
-		# last modification of cache
-		local CACHE_LM=`stat -c %Y "$CACHE"`
+	local entry_lm; local a;
+	for a in $CACHE_REF; do
+		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
+		test $cache_lm -lt $entry_lm && { echo -e "\nreturn: $CACHE_FILE=[$cache_lm] -lt [$entry_ln]=$a"; return 1; }
+	done
 
-		if test $SH_LM -lt $CACHE_LM && test $SRC_LM -lt $CACHE_LM; then
-			. "$CACHE"
-			echo "use cached value of $1 ($CACHE)"
-		fi
-	fi
+	CACHE=`cat "$CACHE_FILE"`
+	echo "set CACHE=[$CACHE] CACHE_FILE=[$CACHE_FILE]"
+	return 0
 }
 
 
@@ -4201,72 +4203,6 @@ function _require_dir {
 
 
 #--
-# Export required rkscript/src/* functions as $REQUIRED_RKSCRIPT.
-# Call scan_rkscript_src first.
-#
-# @param string shell script
-# @param boolean resolve recursive
-# @export REQUIRED_RKSCRIPT REQUIRED_RKSCRIPT_INCLUDE
-# @global RKSCRIPT_FUNCTIONS
-# @require _require_global
-#--
-function _required_rkscript {
-	local BASE=`basename "$1"`
-	# negative offset doesn't work in OSX bash replace ${BASE::-3} with ${BASE:0:${#BASE}-3}
-	local FUNC="_"${BASE:0:${#BASE}-3}
-
-	_require_global RKSCRIPT_FUNCTIONS
-
-	if [ -z ${REQUIRED_RKSCRIPT+x} ]; then
-		REQUIRED_RKSCRIPT_INCLUDE=
-	fi
-
-	if [[ "$REQUIRED_RKSCRIPT_INCLUDE" =~ " $FUNC" ]]; then
-		# skip already included
-		return
-	fi
-
-	REQUIRED_RKSCRIPT_INCLUDE="$REQUIRED_RKSCRIPT_INCLUDE $FUNC"
-
-	local LIST=; local b=; local a=; local sh_run=; local n=0
-	for a in $RKSCRIPT_FUNCTIONS; do
-		b=`cat "$1" | sed -e "s/function .*//" | grep "$a "`
-
-		if test -z "$b"; then
-			b=`cat "$1" | sed -e "s/function .*//" | grep "^\s*$a\s*$"`
-		fi
-
-		sh_run=`echo "$1" | grep 'sh/run/'`
-		if test -z "$b" && ! test -z "$sh_run"; then
-			b=`cat "$1" | grep -E "^\s*$a(\s|$)" | sed -E "s/^\s*($a)(\s.*$|$)/\1/"`
-		fi
-
-		if ! test -z "$b" && test "$FUNC" != "$a"; then
-			LIST="$a $LIST"
-			n=$((n + 1))
-		fi
-	done
-
-	echo "include $FUNC (use $n functions)"
-
-	if ! test -z "$2"; then		
-		local RESULT="$LIST"
-
-		for a in $LIST; do
-			b="$RKSCRIPT_PATH/src/"${a:1}".sh"
-			_required_rkscript $b $2
-			# OSX workaround: use [sed -e 's/ /\'$'\n/g'] instead of [sed -e "s/ /\n/g"]
-			RESULT=`echo "$RESULT $REQUIRED_RKSCRIPT" | sed -e 's/ /\'$'\n/g' | sort -u | xargs`
-		done
-
-		LIST="$RESULT"
-	fi
-
-	REQUIRED_RKSCRIPT="$LIST"
-}
-
-
-#--
 # Abort if file does not exists or owner or privileges don't match.
 #
 # @param path
@@ -4377,8 +4313,10 @@ function _require_program {
 
 
 #--
-# Prepare rks-app.
+# Prepare rks-app. Adjust APP_DESC if _SYNTAX_HELP[$1|$1.$2] is set.
 #
+# global APP_DESC _SYNTAX_CMD _SYNTAX_HELP
+# require _abort _syntax _merge_sh
 # parameter $0 $@
 #--
 function _rks_app {
@@ -4396,15 +4334,64 @@ function _rks_app {
 	test -z "${#_SYNTAX_CMD[@]}" && _abort "_SYNTAX_CMD is empty"
 	test -z "${#_SYNTAX_HELP[@]}" && _abort "_SYNTAX_HELP is empty"
 
-	if [[ ! -z "$_SYNTAX_CMD[$1]" && ("$2" = '?' || "$2" = 'help') ]]; then
-		test -z "${_SYNTAX_HELP[$1]}" || APP_DESC="${_SYNTAX_HELP[$1]}" 
-		_syntax "$1" "help:"
+	[[ "$1" =	'self_update' ]] && _merge_sh
+
+	[[ "$1" = "help" ]] && _syntax "*" "cmd:* help:*"
+	test -z "$1" && return
+
+	test -z "${_SYNTAX_HELP[$1]}" || APP_DESC="${_SYNTAX_HELP[$1]}"
+	test -z "${_SYNTAX_HELP[$1.$2]}" || APP_DESC="${_SYNTAX_HELP[$1.$2]}"
+
+	[[ ! -z "${_SYNTAX_CMD[$1]}" && "$2" = 'help' ]] && _syntax "$1" "help:"
+	[[ ! -z "${_SYNTAX_CMD[$1.$2]}" && "$3" = 'help' ]] && _syntax "$1.$2" "help:"
+}
+
+
+#--
+# Export required $RKSCRIPT_PATH/src/* functions as $REQUIRED_RKSCRIPT.
+#
+# @global RKSCRIPT_PATH (default = .)
+# @export RKSCRIPT_INC RKSCRIPT_INC_NUM
+# @export_local _HAS_SCRIPT
+# @param file path
+#--
+function _rkscript_inc {
+	local _HAS_SCRIPT
+	declare -A _HAS_SCRIPT
+
+	if test -z "$RKSCRIPT_PATH"; then
+		test -s "src/abort.sh" && RKSCRIPT_PATH='.' || _abort 'set RKSCRIPT_PATH'
+	elif ! test -s "$RKSCRIPT_PATH/src/abort.sh"; then
+		_abort "invalid RKSCRIPT_PATH='$RKSCRIPT_PATH'"
 	fi
 
-	if [[ ! -z "$_SYNTAX_CMD[$1_$2]" && ("$3" = '?' || "$3" = 'help') ]]; then
-		test -z "${_SYNTAX_HELP[$1_$2]}" || APP_DESC="${_SYNTAX_HELP[$1_$2]}"
-		_syntax "$1_$2" "help:"
-	fi
+	test -s "$1" || _abort "no such file '$1'"
+	_rrs_scan "$1"
+
+	RKSCRIPT_INC=`_sort ${!_HAS_SCRIPT[@]}`
+	RKSCRIPT_INC_NUM="${#_HAS_SCRIPT[@]}"
+}
+
+
+#--
+# Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
+#
+# @global RKSCRIPT_PATH
+# @global_local _HAS_SCRIPT
+# @param file path
+#--
+function _rrs_scan {
+	test -f "$1" || _abort "no such file '$1'"
+	local func_list=`grep -E -o -e '^\s*(_[a-z0-9\_]+)' -e ' (_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs`
+
+	local a
+	local b
+	for a in $func_list; do
+		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKSCRIPT_PATH/src/${a:1}.sh" ]]; then
+			_HAS_SCRIPT[$a]=1
+			_rrs_scan "$RKSCRIPT_PATH/src/${a:1}.sh"
+		fi
+	done
 }
 
 
@@ -4523,49 +4510,6 @@ function _run_as_root {
 	else
 		echo "sudo true - Please type in your password"
 		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
-	fi
-}
-
-
-#--
-# Scan $RKSCRIPT_PATH/src/* directory. Cache result RKSCRIPT_FUNCTIONS.
-#
-# @export RKSCRIPT_FUNCTIONS 
-# @global RKSCRIPT_PATH
-# @require _require_global _cd _cache
-#--
-function _scan_rkscript_src {
-	RKSCRIPT_FUNCTIONS=
-
-	local HAS_CACHE=`type -t _cache`
-
-	if test "$HAS_CACHE" = "function"; then
-		_cache RKSCRIPT_FUNCTIONS
-	fi
-
-	if ! test -z "$RKSCRIPT_FUNCTIONS"; then
-		echo "use cached result of _scan_rkscript_src (RKSCRIPT_FUNCTIONS)"
-		return
-	fi
-
-	_require_global RKSCRIPT_PATH
-
-	local CURR=$PWD
-	_cd $RKSCRIPT_PATH/src
-
-	local F=; local a=; local n=0
-	for a in *.sh; do
-		# negative length doesn't work in OSX bash replace ${a::-3} with ${a:0:${#a}-3}
-		F="_"${a:0:${#a}-3}
-		RKSCRIPT_FUNCTIONS="$F $RKSCRIPT_FUNCTIONS"
-		n=$((n + 1))
-	done
-
-	echo "found $n RKSCRIPT_FUNCTIONS"
-	_cd $CURR
-
-	if test "$HAS_CACHE" = "function"; then
-		_cache RKSCRIPT_FUNCTIONS "$RKSCRIPT_FUNCTIONS"
 	fi
 }
 
