@@ -35,7 +35,7 @@ function _rkscript_inc {
 #--
 function _rrs_scan {
 	test -f "$1" || _abort "no such file '$1'"
-	local func_list=`grep -E -o -e '^\s*(_[a-z0-9\_]+)' -e ' (_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs`
+	local func_list=`grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs`
 
 	local a
 	local b
