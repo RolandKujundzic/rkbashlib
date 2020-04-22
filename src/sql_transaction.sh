@@ -9,7 +9,6 @@
 #
 # @param string directory name 
 # @param int flag 
-# @require _sql_load _require_dir _confirm _cp
 #--
 function _sql_transaction {
 	local FLAG=$(($2 + 0))
@@ -73,7 +72,6 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
-# @require _rm _cp _confirm _sql_load
 #--
 function _sql_transaction_load {
 	local SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/$2.sql"

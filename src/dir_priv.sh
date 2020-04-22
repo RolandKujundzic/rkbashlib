@@ -6,7 +6,6 @@
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
-# @require _abort _require_program _msg
 #--
 function _dir_priv {
 	_require_program realpath

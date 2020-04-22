@@ -8,7 +8,6 @@
 # @param group 
 # @sudo
 # @global CHOWN (default chown -R)
-# @require _abort _sudo _require_program _msg
 #--
 function _chown {
 	if test -z "$2" || test -z "$3"; then

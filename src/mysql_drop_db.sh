@@ -5,7 +5,6 @@
 #
 # @param database name
 # @global MYSQL (use 'mysql -u root' if empty)
-# @require _abort _confirm _msg _mysql_drop_user
 #--
 function _mysql_drop_db {
 	local NAME=$1

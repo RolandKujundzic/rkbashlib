@@ -6,7 +6,6 @@
 #
 # @param encrypted file or archive
 # @param password or password-file (optional, default = ask)
-# @require _abort _require_program _require_file _confirm _extract_tgz _msg
 #--
 function _decrypt {
 	test -z "$1" && _abort "_decrypt: empty filepath"

@@ -6,7 +6,6 @@
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
-# @require _abort _require_priv _require_owner
 #--
 function _require_dir {
 	test -d "$1" || _abort "no such directory '$1'"

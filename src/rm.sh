@@ -5,7 +5,6 @@
 #
 # @param path/to/entry
 # @param int (optional - abort if set and path is invalid)
-# @require _abort _msg
 #--
 function _rm {
 	test -z "$1" && _abort "Empty remove path"

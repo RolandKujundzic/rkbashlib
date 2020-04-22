@@ -5,8 +5,6 @@
 #
 # @param path
 # @param bool do not abort if $1 is missing (optional, default = 0 = abort)
-# @require _cp _abort _msg
-# @return bool
 #--
 function _orig {
 	if ! test -f "$1" && ! test -d "$1"; then

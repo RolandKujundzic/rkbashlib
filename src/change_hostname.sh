@@ -4,7 +4,6 @@
 # Change hostname if hostname != $1.
 #
 # @param hostname
-# @require _abort _require_program _msg _run_as_root
 #--
 function _change_hostname {
 	local NEW_HNAME="$1"

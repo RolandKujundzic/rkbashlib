@@ -5,7 +5,6 @@
 #
 # @param path
 # @param owner[:group]
-# @require _abort
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then

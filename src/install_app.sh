@@ -6,7 +6,6 @@
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _abort _mkdir _cp _dl_unpack _rm _require_global _require_dir
 #--
 function _install_app {
 	test -z "$1" && _abort "use _install_app . $2"

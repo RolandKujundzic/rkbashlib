@@ -6,7 +6,6 @@
 #
 # @param domain
 # @param docroot
-# @require _mkdir _confirm _cd _ln _run_as_root _append_txt _msg _split
 #--
 function _apache2_vhost {
 	if ! test -d "$2"; then

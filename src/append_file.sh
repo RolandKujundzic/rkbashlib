@@ -5,7 +5,6 @@
 #
 # @param target file
 # @param source file
-# @require _abort _msg
 #--
 function _append_file {
 	local FOUND=

@@ -4,7 +4,6 @@
 # Create composer.json
 #
 # @param package name e.g. rklib/test
-# @require _abort _rm _confirm _license
 #--
 function _composer_json {
 	if test -z "$1"; then

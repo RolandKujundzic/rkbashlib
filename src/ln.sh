@@ -5,7 +5,6 @@
 #
 # @param source path
 # @param link path
-# @require _abort _rm _mkdir _require_program _cd
 #--
 function _ln {
 	_require_program realpath

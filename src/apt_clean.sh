@@ -2,8 +2,6 @@
 
 #--
 # Clean apt installation.
-#
-# @require _abort _run_as_root
 #--
 function _apt_clean {
 	_run_as_root

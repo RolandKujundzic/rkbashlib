@@ -5,7 +5,6 @@
 # and footer is name Z_main.inc.sh. Inverse of _merge_sh.
 #
 # @param path to shell script
-# @require _mkdir _require_file _rm _msg
 #--
 function _split_sh {
 	_require_file "$1"

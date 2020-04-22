@@ -10,7 +10,6 @@
 #
 # @param string source url
 # @param string target path
-# @require _abort _mkdir _download
 #--
 function _cdn_dl {
 	local SUFFIX=`echo "$2" | awk -F . '{print $NF}'`

@@ -5,7 +5,6 @@
 #
 # @param command
 # @param 2^n flag (2^0= no echo, 2^1= print output)
-# @require _abort _log
 #--
 function _cmd {
 

@@ -5,7 +5,6 @@
 #
 # @param file
 # @param ignore_if_not_gzip (optional)
-# @require _abort
 #--
 function _gunzip {
 

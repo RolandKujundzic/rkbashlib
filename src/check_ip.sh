@@ -6,7 +6,6 @@
 #
 # @global IP_ADDRESS
 # @param domain
-# @require _abort _require_program _is_ip4
 #--
 function _check_ip {
 	_require_program ping

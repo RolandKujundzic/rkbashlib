@@ -5,7 +5,6 @@
 #
 # @param path
 # @param privileges (e.g. 600)
-# @require _abort
 #--
 function _require_priv {
 	test -z "$2" && _abort "empty privileges"

@@ -5,7 +5,6 @@
 # Link php/phplib to /webhome/.php/phplib if $1 & 2=2.
 #
 # @param int flag
-# @require _mkdir _cd _require_dir
 #--
 function _webhome_php {
 	local FLAG=$1

@@ -6,7 +6,6 @@
 # Use NODE_VERSION=v12.16.2 and NPM_VERSION=6.13.4 as default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _ver3 _msg _install_node _sudo
 #--
 function _node_version {
 	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2

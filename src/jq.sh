@@ -5,7 +5,6 @@
 #
 # @param key
 # @param json file (optional if JQ_FILE is set)
-# @require _abort _require_file _msg _require_program
 #--
 function _jq {
 	local KEY="$1"

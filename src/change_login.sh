@@ -6,7 +6,6 @@
 #
 # @param old_login
 # @param new_login
-# @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_login {
 	local OLD="$1"

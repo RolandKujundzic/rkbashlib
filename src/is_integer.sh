@@ -4,7 +4,6 @@
 # Abort if parameter is not integer
 #
 # @param number
-# @require _abort
 #--
 function _is_integer {
 	local re='^[0-9]+$'

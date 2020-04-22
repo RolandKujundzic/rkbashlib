@@ -5,7 +5,6 @@
 #
 # @param string domain
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
-# @require _abort
 #--
 function _cert_domain {
 	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"

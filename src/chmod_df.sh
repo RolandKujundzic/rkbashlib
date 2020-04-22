@@ -7,7 +7,6 @@
 # @param file privileges (default = 644)
 # @param dir privileges (default = 755)
 # @param main dir privileges (default = dir privleges)
-# @require _abort _file_priv _dir_priv
 #--
 function _chmod_df {
 	local CHMOD_PATH="$1"

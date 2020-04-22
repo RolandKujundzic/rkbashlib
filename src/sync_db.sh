@@ -4,7 +4,6 @@
 # Dump database on $1:$2. Require rks-db on both server.
 # @param ssh e.g. user@domain.tld
 # @param docroot
-# @require _abort _require_program _msg
 #--
 function _sync_db {
 	_msg "Create database dump in $1:$2/data/.sql with rks-db dump"

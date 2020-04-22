@@ -10,7 +10,6 @@
 # @param bool required 1|[] (default empty)
 # @global _ASK_DEFAULT
 # @export ANSWER
-# @required _abort
 #--
 function _ask {
 	local default

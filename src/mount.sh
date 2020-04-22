@@ -5,7 +5,6 @@
 #
 # @param device
 # @param directory (mount point)
-# @require _abort _confirm
 #--
 function _mount {
 	local HAS_FS=`file -sL $1 | grep ' filesystem'`

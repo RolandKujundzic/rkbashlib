@@ -6,7 +6,6 @@
 #
 # @param sql dump
 # @param flag
-# @require _require_program _require_file _confirm
 #--
 function _sql_load {
 	_require_program "rks-db"

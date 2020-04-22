@@ -9,7 +9,6 @@
 #
 # @global PATCH_SOURCE_DIR PATCH_LIST PATCH_DIR
 # @param patch file directory or patch source file (optional)
-# @require _abort _msg _require_program _require_global _require_dir _orig
 #--
 function _patch {
 	if ! test -z "$1" && test -d "$1"; then

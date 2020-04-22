@@ -6,7 +6,6 @@
 # @param list
 # @param linebreak
 # @param label (optional)
-# @require _label
 #--
 function _show_list {
 	local i=0

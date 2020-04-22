@@ -4,7 +4,6 @@
 # Add linenumber to $1 after _abort if caller function does not exist.
 #
 # @param string file 
-# @require _cp _mkdir _abort
 #--
 function _add_abort_linenum {
 	type -t caller >/dev/null 2>/dev/null && return

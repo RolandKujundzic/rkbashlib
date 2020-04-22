@@ -6,7 +6,6 @@
 # @param source directory
 # @param output file
 # @global PATH_RKPHPLIB
-# @require _require_global
 #--
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`

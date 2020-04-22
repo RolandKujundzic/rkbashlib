@@ -5,7 +5,6 @@
 # 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
-# @require _abort _log
 #--
 function _sudo {
 	local CURR_SUDO=$SUDO

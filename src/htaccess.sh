@@ -4,7 +4,6 @@
 # Create .htaccess file in directory $1 if missing. 
 # @param path to directory
 # @param option (deny|auth:user:pass)
-# @require _mkdir _abort _append_txt _split _msg _chown _chmod
 #--
 function _htaccess {
 	if test "$2" = "deny"; then

@@ -6,7 +6,6 @@
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# @require _composer_phar _abort _rm
 #--
 function _composer {
 	local DO="$1"

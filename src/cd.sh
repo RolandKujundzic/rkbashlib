@@ -7,7 +7,6 @@
 # @param path
 # @param do_not_echo
 # @export LAST_DIR
-# @require _abort 
 #--
 function _cd {
 	local has_realpath=`which realpath`

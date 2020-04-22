@@ -5,7 +5,6 @@
 #
 # @param target file
 # @param text
-# @require _abort _msg _mkdir
 #--
 function _append_txt {
 	local found

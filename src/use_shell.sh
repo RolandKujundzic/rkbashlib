@@ -4,7 +4,6 @@
 # Link /bin/sh to /bin/shell.
 #
 # @abort
-# @require _abort _ln _cd _rm
 # @param abort message
 #--
 function _use_shell {

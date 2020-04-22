@@ -5,7 +5,6 @@
 #
 # @global _SQL
 # @param type query
-# @require _abort _require_global
 #--
 function _sql_list {
 	local QUERY="$1"

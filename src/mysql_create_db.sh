@@ -10,7 +10,6 @@
 # @param password
 # @global MYSQL DB_CHARSET
 # @export DB_NAME DB_PASS
-# @require _abort _mysql_split_dsn _mysql_conn _confirm _msg _require_global
 #--
 function _mysql_create_db {
 	DB_NAME=$1

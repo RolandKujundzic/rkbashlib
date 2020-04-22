@@ -6,7 +6,6 @@
 #
 # @param file or directory path
 # @param crypt key path (optional)
-# @require _abort _confirm _create_tgz _msg _rm _require_program
 #--
 function _encrypt {
 	test -z "$1" && _abort "_encrypt: first parameter (path/to/source) missing"

@@ -8,7 +8,6 @@
 # @param int don't abort if error (default = 0 = abort)
 # @export DOCROOT
 # @return bool (if $2=1)
-# @require _abort _msg 
 #--
 function _find_docroot {
 	local DIR=

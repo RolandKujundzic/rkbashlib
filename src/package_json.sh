@@ -6,7 +6,6 @@
 #
 # @param upgrade (default = empty = false)
 # @global NPM_PACKAGE NPM_PACKAGE_GLOBAL NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
-# @require _npm_module
 #--
 function _package_json {
 

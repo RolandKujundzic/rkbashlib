@@ -17,7 +17,6 @@ declare -A PROCESS
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|command] 
-# @require _abort
 #--
 function _has_process {
 	local flag=$(($2 + 0))

@@ -24,7 +24,6 @@ function md5sum {
 #
 # @param -c
 # @param -
-# @require _abort 
 #--
 function stat {
 	if test "$1" = "-c"; then

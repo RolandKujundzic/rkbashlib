@@ -6,7 +6,6 @@
 #
 # @param file or directory path
 # @param crypt key path (optional)
-# @require _abort
 #--
 function _encrypt {
 	local FILE="$1"

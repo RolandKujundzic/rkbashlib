@@ -7,7 +7,6 @@
 #
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
-# @require _abort
 #--
 function _kill_process {
 	local MY_PID=

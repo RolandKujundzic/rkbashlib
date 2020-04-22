@@ -5,7 +5,6 @@
 #
 # @param user
 # @param password
-# @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
 	[[ -z "$1" || -z "$2" ]] && return

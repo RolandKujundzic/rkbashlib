@@ -10,7 +10,6 @@
 #
 # @call_before _parse_arg "$@" 
 # @global RKSCRIPT_DIR ARG
-# @require _require_program _abort _mkdir _confirm _is_running
 #--
 function _php_server {
 	_require_program php

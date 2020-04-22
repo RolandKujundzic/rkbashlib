@@ -6,7 +6,6 @@
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
-# @require _abort _require_program _msg
 #--
 function _file_priv {
 	_require_program realpath

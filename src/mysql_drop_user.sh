@@ -6,7 +6,6 @@
 # @param name
 # @param host (default = localhost)
 # @global MYSQL (use 'mysql -u root' if empty)
-# @require _abort _confirm _msg
 #--
 function _mysql_drop_user {
 	local NAME=$1

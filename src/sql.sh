@@ -17,7 +17,6 @@ declare -A _SQL_QUERY
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
-# @require _abort _confirm _sql_select _sql_execute _sql_list _sql_querystring
 # @return boolean (if type=select - false = no result)
 #--
 function _sql {

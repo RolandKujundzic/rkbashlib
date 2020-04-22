@@ -6,7 +6,6 @@
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
-# @require _abort _rm
 #--
 function _extract_tgz {
 	test -s "$1" || _abort "_extract_tgz: Invalid archive path [$1]"

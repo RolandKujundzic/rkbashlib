@@ -6,7 +6,6 @@
 # @param sql query
 # @param flag (1=execute sql without confirmation)
 # @global _SQL
-# @require _abort _confirm _sql_echo _require_global
 #--
 function _sql_execute {
 	local QUERY="$1"

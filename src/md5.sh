@@ -5,7 +5,6 @@
 #
 # @param file
 # @param bool (optional: 1 = threat $1 as string)
-# @require _abort _require_program
 # @print md5sum
 #--
 function _md5 {

@@ -6,7 +6,6 @@
 # @param string user
 # @param string repeat-time
 # @param string command
-# @require _abort _msg _mkdir _require_program
 #--
 function _crontab {
 	local CRONTAB_DIR="/var/spool/cron/crontabs"

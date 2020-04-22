@@ -6,7 +6,6 @@
 #
 # @see _node_version
 # @global NODE_VERSION
-# @require _abort _require_global _msg _os_type _install_app
 #--
 function _install_node {
 	_require_global "NODE_VERSION"

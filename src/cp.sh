@@ -7,7 +7,6 @@
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require _abort _md5 _sudo _confirm _rm _rsync _msg
 #--
 function _cp {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO

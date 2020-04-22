@@ -6,7 +6,6 @@
 #		2: rk@s1.dyn4.com:/data/git/php/phplib.git
 #
 # @param int flag (2^N, default=3)
-# @require _git_checkout _mkdir _cd
 #--
 function _git_update_php {
 	local FLAG=$1

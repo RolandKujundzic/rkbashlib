@@ -6,7 +6,6 @@
 #
 # @param target path
 # @param source path (node_modules/$2)
-# @require _abort _cp _patch
 #--
 function _npm2js {
 	test -z "$2" && _abort "empty module path"

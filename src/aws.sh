@@ -1,9 +1,7 @@
 #!/bin/bash
 
 #--
-# Install Amazon AWS PHP SDK
-#
-# @require _composer _composer_pkg 
+# Install Amazon AWS PHP SDK.
 #--
 function _aws {
 	_composer

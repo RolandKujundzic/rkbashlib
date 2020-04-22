@@ -13,7 +13,6 @@ declare -A _SQL_COL
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
-# @require _abort _confirm _sql_echo _require_global
 # @return boolean (if type=select - false = no result)
 #--
 function _sql_select {

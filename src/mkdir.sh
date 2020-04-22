@@ -6,7 +6,6 @@
 # @param path
 # @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory)
 # @global SUDO
-# @require _abort
 #--
 function _mkdir {
 

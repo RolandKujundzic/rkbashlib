@@ -13,7 +13,6 @@
 # @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
-# @require _abort _confirm _cd _ln
 #--
 function _git_checkout {
 	local CURR="$PWD"

@@ -5,7 +5,6 @@
 #
 # @param ip_address
 # @param flag
-# @require _abort 
 #--
 function _is_ip4 {
 	local FLAG=$(($2 + 0))

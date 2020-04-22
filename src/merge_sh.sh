@@ -10,7 +10,6 @@
 # @global APP
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# @require _require_file _require_dir _chmod _md5 _rm _add_abort_linenum
 # @exit unless $2 is empty
 #--
 function _merge_sh {

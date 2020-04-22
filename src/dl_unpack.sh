@@ -5,7 +5,6 @@
 #
 # @param string directory name
 # @param string download url
-# @require _abort _msg _mv _mkdir _wget _cd
 #--
 function _dl_unpack {
 	if test -d "$1"; then

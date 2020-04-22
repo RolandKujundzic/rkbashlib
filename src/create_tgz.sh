@@ -6,7 +6,6 @@
 #
 # @param tgz_file
 # @param directory/file list
-# @require _abort _confirm _msg
 #--
 function _create_tgz {
 	test -z "$1" && _abort "Empty archive path"

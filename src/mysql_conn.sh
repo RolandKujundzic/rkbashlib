@@ -8,7 +8,6 @@
 # @global MYSQL_CONN DB_NAME DB_PASS
 # @export MYSQL_CONN (and MYSQL if $1=1)
 # @param require root access (default = false)
-# @require _abort
 #--
 function _mysql_conn {
 

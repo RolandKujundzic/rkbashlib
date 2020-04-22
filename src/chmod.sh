@@ -7,7 +7,6 @@
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
-# @require _abort _sudo
 #--
 function _chmod {
 	test -z "$1" && _abort "empty privileges parameter"

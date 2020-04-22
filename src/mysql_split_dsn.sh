@@ -7,7 +7,6 @@
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @param int don't abort (default = 0 = abort)
 # @export DB_NAME DB_PASS MYSQL
-# @require _abort _find_docroot _my_cnf 
 # @return bool
 #--
 function _mysql_split_dsn {

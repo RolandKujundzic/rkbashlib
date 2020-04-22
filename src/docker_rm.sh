@@ -4,7 +4,6 @@
 # Remove stopped docker container (if found).
 #
 # @param name
-# @require _docker_stop
 #--
 function _docker_rm {
 	_docker_stop "$1"

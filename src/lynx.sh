@@ -5,7 +5,6 @@
 #
 # @param url
 # @param keystroke file (optional)
-# @require _abort _require_program
 #--
 function _lynx {
 	_require_program lynx

@@ -4,7 +4,6 @@
 # Remove (purge) apt packages.
 #
 # @param package list
-# @require _apt_clean _abort _run_as_root _confirm _rm
 #--
 function _apt_remove {
 	_run_as_root

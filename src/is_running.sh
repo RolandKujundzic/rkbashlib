@@ -15,7 +15,6 @@
 #
 # @param Process Expression Name 
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
-# @require _abort _os_type
 # @os linux
 # @return bool
 #--

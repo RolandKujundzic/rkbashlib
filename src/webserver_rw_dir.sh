@@ -4,7 +4,6 @@
 # Make directory $1 read|writeable for webserver.
 #
 # @param directory path
-# @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
 	test -d "$1" || _abort "no such directory $1"

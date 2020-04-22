@@ -5,7 +5,6 @@
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
-# @require _abort _require_program _confirm
 #--
 function _wget {
 	test -z "$1" && _abort "empty url"

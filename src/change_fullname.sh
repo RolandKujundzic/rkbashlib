@@ -5,7 +5,6 @@
 #
 # @param user
 # @param fullname
-# @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_fullname {
 	[[ -z "$1" || -z "$2" ]] && return
