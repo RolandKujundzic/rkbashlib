@@ -12,6 +12,7 @@ declare -A _SYNTAX_HELP
 # @global _SYNTAX_CMD _SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
+# @require _sort 
 #--
 function _syntax {
 	local MSG="$1\n"
@@ -24,11 +25,12 @@ function _syntax {
 		local KEYS="${!_SYNTAX_CMD[@]}"
 		MSG=
 
+		local cmd_list
 		for b in $KEYS; do
-			grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG|${b/$prefix/}"
+			grep -E "$a" >/dev/null <<< "$b" && cmd_list="$cmd_list ${b/$prefix/}"
 		done
 
-		MSG="${MSG:1}\n"
+		MSG="${MSG:1}$(_sort $cmd_list | tr ' ' '|')\n"
 	fi
 
 	for a in $2; do
