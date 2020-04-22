@@ -71,7 +71,6 @@ function _abort {
 # Add linenumber to $1 after _abort if caller function does not exist.
 #
 # @param string file 
-# @require _cp _mkdir _abort
 #--
 function _add_abort_linenum {
 	type -t caller >/dev/null 2>/dev/null && return
@@ -104,7 +103,6 @@ function _add_abort_linenum {
 #
 # @param domain
 # @param docroot
-# @require _mkdir _confirm _cd _ln _run_as_root _append_txt _msg _split
 #--
 function _apache2_vhost {
 	if ! test -d "$2"; then
@@ -141,7 +139,6 @@ function _apache2_vhost {
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/apigen)
-# @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
 #--
 function _apigen_doc {
   local DOC_DIR=./docs/apigen
@@ -234,7 +231,6 @@ function _api_query {
 #
 # @param target file
 # @param source file
-# @require _abort _msg
 #--
 function _append_file {
 	local FOUND=
@@ -251,7 +247,6 @@ function _append_file {
 # @deprecated use _append_file
 # @param target file
 # @param source file
-# @require _append_file _msg
 #--
 function _append {
 	_msg "DEPRECATED: use _append_file"
@@ -264,7 +259,6 @@ function _append {
 #
 # @param target file
 # @param text
-# @require _abort _msg _mkdir
 #--
 function _append_txt {
 	local found
@@ -287,8 +281,6 @@ function _append_txt {
 
 #--
 # Clean apt installation.
-#
-# @require _abort _run_as_root
 #--
 function _apt_clean {
 	_run_as_root
@@ -301,8 +293,6 @@ function _apt_clean {
 
 #--
 # Install apt packages.
-#
-# @require _abort _run_as_root
 #--
 function _apt_install {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
@@ -332,7 +322,6 @@ function _apt_install {
 # Remove (purge) apt packages.
 #
 # @param package list
-# @require _apt_clean _abort _run_as_root _confirm _rm
 #--
 function _apt_remove {
 	_run_as_root
@@ -359,7 +348,6 @@ function _apt_remove {
 # @param bool required 1|[] (default empty)
 # @global _ASK_DEFAULT
 # @export ANSWER
-# @required _abort
 #--
 function _ask {
 	local default
@@ -403,9 +391,7 @@ function _ask {
 }
 
 #--
-# Install Amazon AWS PHP SDK
-#
-# @require _composer _composer_pkg 
+# Install Amazon AWS PHP SDK.
 #--
 function _aws {
 	_composer
@@ -473,7 +459,6 @@ function _cache {
 #
 # @param string source url
 # @param string target path
-# @require _abort _mkdir _download
 #--
 function _cdn_dl {
 	local SUFFIX=`echo "$2" | awk -F . '{print $NF}'`
@@ -518,7 +503,6 @@ function _cdn_dl {
 # @param path
 # @param do_not_echo
 # @export LAST_DIR
-# @require _abort 
 #--
 function _cd {
 	local has_realpath=`which realpath`
@@ -562,7 +546,6 @@ function _cd {
 #
 # @param string domain
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
-# @require _abort
 #--
 function _cert_domain {
 	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"
@@ -589,7 +572,6 @@ function _cert_domain {
 #
 # @param user
 # @param fullname
-# @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_fullname {
 	[[ -z "$1" || -z "$2" ]] && return
@@ -612,7 +594,6 @@ function _change_fullname {
 # Change hostname if hostname != $1.
 #
 # @param hostname
-# @require _abort _require_program _msg _run_as_root
 #--
 function _change_hostname {
 	local NEW_HNAME="$1"
@@ -635,7 +616,6 @@ function _change_hostname {
 #
 # @param old_login
 # @param new_login
-# @require _abort _require_program _require_file _run_as_root _msg
 #--
 function _change_login {
 	local OLD="$1"
@@ -673,7 +653,6 @@ function _change_login {
 #
 # @param user
 # @param password
-# @require _abort _msg _require_progam _require_file _run_as_root
 #--
 function _change_password {
 	[[ -z "$1" || -z "$2" ]] && return
@@ -700,7 +679,6 @@ function _change_password {
 #
 # @global IP_ADDRESS
 # @param domain
-# @require _abort _require_program _is_ip4
 #--
 function _check_ip {
 	_require_program ping
@@ -741,7 +719,6 @@ function _check_ssl {
 # @param file privileges (default = 644)
 # @param dir privileges (default = 755)
 # @param main dir privileges (default = dir privleges)
-# @require _abort _file_priv _dir_priv
 #--
 function _chmod_df {
 	local CHMOD_PATH="$1"
@@ -773,7 +750,6 @@ function _chmod_df {
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
-# @require _abort _sudo
 #--
 function _chmod {
 	test -z "$1" && _abort "empty privileges parameter"
@@ -823,7 +799,6 @@ function _chmod {
 # @param group 
 # @sudo
 # @global CHOWN (default chown -R)
-# @require _abort _sudo _require_program _msg
 #--
 function _chown {
 	if test -z "$2" || test -z "$3"; then
@@ -886,7 +861,6 @@ function _chown {
 #
 # @param command
 # @param 2^n flag (2^0= no echo, 2^1= print output)
-# @require _abort _log
 #--
 function _cmd {
 
@@ -916,7 +890,6 @@ function _cmd {
 # Create composer.json
 #
 # @param package name e.g. rklib/test
-# @require _abort _rm _confirm _license
 #--
 function _composer_json {
 	if test -z "$1"; then
@@ -968,7 +941,6 @@ EOL
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
-# @require _abort _rm _wget
 #--
 function _composer_phar {
   local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
@@ -1003,7 +975,6 @@ function _composer_phar {
 # Install php package with composer. Target directory is vendor/$1
 #
 # @param composer-vendor-directory
-# @require _abort
 #--
 function _composer_pkg {
 	if ! test -f composer.phar; then
@@ -1026,7 +997,6 @@ function _composer_pkg {
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# @require _composer_phar _abort _rm
 #--
 function _composer {
 	local DO="$1"
@@ -1200,7 +1170,6 @@ function _confirm {
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
-# @require _rm _patch
 #--
 function _cordova_add_android {
 
@@ -1221,7 +1190,6 @@ function _cordova_add_android {
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
-# @require _rm _os_type _patch
 #--
 function _cordova_add_ios {
 	local OS_TYPE=$(_os_type)
@@ -1247,7 +1215,6 @@ function _cordova_add_ios {
 # Create corodva project in app/ directory.
 # 
 # @param app name
-# @require _abort _os_type _cordova_add_android _cordova_add_ios _mkdir
 #--
 function _cordova_create {
 	if test -d "app/$1"; then
@@ -1283,7 +1250,6 @@ function _cordova_create {
 # @param target path
 # @param [md5] if set make md5 file comparison
 # @global SUDO
-# @require _abort _md5 _sudo _confirm _rm _rsync _msg
 #--
 function _cp {
 	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
@@ -1339,7 +1305,6 @@ function _cp {
 #
 # @param tgz_file
 # @param directory/file list
-# @require _abort _confirm _msg
 #--
 function _create_tgz {
 	test -z "$1" && _abort "Empty archive path"
@@ -1376,7 +1341,6 @@ function _create_tgz {
 # @param string user
 # @param string repeat-time
 # @param string command
-# @require _abort _msg _mkdir _require_program
 #--
 function _crontab {
 	local CRONTAB_DIR="/var/spool/cron/crontabs"
@@ -1396,7 +1360,6 @@ function _crontab {
 #
 # @param encrypted file or archive
 # @param password or password-file (optional, default = ask)
-# @require _abort _require_program _require_file _confirm _extract_tgz _msg
 #--
 function _decrypt {
 	test -z "$1" && _abort "_decrypt: empty filepath"
@@ -1442,7 +1405,6 @@ function _decrypt {
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
-# @require _abort _require_program _msg
 #--
 function _dir_priv {
 	_require_program realpath
@@ -1477,7 +1439,6 @@ function _dir_priv {
 #
 # @param string directory name
 # @param string download url
-# @require _abort _msg _mv _mkdir _wget _cd
 #--
 function _dl_unpack {
 	if test -d "$1"; then
@@ -1519,7 +1480,6 @@ function _dl_unpack {
 # Remove stopped docker container (if found).
 #
 # @param name
-# @require _docker_stop
 #--
 function _docker_rm {
 	_docker_stop "$1"
@@ -1538,7 +1498,6 @@ function _docker_rm {
 #
 # @param name
 # @param config file
-# @require _abort _cd _docker_stop _docker_rm
 #--
 function _docker_run {
 	_docker_rm $1
@@ -1587,7 +1546,6 @@ function _docker_stop {
 # @param string url
 # @param string file
 # @param bool allow_fail
-# @require _abort _mkdir _wget
 #--
 function _download {
 	if test -z "$2"; then
@@ -1626,7 +1584,6 @@ function _download {
 #
 # @param file or directory path
 # @param crypt key path (optional)
-# @require _abort
 #--
 function _encrypt {
 	local FILE="$1"
@@ -1651,7 +1608,6 @@ function _encrypt {
 #
 # @param file or directory path
 # @param crypt key path (optional)
-# @require _abort _confirm _create_tgz _msg _rm _require_program
 #--
 function _encrypt {
 	test -z "$1" && _abort "_encrypt: first parameter (path/to/source) missing"
@@ -1706,7 +1662,6 @@ function _encrypt {
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
-# @require _abort _rm
 #--
 function _extract_tgz {
 	test -s "$1" || _abort "_extract_tgz: Invalid archive path [$1]"
@@ -1739,7 +1694,6 @@ function _extract_tgz {
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
-# @require _abort _require_program _msg
 #--
 function _file_priv {
 	_require_program realpath
@@ -1777,7 +1731,6 @@ function _file_priv {
 # @param int don't abort if error (default = 0 = abort)
 # @export DOCROOT
 # @return bool (if $2=1)
-# @require _abort _msg 
 #--
 function _find_docroot {
 	local DIR=
@@ -1828,7 +1781,6 @@ function _find_docroot {
 #
 # @param any paramter useable with find command
 # @export FOUND Path Array
-# @required _require_program
 #--
 function _find {
 	FOUND=()
@@ -1871,7 +1823,6 @@ function _get {
 # @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
-# @require _abort _confirm _cd _ln
 #--
 function _git_checkout {
 	local CURR="$PWD"
@@ -1957,7 +1908,6 @@ function _github_latest {
 #		2: rk@s1.dyn4.com:/data/git/php/phplib.git
 #
 # @param int flag (2^N, default=3)
-# @require _git_checkout _mkdir _cd
 #--
 function _git_update_php {
 	local FLAG=$1
@@ -1976,7 +1926,6 @@ function _git_update_php {
 #--
 # @deprecated use _git_update_php
 # @param int flag (2^N, default=3)
-# @require _msg _git_update_php
 #--
 function _git_update {
 	_msg "DEPRECATED: use _git_update_php"
@@ -1989,7 +1938,6 @@ function _git_update {
 #
 # @param file
 # @param ignore_if_not_gzip (optional)
-# @require _abort
 #--
 function _gunzip {
 
@@ -2042,7 +1990,6 @@ declare -A PROCESS
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
 # @export PROCESS[pid|start|command] 
-# @require _abort
 #--
 function _has_process {
 	local flag=$(($2 + 0))
@@ -2112,7 +2059,6 @@ function _has_process {
 # Create .htaccess file in directory $1 if missing. 
 # @param path to directory
 # @param option (deny|auth:user:pass)
-# @require _mkdir _abort _append_txt _split _msg _chown _chmod
 #--
 function _htaccess {
 	if test "$2" = "deny"; then
@@ -2148,7 +2094,6 @@ require valid-user"
 # @param string app dir 
 # @param string app url (optional)
 # @global APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _abort _mkdir _cp _dl_unpack _rm _require_global _require_dir
 #--
 function _install_app {
 	test -z "$1" && _abort "use _install_app . $2"
@@ -2187,7 +2132,6 @@ function _install_app {
 #
 # @see _node_version
 # @global NODE_VERSION
-# @require _abort _require_global _msg _os_type _install_app
 #--
 function _install_node {
 	_require_global "NODE_VERSION"
@@ -2209,7 +2153,6 @@ function _install_node {
 # Export ip address as IP_ADDRESS (ip4) and IP6_ADDRESS (ip6) (and DYNAMIC_IP).
 #
 # @export IP_ADDRESS IP6_ADDRESS DYNAMIC_IP
-# @require _abort _require_program
 #--
 function _ip_address {
 	_require_program ip
@@ -2259,7 +2202,6 @@ function _is_gitmodule {
 # Abort if parameter is not integer
 #
 # @param number
-# @require _abort
 #--
 function _is_integer {
 	local re='^[0-9]+$'
@@ -2275,7 +2217,6 @@ function _is_integer {
 #
 # @param ip_address
 # @param flag
-# @require _abort 
 #--
 function _is_ip4 {
 	local FLAG=$(($2 + 0))
@@ -2296,7 +2237,6 @@ function _is_ip4 {
 #
 # @param ip_address
 # @param flag
-# @require _abort 
 #--
 function _is_ip6 {
 	local FLAG=$(($2 + 0))
@@ -2328,7 +2268,6 @@ function _is_ip6 {
 #
 # @param Process Expression Name 
 # @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
-# @require _abort _os_type
 # @os linux
 # @return bool
 #--
@@ -2403,7 +2342,6 @@ function _join {
 #
 # @param key
 # @param json file (optional if JQ_FILE is set)
-# @require _abort _require_file _msg _require_program
 #--
 function _jq {
 	local KEY="$1"
@@ -2424,7 +2362,6 @@ function _jq {
 #
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
-# @require _abort
 #--
 function _kill_process {
 	local MY_PID=
@@ -2491,7 +2428,6 @@ function _label {
 # @see https://help.github.com/en/articles/licensing-a-repository 
 # @param license name (default "gpl-3.0")
 # @export LICENSE
-# @require _abort _wget _confirm
 #--
 function _license {
 	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
@@ -2528,7 +2464,6 @@ function _license {
 #
 # @param source path
 # @param link path
-# @require _abort _rm _mkdir _require_program _cd
 #--
 function _ln {
 	_require_program realpath
@@ -2625,7 +2560,6 @@ function _log {
 #
 # @param url
 # @param keystroke file (optional)
-# @require _abort _require_program
 #--
 function _lynx {
 	_require_program lynx
@@ -2672,7 +2606,6 @@ function _mb_check {
 #
 # @param file
 # @param bool (optional: 1 = threat $1 as string)
-# @require _abort _require_program
 # @print md5sum
 #--
 function _md5 {
@@ -2700,7 +2633,6 @@ function _md5 {
 # @global APP
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# @require _require_file _require_dir _chmod _md5 _rm _add_abort_linenum
 # @exit unless $2 is empty
 #--
 function _merge_sh {
@@ -2753,7 +2685,6 @@ function _merge_sh {
 # @param path
 # @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory)
 # @global SUDO
-# @require _abort
 #--
 function _mkdir {
 
@@ -2780,7 +2711,6 @@ function _mkdir {
 #
 # @param device
 # @param directory (mount point)
-# @require _abort _confirm
 #--
 function _mount {
 	local HAS_FS=`file -sL $1 | grep ' filesystem'`
@@ -2829,7 +2759,6 @@ function _msg {
 #
 # @param source_path
 # @param target_path
-# @require _abort
 #--
 function _mv {
 
@@ -2897,7 +2826,6 @@ function _my_cnf {
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @require _abort _cd _cp _mysql_dump _create_tgz _rm
 #--
 function _mysql_backup {
 
@@ -2942,7 +2870,6 @@ function _mysql_backup {
 # @global MYSQL_CONN DB_NAME DB_PASS
 # @export MYSQL_CONN (and MYSQL if $1=1)
 # @param require root access (default = false)
-# @require _abort
 #--
 function _mysql_conn {
 
@@ -2987,7 +2914,6 @@ function _mysql_conn {
 # @param password
 # @global MYSQL DB_CHARSET
 # @export DB_NAME DB_PASS
-# @require _abort _mysql_split_dsn _mysql_conn _confirm _msg _require_global
 #--
 function _mysql_create_db {
 	DB_NAME=$1
@@ -3034,7 +2960,6 @@ function _mysql_create_db {
 #
 # @param database name
 # @global MYSQL (use 'mysql -u root' if empty)
-# @require _abort _confirm _msg _mysql_drop_user
 #--
 function _mysql_drop_db {
 	local NAME=$1
@@ -3090,7 +3015,6 @@ function _mysql_drop_tables {
 # @param name
 # @param host (default = localhost)
 # @global MYSQL (use 'mysql -u root' if empty)
-# @require _abort _confirm _msg
 #--
 function _mysql_drop_user {
 	local NAME=$1
@@ -3120,7 +3044,6 @@ function _mysql_drop_user {
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require _abort
 #--
 function _mysql_dump {
 
@@ -3151,7 +3074,6 @@ function _mysql_dump {
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
-# @require _abort _confirm _mysql_conn
 #--
 function _mysql_load {
 
@@ -3207,7 +3129,6 @@ function _mysql_load {
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN (call _mysql_conn for mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME")
-# @require _abort _extract_tgz _cd _cp _chmod _rm _mv _mkdir _mysql_load _mysql_conn
 #--
 function _mysql_restore {
 
@@ -3286,7 +3207,6 @@ function _mysql_restore {
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @param int don't abort (default = 0 = abort)
 # @export DB_NAME DB_PASS MYSQL
-# @require _abort _find_docroot _my_cnf 
 # @return bool
 #--
 function _mysql_split_dsn {
@@ -3368,7 +3288,6 @@ function _mysql_split_dsn {
 # Use NODE_VERSION=v12.16.2 and NPM_VERSION=6.13.4 as default.
 #
 # @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
-# @require _ver3 _msg _install_node _sudo
 #--
 function _node_version {
 	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2
@@ -3395,7 +3314,6 @@ function _node_version {
 #
 # @param target path
 # @param source path (node_modules/$2)
-# @require _abort _cp _patch
 #--
 function _npm2js {
 	test -z "$2" && _abort "empty module path"
@@ -3418,7 +3336,6 @@ function _npm2js {
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
-# @require _node_version
 #--
 function _npm_module {
 
@@ -3462,8 +3379,6 @@ function _npm_module {
 #
 # @param path
 # @param bool do not abort if $1 is missing (optional, default = 0 = abort)
-# @require _cp _abort _msg
-# @return bool
 #--
 function _orig {
 	if ! test -f "$1" && ! test -d "$1"; then
@@ -3490,7 +3405,6 @@ function _orig {
 # If $1 is set and != os_type abort otherwise return 0.
 #
 # @print string (abort if set and os_type != $1)
-# @require _abort _require_program
 # @print linux|macos|cygwin if $1 is empty
 # @return bool
 #--
@@ -3542,7 +3456,6 @@ function md5sum {
 #
 # @param -c
 # @param -
-# @require _abort 
 #--
 function stat {
 	if test "$1" = "-c"; then
@@ -3636,7 +3549,6 @@ function _overwrite_file {
 #
 # @param upgrade (default = empty = false)
 # @global NPM_PACKAGE NPM_PACKAGE_GLOBAL NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
-# @require _npm_module
 #--
 function _package_json {
 
@@ -3746,7 +3658,6 @@ function _parse_arg {
 #
 # @global PATCH_SOURCE_DIR PATCH_LIST PATCH_DIR
 # @param patch file directory or patch source file (optional)
-# @require _abort _msg _require_program _require_global _require_dir _orig
 #--
 function _patch {
 	if ! test -z "$1" && test -d "$1"; then
@@ -3793,7 +3704,6 @@ function _patch {
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/phpdocumentor)
-# @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
 #--
 function _phpdocumentor {
   local DOC_DIR=./docs/phpdocumentor
@@ -3852,7 +3762,6 @@ function _phpdocumentor {
 #
 # @call_before _parse_arg "$@" 
 # @global RKSCRIPT_DIR ARG
-# @require _require_program _abort _mkdir _confirm _is_running
 #--
 function _php_server {
 	_require_program php
@@ -4150,7 +4059,6 @@ function _realpath_osx {
 # Re-create database if inside docker.
 #
 # @param do_not_load_dump (optional, default = empty = load_dump)
-# @require _mysql_split_dsn _mysql_create_db _mysql_load
 # @export DB_NAME DB_PASS MYSQL_CONN
 #--
 function _recreate_docker_db {
@@ -4174,7 +4082,6 @@ function _recreate_docker_db {
 # Export remote ip adress REMOTE_IP and REMOTE_IP6.
 #
 # @export REMOTE_IP REMOTE_IP6
-# @require _abort _require_program
 #--
 function _remote_ip {
 	_require_program curl
@@ -4192,7 +4099,6 @@ function _remote_ip {
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
-# @require _abort _require_priv _require_owner
 #--
 function _require_dir {
 	test -d "$1" || _abort "no such directory '$1'"
@@ -4207,7 +4113,6 @@ function _require_dir {
 # @param path
 # @param owner[:group] (optional)
 # @param privileges (optional, e.g. 600)
-# @require _abort _require_owner _require_priv
 #--
 function _require_file {
 	test -f "$1" || _abort "no such file '$1'"
@@ -4221,7 +4126,6 @@ function _require_file {
 # for arrays. If bash version < 4.4 export HAS_HASH_$1
 #
 # @param name list (e.g. "GLOBAL", "GLOB1 GLOB2 ...", GLOB1 GLOB2 ...)
-# @require _abort
 #--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
@@ -4247,7 +4151,6 @@ function _require_global {
 #
 # @param path
 # @param owner[:group]
-# @require _abort
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
@@ -4275,7 +4178,6 @@ function _require_owner {
 #
 # @param path
 # @param privileges (e.g. 600)
-# @require _abort
 #--
 function _require_priv {
 	test -z "$2" && _abort "empty privileges"
@@ -4444,7 +4346,6 @@ function _rkscript {
 #
 # @param path/to/entry
 # @param int (optional - abort if set and path is invalid)
-# @require _abort _msg
 #--
 function _rm {
 	test -z "$1" && _abort "Empty remove path"
@@ -4464,7 +4365,6 @@ function _rm {
 # @param source path e.g. user@host:/path/to/source
 # @param target path default=[.]
 # @param optional rsync parameter e.g. "--delete --exclude /data"
-# @require _abort _log
 #--
 function _rsync {
 	local TARGET="$2"
@@ -4499,7 +4399,6 @@ function _rsync {
 # Abort if user is not root. If sudo cache time is ok allow sudo with $1 = 1.
 #
 # @param try sudo
-# @require _abort
 #--
 function _run_as_root {
 	test "$UID" = "0" && return
@@ -4537,7 +4436,6 @@ function _set {
 # @param list
 # @param linebreak
 # @param label (optional)
-# @require _label
 #--
 function _show_list {
 	local i=0
@@ -4589,7 +4487,6 @@ function _split {
 # and footer is name Z_main.inc.sh. Inverse of _merge_sh.
 #
 # @param path to shell script
-# @require _mkdir _require_file _rm _msg
 #--
 function _split_sh {
 	_require_file "$1"
@@ -4663,7 +4560,6 @@ function _sql_echo {
 # @param sql query
 # @param flag (1=execute sql without confirmation)
 # @global _SQL
-# @require _abort _confirm _sql_echo _require_global
 #--
 function _sql_execute {
 	local QUERY="$1"
@@ -4684,7 +4580,6 @@ function _sql_execute {
 #
 # @global _SQL
 # @param type query
-# @require _abort _require_global
 #--
 function _sql_list {
 	local QUERY="$1"
@@ -4701,7 +4596,6 @@ function _sql_list {
 #
 # @param sql dump
 # @param flag
-# @require _require_program _require_file _confirm
 #--
 function _sql_load {
 	_require_program "rks-db"
@@ -4781,7 +4675,6 @@ declare -A _SQL_COL
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
-# @require _abort _confirm _sql_echo _require_global
 # @return boolean (if type=select - false = no result)
 #--
 function _sql_select {
@@ -4834,7 +4727,6 @@ declare -A _SQL_QUERY
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
-# @require _abort _confirm _sql_select _sql_execute _sql_list _sql_querystring
 # @return boolean (if type=select - false = no result)
 #--
 function _sql {
@@ -4880,7 +4772,6 @@ function _sql {
 #
 # @param string directory name 
 # @param int flag 
-# @require _sql_load _require_dir _confirm _cp
 #--
 function _sql_transaction {
 	local FLAG=$(($2 + 0))
@@ -4944,7 +4835,6 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
-# @require _rm _cp _confirm _sql_load
 #--
 function _sql_transaction_load {
 	local SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/$2.sql"
@@ -4968,7 +4858,6 @@ function _sql_transaction_load {
 # Copy content from www_src to www.  and *.js files from src/javascript.
 #
 # @global SRC2WWW_FILES SRC2WWW_DIR SRC2WWW_RKJS_DIR SRC2WWW_RKJS_FILES
-# @require _require_global
 #--
 function _src2www_copy {
 
@@ -5054,7 +4943,6 @@ function _ssh_auth {
 # Stop webserver (apache2, nginx) on port 80 if running.
 # Ignore docker webservice on port 80.
 #
-# @require _is_running _os_type
 # @os linux
 #--
 function _stop_http {
@@ -5089,7 +4977,6 @@ function _stop_http {
 # 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
-# @require _abort _log
 #--
 function _sudo {
 	local CURR_SUDO=$SUDO
@@ -5121,7 +5008,6 @@ function _sudo {
 # Dump database on $1:$2. Require rks-db on both server.
 # @param ssh e.g. user@domain.tld
 # @param docroot
-# @require _abort _require_program _msg
 #--
 function _sync_db {
 	_msg "Create database dump in $1:$2/data/.sql with rks-db dump"
@@ -5143,7 +5029,6 @@ function _sync_db {
 # @param source directory
 # @param output file
 # @global PATH_RKPHPLIB
-# @require _require_global
 #--
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
@@ -5179,7 +5064,6 @@ declare -A _SYNTAX_HELP
 # @global _SYNTAX_CMD _SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
-# @require _sort
 #--
 function _syntax {
 	local MSG="$1\n"
@@ -5284,7 +5168,6 @@ function _trim {
 # Link /bin/sh to /bin/shell.
 #
 # @abort
-# @require _abort _ln _cd _rm
 # @param abort message
 #--
 function _use_shell {
@@ -5320,7 +5203,6 @@ function _ver3 {
 # Link php/phplib to /webhome/.php/phplib if $1 & 2=2.
 #
 # @param int flag
-# @require _mkdir _cd _require_dir
 #--
 function _webhome_php {
 	local FLAG=$1
@@ -5357,7 +5239,6 @@ function _webhome_php {
 # Make directory $1 read|writeable for webserver.
 #
 # @param directory path
-# @require _abort _chown _chmod
 #--
 function _webserver_rw_dir {
 	test -d "$1" || _abort "no such directory $1"
@@ -5388,7 +5269,6 @@ function _webserver_rw_dir {
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
-# @require _abort _require_program _confirm
 #--
 function _wget {
 	test -z "$1" && _abort "empty url"
