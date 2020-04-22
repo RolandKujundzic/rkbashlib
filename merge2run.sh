@@ -48,11 +48,6 @@ function merge_list {
 
 	test -z "$MERGE_SH" && _syntax "path/func1.sh path/func2.sh ... path/main.sh"
 	test -z "$MERGE2RUN_OUTPUT" || OUT="$MERGE2RUN_OUTPUT"
-
-	if test -f "$OUT"; then
-		_confirm "Remove existing $OUT?" 1
-		test $CONFIRM = "y" && _rm "$OUT" || _abort "$OUT already exists"
-	fi
 }
 
 
