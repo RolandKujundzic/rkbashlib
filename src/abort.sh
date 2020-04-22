@@ -31,10 +31,10 @@ function _abort {
 		return 1
 	fi
 
-  if type -t caller >/dev/null 2>/dev/null; then
-    local frame=0
-    local trace=$(while caller $frame; do ((frame++)); done)
-    MSG="$MSG\n\n$trace"
+	if type -t caller >/dev/null 2>/dev/null; then
+		local frame=0
+		local trace=$(while caller $frame; do ((frame++)); done)
+		MSG="$MSG\n\n$trace"
 	fi
 
 	echo -e "\nABORT$LINE: $MSG\n" 1>&2
