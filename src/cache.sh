@@ -1,50 +1,51 @@
 #!/bin/bash
 
-test -z "$RKSCRIPT_CACHE" && RKSCRIPT_CACHE="$HOME/.rkscript/cache"
+test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkscript/cache"
+test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkscript/src"
+CACHE_OFF=
+CACHE=
 
 #--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
-# modification of cache file $RKSCRIPT_CACHE/$1 with sh/run and ../rkscript/src.
+# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkscript/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
+# Use CACHE_DIR/$1.sh as cache. Use last modification of entries in CACHE_REF
+# for cache invalidation.
 #
 # @param variable name
 # @param variable value
-# @global RKSCRIPT_CACHE
-# @require _mkdir
+# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
+# @export CACHE CACHE_FILE
+# @return bool
 #--
 function _cache {
-	test -z "$CACHE_OFF" || return
+	CACHE_FILE=
+	CACHE=
 
-	# bash 4.3.* does not support ${2@Q} expression
-	local BASH43=`/bin/bash --version | grep 'ersion 4.3.'`
-	test -z "$BASH43" || return
+	test -z "$CACHE_OFF" || return 1
 
-	# bash 3.* does not support ${2@Q} expression
-	local BASH3X=`/bin/bash --version | grep 'ersion 3.'`
-	test -z "$BASH3X" || return
+	# $1 = abc.xyz.uvw -> prefix=abc key=xyz.uvw
+	local prefix="${1#*.}"
+	local key="${1%%.*}"
+	local cdir="$CACHE_DIR/$prefix"
+	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
-	_mkdir "$RKSCRIPT_CACHE"
+	_mkdir "$cdir" >/dev/null
+	CACHE_FILE="$cdir/$key"
 
-	local CACHE="$RKSCRIPT_CACHE/$1.sh"
+	# if pameter $2 is set update CACHE_FILE
+	[ -z ${2+x} ] || echo "$2" > "$CACHE_FILE"
 
-	if ! test -z "$2"; then
-		# update cache value - ${2@Q} = escaped value of $2
-		echo "$1=${2@Q}" > "$CACHE"
-		echo "update cached value of $1 ($CACHE)"
-	fi
+	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
+	test -z "$cache_lm" && return 1
 
-	if test -f "$CACHE" && test -d "sh/run" && test -d "../rkscript/src"; then
-		# last modification unix ts local source
-		local SH_LM=`stat -c %Y sh/run`
-		# last modification unix ts include source
-		local SRC_LM=`stat -c %Y ../rkscript/src`
-		# last modification of cache
-		local CACHE_LM=`stat -c %Y "$CACHE"`
+	local is_valid=1; local entry_lm; local a;
+	for a in $CACHE_REF; do
+		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
+		test $entry_lm -lt $cache_lm && is_valid=0
+	done
 
-		if test $SH_LM -lt $CACHE_LM && test $SRC_LM -lt $CACHE_LM; then
-			. "$CACHE"
-			echo "use cached value of $1 ($CACHE)"
-		fi
-	fi
+	CACHE=`cat "$CACHE_FILE"`
+	return 0
 }
 
