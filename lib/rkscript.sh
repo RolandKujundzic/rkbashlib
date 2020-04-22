@@ -4618,6 +4618,15 @@ function _show_list {
 }
 
 #--
+# Sort (unique) whitespace list.
+# @param $@ list elements
+#--
+function _sort {
+	echo "$@" | xargs -n1 | sort -u | xargs
+}
+
+
+#--
 # Split string "$2" at "$1" (export as $_SPLIT[@]).
 # @param delimter
 # @param string
