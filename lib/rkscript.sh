@@ -455,11 +455,10 @@ function _cache {
 	local entry_lm; local a;
 	for a in $CACHE_REF; do
 		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
-		test $cache_lm -lt $entry_lm && { echo -e "\nreturn: $CACHE_FILE=[$cache_lm] -lt [$entry_ln]=$a"; return 1; }
+		test $cache_lm -lt $entry_lm && return 1
 	done
 
 	CACHE=`cat "$CACHE_FILE"`
-	echo "set CACHE=[$CACHE] CACHE_FILE=[$CACHE_FILE]"
 	return 0
 }
 
