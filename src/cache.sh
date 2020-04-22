@@ -25,13 +25,13 @@ function _cache {
 	test -z "$CACHE_OFF" || return 1
 
 	# $1 = abc.xyz.uvw -> prefix=abc key=xyz.uvw
-	local prefix="${1#*.}"
-	local key="${1%%.*}"
+	local key="${1#*.}"
+	local prefix="${1%%.*}"
 	local cdir="$CACHE_DIR/$prefix"
 	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
-	_mkdir "$cdir" >/dev/null
 	CACHE_FILE="$cdir/$key"
+	_mkdir "$cdir" >/dev/null
 
 	# if pameter $2 is set update CACHE_FILE
 	[ -z ${2+x} ] || echo "$2" > "$CACHE_FILE"
@@ -39,10 +39,10 @@ function _cache {
 	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
 	test -z "$cache_lm" && return 1
 
-	local is_valid=1; local entry_lm; local a;
+	local entry_lm; local a;
 	for a in $CACHE_REF; do
 		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
-		test $entry_lm -lt $cache_lm && is_valid=0
+		test $cache_lm -lt $entry_lm && return 1
 	done
 
 	CACHE=`cat "$CACHE_FILE"`
