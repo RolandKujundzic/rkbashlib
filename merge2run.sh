@@ -53,7 +53,11 @@ fi
 echo -e "Include: $INCLUDE\nCreate $OUT"
 test -z "$MERGE2RUN_OUTPUT" || OUT="$MERGE2RUN_OUTPUT"
 
-echo -e "#!/bin/bash\n" > "$OUT"
+COPYRIGHT=`date +"%Y"`
+test -f ".gitignore" && COPYRIGHT=`git log --diff-filter=A -- .gitignore | grep 'Date:' | sed -E 's/.+ ([0-9]+) \+[0-9]+/\1/'`" - $COPYRIGHT"
+
+echo -e "#!/bin/bash\n#\n# Copyright (c) $COPYRIGHT Roland Kujundzic <roland@kujundzic.de>\n#" > "$OUT"
+
 for a in $INCLUDE; do
 	tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#' >> "$OUT"
 done
