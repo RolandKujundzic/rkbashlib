@@ -9,8 +9,8 @@ declare ARGV
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
 # Use _parse_arg "$@" to preserve whitespace.
 #
-# @parameter any
-# @global ARG (hash)
+# @param "$@"
+# @export ARG (hash)
 #--
 function _parse_arg {
 	ARGV=()
