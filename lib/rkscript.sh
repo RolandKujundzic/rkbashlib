@@ -3613,8 +3613,8 @@ declare ARGV
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
 # Use _parse_arg "$@" to preserve whitespace.
 #
-# @parameter any
-# @global ARG (hash)
+# @param "$@"
+# @export ARG (hash)
 #--
 function _parse_arg {
 	ARGV=()
@@ -4214,11 +4214,11 @@ function _require_program {
 
 
 #--
-# Prepare rks-app. Adjust APP_DESC if _SYNTAX_HELP[$1|$1.$2] is set.
+# Prepare rks-app. Adjust APP_DESC if SYNTAX_HELP[$1|$1.$2] is set.
+# Execute self_update or help action if $1 = self_update|help.
 #
-# global APP_DESC _SYNTAX_CMD _SYNTAX_HELP
-# require _abort _syntax _merge_sh
-# parameter $0 $@
+# @global APP_DESC SYNTAX_CMD SYNTAX_HELP
+# @param $0 $@
 #--
 function _rks_app {
 	local me="$1"
@@ -4232,19 +4232,19 @@ function _rks_app {
 	fi
 
 	test -z "$APP_DESC" && _abort "APP_DESC is empty"
-	test -z "${#_SYNTAX_CMD[@]}" && _abort "_SYNTAX_CMD is empty"
-	test -z "${#_SYNTAX_HELP[@]}" && _abort "_SYNTAX_HELP is empty"
+	test -z "${#SYNTAX_CMD[@]}" && _abort "SYNTAX_CMD is empty"
+	test -z "${#SYNTAX_HELP[@]}" && _abort "SYNTAX_HELP is empty"
 
 	[[ "$1" =	'self_update' ]] && _merge_sh
 
 	[[ "$1" = "help" ]] && _syntax "*" "cmd:* help:*"
 	test -z "$1" && return
 
-	test -z "${_SYNTAX_HELP[$1]}" || APP_DESC="${_SYNTAX_HELP[$1]}"
-	test -z "${_SYNTAX_HELP[$1.$2]}" || APP_DESC="${_SYNTAX_HELP[$1.$2]}"
+	test -z "${SYNTAX_HELP[$1]}" || APP_DESC="${SYNTAX_HELP[$1]}"
+	test -z "${SYNTAX_HELP[$1.$2]}" || APP_DESC="${SYNTAX_HELP[$1.$2]}"
 
-	[[ ! -z "${_SYNTAX_CMD[$1]}" && "$2" = 'help' ]] && _syntax "$1" "help:"
-	[[ ! -z "${_SYNTAX_CMD[$1.$2]}" && "$3" = 'help' ]] && _syntax "$1.$2" "help:"
+	[[ ! -z "${SYNTAX_CMD[$1]}" && "$2" = 'help' ]] && _syntax "$1" "help:"
+	[[ ! -z "${SYNTAX_CMD[$1.$2]}" && "$3" = 'help' ]] && _syntax "$1.$2" "help:"
 }
 
 
@@ -5052,76 +5052,76 @@ function _syntax_check_php {
 }
 
 
-declare -A _SYNTAX_CMD
-declare -A _SYNTAX_HELP
+declare -A SYNTAX_CMD
+declare -A SYNTAX_HELP
 
 #--
 # Abort with SYNTAX: message. Usually APP=$0.
-# If $1 = "*" show join('|', ${!_SYNTAX_CMD[@]}).
+# If $1 = "*" show join('|', ${!SYNTAX_CMD[@]}).
 # If APP_DESC(_2|_3|_4) is set output APP_DESC\n\n(APP_DESC_2\n\n ...).
 #
-# @export _SYNTAX_CMD _SYNTAX_HELP
-# @global _SYNTAX_CMD _SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
+# @declare SYNTAX_CMD SYNTAX_HELP
+# @global SYNTAX_CMD SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
-# @param info (e.g. cmd:* = show all _SYNTAX_CMD otherwise show cmd|help:name = _SYNTAX_CMD|_SYNTAX_HELP[name])
+# @param info (e.g. cmd:* = show all SYNTAX_CMD otherwise show cmd|help:[name] = SYNTAX_CMD|SYNTAX_HELP[name])
 #--
 function _syntax {
-	local MSG="$1\n"
+	local msg="$1\n"
 	local a; local b; local prefix; local i;
-	local keys=`_sort ${!_SYNTAX_CMD[@]}`
+	local keys=`_sort ${!SYNTAX_CMD[@]}`
 
-	if ! test -z "${_SYNTAX_CMD[$1]}"; then
-		MSG="${_SYNTAX_CMD[$1]}\n"
-	elif test "${1: -1}" = "*" && test "${#_SYNTAX_CMD[@]}" -gt 0; then
+	if ! test -z "${SYNTAX_CMD[$1]}"; then
+		msg="${SYNTAX_CMD[$1]}\n"
+	elif test "${1: -1}" = "*" && test "${#SYNTAX_CMD[@]}" -gt 0; then
 		test "$1" = "*" && a='^[a-zA-Z0-9_]+$' || { prefix="${1:0:-1}"; a="^${1:0:-2}"'\.[a-zA-Z0-9_\.]+$'; }
 
-		MSG=
+		msg=
 		for b in $keys; do
-			grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG|${b/$prefix/}"
+			grep -E "$a" >/dev/null <<< "$b" && msg="$msg|${b/$prefix/}"
 		done
-		MSG="${MSG:1}\n"
+		msg="${msg:1}\n"
 	fi
 
 	for a in $2; do
-		local OLD_MSG="$MSG"
+		local old_msg="$msg"
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
 			test "${a:4}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:4:-2}"'\.[a-zA-Z0-9_]+$'
 			for b in $keys; do
-				grep -E "$a" >/dev/null <<< "$b" && MSG="$MSG\n$APP ${_SYNTAX_CMD[$b]}"
+				grep -E "$a" >/dev/null <<< "$b" && msg="$msg\n$APP ${SYNTAX_CMD[$b]}"
 			done
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
 			local shelp=""
-			for b in `_sort ${!_SYNTAX_HELP[@]}`; do
+			for b in `_sort ${!SYNTAX_HELP[@]}`; do
 				if test "$b" = "$1"; then
-					shelp="$shelp\n${_SYNTAX_HELP[$b]}"
+					shelp="$shelp\n${SYNTAX_HELP[$b]}"
 				elif grep -E "$a" >/dev/null <<< "$b"; then
 					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
-					shelp="$shelp\n"`printf "%12s: ${_SYNTAX_HELP[$b]}" $prefix`
+					shelp="$shelp\n"`printf "%12s: ${SYNTAX_HELP[$b]}" $prefix`
 				fi
 			done
 
-			[[ ! -z "$shelp" && "$shelp" != "\n$APP_DESC" ]] && MSG="$MSG$shelp"
+			[[ ! -z "$shelp" && "$shelp" != "\n$APP_DESC" ]] && msg="$msg$shelp"
 		fi
 
-		test "$OLD_MSG" != "$MSG" && MSG="$MSG\n"
+		test "$old_msg" != "$msg" && msg="$msg\n"
 	done
 
 	if ! test -z "$APP_PREFIX"; then
-		echo -e "\nSYNTAX: $APP_PREFIX $APP $MSG" 1>&2
+		echo -e "\nSYNTAX: $APP_PREFIX $APP $msg" 1>&2
 	else
-		echo -e "\nSYNTAX: $APP $MSG" 1>&2
+		echo -e "\nSYNTAX: $APP $msg" 1>&2
 	fi
 
-	local DESC=""
+	local desc=""
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
-		test -z "${!a}" || DESC="$DESC${!a}\n\n"
+		test -z "${!a}" || desc="$desc${!a}\n\n"
 	done
-	echo -e "$DESC" 1>&2
+	echo -e "$desc" 1>&2
 
 	exit 1
 }
