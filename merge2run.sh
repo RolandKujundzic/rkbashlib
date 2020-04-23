@@ -13,7 +13,7 @@ function load_functions {
 		RKSCRIPT_PATH=`realpath "$APP" | xargs dirname`
 	fi
 
-	local load_func="abort msg osx syntax sort confirm log sudo require_global rkscript_inc cache mkdir cd cp rm add_abort_linenum"
+	local load_func="abort msg osx syntax sort confirm log sudo require_global rks_header rkscript_inc cache mkdir cd cp rm add_abort_linenum"
 	local a
 
 	for a in $load_func; do
@@ -80,10 +80,7 @@ function include_list {
 function join_include {
 	echo -e "Include: $INCLUDE\nCreate $OUT"
 
-	local copyright=`date +"%Y"`
-	test -f ".gitignore" && copyright=`git log --diff-filter=A -- .gitignore | grep 'Date:' | sed -E 's/.+ ([0-9]+) \+[0-9]+/\1/'`" - $copyright"
-
-	echo -e "#!/bin/bash\n#\n# Copyright (c) $copyright Roland Kujundzic <roland@kujundzic.de>\n#" > "$OUT"
+	_rks_header "$OUT"
 
 	local a
 	for a in $INCLUDE; do

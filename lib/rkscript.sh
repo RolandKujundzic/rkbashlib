@@ -2633,46 +2633,45 @@ function _md5 {
 # @global APP
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# @exit unless $2 is empty
 #--
 function _merge_sh {
-	local MAPP="${1:-$APP}"
+	local my_app="${1:-$APP}"
+	local sh_dir="${my_app}_"
 
 	if ! test -z "$2"; then
-		MAPP="$2"
-		SH_DIR="$1"
+		my_app="$2"
+		sh_dir="$1"
 	else
-		_require_file "$MAPP"
-		local SH_DIR="$MAPP"'_'
-		test -d "$SH_DIR" || { test -d `basename $MAPP` && SH_DIR=`basename $MAPP`; }
+		_require_file "$my_app"
+		test -d "$sh_dir" || { test -d `basename $my_app` && sh_dir=`basename $my_app`; }
 	fi
 
-	_require_dir "$SH_DIR"
+	_require_dir "$sh_dir"
 
-	local TMP_APP="$SH_DIR"'_'
-	local MD5_OLD=
-	test -s "$MAPP" && MD5_OLD=`_md5 "$MAPP"`
-	echo -n "merge $SH_DIR into $MAPP ... "
+	local tmp_app="$sh_dir"'_'
+	local md5_old=
+	test -s "$my_app" && md5_old=`_md5 "$my_app"`
+	echo -n "merge $sh_dir into $my_app ... "
 
-	echo '#!/bin/bash' > "$TMP_APP"
+	_rks_header "$tmp_app"
 
-	local INC_SH=`ls "$SH_DIR"/*.inc.sh "$SH_DIR"/*/*.inc.sh "$SH_DIR"/*/*/*.inc.sh 2>/dev/null | sort`
+	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
-	for a in $INC_SH; do
-		tail -n+2 "$a" >> "$TMP_APP"
+	for a in $inc_sh; do
+		tail -n+2 "$a" >> "$tmp_app"
 	done
 
-	_add_abort_linenum "$TMP_APP"
+	_add_abort_linenum "$tmp_app"
 
-	local MD5_NEW=`_md5 "$TMP_APP"`
+	local md5_new=`_md5 "$tmp_app"`
 
-	if test "$MD5_OLD" = "$MD5_NEW"; then
+	if test "$md5_old" = "$md5_new"; then
 		echo "no change"
-		_rm "$TMP_APP" >/dev/null
+		_rm "$tmp_app" >/dev/null
 	else
 		echo "update"
-		_mv "$TMP_APP" "$MAPP"
-		_chmod 755 "$MAPP"
+		_mv "$tmp_app" "$my_app"
+		_chmod 755 "$my_app"
 	fi
 
 	test -z "$2" && exit 0
@@ -4338,6 +4337,27 @@ function _rkscript {
 			echo "found $a"
 		fi
 	done
+}
+
+
+#--
+# Print script header header to file.
+#
+# @param filename
+#--
+function _rks_header {
+	local copyright=`date +"%Y"`
+
+	if test -f ".gitignore"; then
+		copyright=`git log --diff-filter=A -- .gitignore | grep 'Date:' | sed -E 's/.+ ([0-9]+) \+[0-9]+/\1/'`" - $copyright"
+	fi
+
+	echo -e "#!/bin/bash
+#
+# Copyright (c) $copyright Roland Kujundzic <roland@kujundzic.de>
+#
+" > "$1"
+	# . /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
 }
 
 
