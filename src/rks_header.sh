@@ -21,11 +21,9 @@ function _rks_header {
 	fi
 
 	test $((flag & 1)) = 1 && \
-		header="\n\n. /usr/local/lib/rkscript.sh || { echo -e "'"\\nERROR: . /usr/local/lib/rkscript.sh\\n"; exit 1; }'
+		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
 
-	echo -e "#!/bin/bash
-#
-# Copyright (c) $copyright Roland Kujundzic <roland@kujundzic.de>
-#$header" > "$1"
+	printf '\x23!/bin/bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n' "$copyright" > "$1"
+	test -z "$header" || echo "$header" >> "$1"
 }
 
