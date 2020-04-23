@@ -5,24 +5,6 @@
 
 
 #--
-# Load necessary src/* functions.
-# @export RKSCRIPT_PATH
-#--
-function load_functions {
-	if test -z "$RKSCRIPT_PATH"; then
-		RKSCRIPT_PATH=`realpath "$APP" | xargs dirname`
-	fi
-
-	local load_func="abort msg osx syntax sort confirm log sudo require_global rks_header rkscript_inc cache mkdir cd cp rm add_abort_linenum"
-	local a
-
-	for a in $load_func; do
-		. "$RKSCRIPT_PATH/src/$a.sh"
-	done
-}
-
-
-#--
 # Compute merge list.
 # 
 # @export OUT MERGE_SH
@@ -108,9 +90,32 @@ export APP_PID="$APP_PID $$"
 
 echo -e "\n$APP_DESC"
 
-load_functions
-merge_list $@
-include_list
-join_include
+# Load necessary src/* functions - don't put in function (declare -A will be lost)
+if test -z "$RKSCRIPT_PATH"; then
+	RKSCRIPT_PATH=`realpath "$APP" | xargs dirname`
+fi
+
+load_func="abort add_abort_linenum chmod confirm cp find log md5
+	merge_sh mkdir msg mv parse_arg require_dir require_file require_owner 
+	require_priv require_program rkscript_inc rks_header rm rsync sort sudo 
+	syntax"
+
+for a in $load_func; do
+	source "$RKSCRIPT_PATH/src/$a.sh"
+done
+
+_parse_arg $@
+
+if [[ ! -z "${ARG[scan]}" && -s "${ARG[scan]}" ]]; then
+	_rkscript_inc "${ARG[scan]}" #>/dev/null
+	echo "found $RKSCRIPT_INC_NUM: $RKSCRIPT_INC"
+elif [[ ! -z "${ARG[self_update]}" && -f "${ARG[self_update]}" && -d "${ARG[self_update]}_" ]]; then
+	echo "_merge_sh '${ARG[self_update]}_' '${ARG[self_update]}'"
+	_merge_sh "${ARG[self_update]}_" "${ARG[self_update]}" 
+else
+	merge_list $@
+	include_list
+	join_include
+fi
 
 echo -e "done.\n"
