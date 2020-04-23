@@ -2626,7 +2626,7 @@ function _md5 {
 #--
 # Merge "$APP"_ (or ../`basename "$APP"`) directory into $APP (concat *.inc.sh).
 # Use 0_header.inc.sh, function.inc.sh, ... Z0_configuration.inc.sh, Z1_setup.inc.sh, Z_main.inc.sh.
-# Set RKS_HEADER=0 to avoid rkscript.sh loading.
+# Set RKS_HEADER=0 to avoid rkscript.sh loading. Use --static to include rkscript.sh functions.
 # 
 # @example test.sh, test.sh_/ and test.sh_/*.inc.sh
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
@@ -2647,6 +2647,9 @@ function _merge_sh {
 		test -d "$sh_dir" || { test -d `basename $my_app` && sh_dir=`basename $my_app`; }
 	fi
 
+	local rkscript_inc
+	test "${ARG[static]}" = "1" && rkscript_inc=`_merge_static "$sh_dir"`
+
 	_require_dir "$sh_dir"
 
 	local tmp_app="$sh_dir"'_'
@@ -2654,7 +2657,12 @@ function _merge_sh {
 	test -s "$my_app" && md5_old=`_md5 "$my_app"`
 	echo -n "merge $sh_dir into $my_app ... "
 
-	_rks_header "$tmp_app" 1
+	if test -z "$rkscript_inc"; then
+		_rks_header "$tmp_app" 1
+	else
+		_rks_header "$tmp_app"
+		echo "$rkscript_inc" >> "$tmp_app"
+	fi
 
 	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
@@ -2676,6 +2684,26 @@ function _merge_sh {
 	fi
 
 	test -z "$2" && exit 0
+}
+
+
+#--
+# Return include code
+# @param script source dir
+#--
+function _merge_static {
+	local inc_sh=`ls "$1"/*.inc.sh "$1"/*/*.inc.sh "$1"/*/*/*.inc.sh 2>/dev/null`
+	local rks_inc
+	local a
+
+	for a in $inc_sh; do
+		_rkscript_inc "$a"
+		rks_inc="$rks_inc $RKSCRIPT_INC"
+	done
+
+	for a in `_sort $rks_inc`; do
+		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#'
+	done
 }
 
 
@@ -4225,7 +4253,7 @@ function _rks_app {
 	test -z "$me" && _abort "call _rks_app '$0' $@"
 	shift
 
-	if ! test -z "$APP" && ! test -z "$CURR" && test -z "$APP_PID"; then
+	if test -z "$APP"; then
 		APP="$me"
 		CURR="$PWD"
 		export APP_PID="$APP_PID $$"
@@ -4237,7 +4265,7 @@ function _rks_app {
 
 	[[ "$1" =	'self_update' ]] && _merge_sh
 
-	[[ "$1" = "help" ]] && _syntax "*" "cmd:* help:*"
+	[[ "$1" = 'help' ]] && _syntax "*" "cmd:* help:*"
 	test -z "$1" && return
 
 	test -z "${SYNTAX_HELP[$1]}" || APP_DESC="${SYNTAX_HELP[$1]}"
@@ -4362,12 +4390,10 @@ function _rks_header {
 	fi
 
 	test $((flag & 1)) = 1 && \
-		header="\n\n. /usr/local/lib/rkscript.sh || { echo -e "'"\\nERROR: . /usr/local/lib/rkscript.sh\\n"; exit 1; }'
+		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
 
-	echo -e "#!/bin/bash
-#
-# Copyright (c) $copyright Roland Kujundzic <roland@kujundzic.de>
-#$header" > "$1"
+	printf '\x23!/bin/bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n' "$copyright" > "$1"
+	test -z "$header" || echo "$header" >> "$1"
 }
 
 
