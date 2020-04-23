@@ -12,7 +12,7 @@ function _rks_app {
 	test -z "$me" && _abort "call _rks_app '$0' $@"
 	shift
 
-	if ! test -z "$APP" && ! test -z "$CURR" && test -z "$APP_PID"; then
+	if test -z "$APP"; then
 		APP="$me"
 		CURR="$PWD"
 		export APP_PID="$APP_PID $$"
@@ -24,7 +24,7 @@ function _rks_app {
 
 	[[ "$1" =	'self_update' ]] && _merge_sh
 
-	[[ "$1" = "help" ]] && _syntax "*" "cmd:* help:*"
+	[[ "$1" = 'help' ]] && _syntax "*" "cmd:* help:*"
 	test -z "$1" && return
 
 	test -z "${SYNTAX_HELP[$1]}" || APP_DESC="${SYNTAX_HELP[$1]}"
