@@ -2625,12 +2625,13 @@ function _md5 {
 
 #--
 # Merge "$APP"_ (or ../`basename "$APP"`) directory into $APP (concat *.inc.sh).
-# Use 0_header.inc.sh, function.inc.sh, ... Z_main.inc.sh.
+# Use 0_header.inc.sh, function.inc.sh, ... Z0_configuration.inc.sh, Z1_setup.inc.sh, Z_main.inc.sh.
+# Set RKS_HEADER=0 to avoid rkscript.sh loading.
 # 
 # @example test.sh, test.sh_/ and test.sh_/*.inc.sh
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
 #
-# @global APP
+# @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
 #--
@@ -2653,7 +2654,7 @@ function _merge_sh {
 	test -s "$my_app" && md5_old=`_md5 "$my_app"`
 	echo -n "merge $sh_dir into $my_app ... "
 
-	_rks_header "$tmp_app"
+	_rks_header "$tmp_app" 1
 
 	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
@@ -4341,23 +4342,32 @@ function _rkscript {
 
 
 #--
-# Print script header header to file.
+# Print script header header to file. Flag:
 #
+# 1 = load /usr/local/lib/rkscript.sh
+#
+# @global RKS_HEADER (optional instead of flag)
 # @param filename
+# @param int flag (2^n)
 #--
 function _rks_header {
 	local copyright=`date +"%Y"`
+	local flag=$(($2 + 0))
+	local header
+
+	[ -z ${RKS_HEADER+x} ] || flag=$(($RKS_HEADER + 0))
 
 	if test -f ".gitignore"; then
 		copyright=`git log --diff-filter=A -- .gitignore | grep 'Date:' | sed -E 's/.+ ([0-9]+) \+[0-9]+/\1/'`" - $copyright"
 	fi
 
+	test $((flag & 1)) = 1 && \
+		header="\n\n. /usr/local/lib/rkscript.sh || { echo -e "'"\\nERROR: . /usr/local/lib/rkscript.sh\\n"; exit 1; }'
+
 	echo -e "#!/bin/bash
 #
 # Copyright (c) $copyright Roland Kujundzic <roland@kujundzic.de>
-#
-" > "$1"
-	# . /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
+#$header" > "$1"
 }
 
 

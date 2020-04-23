@@ -2,12 +2,13 @@
 
 #--
 # Merge "$APP"_ (or ../`basename "$APP"`) directory into $APP (concat *.inc.sh).
-# Use 0_header.inc.sh, function.inc.sh, ... Z_main.inc.sh.
+# Use 0_header.inc.sh, function.inc.sh, ... Z0_configuration.inc.sh, Z1_setup.inc.sh, Z_main.inc.sh.
+# Set RKS_HEADER=0 to avoid rkscript.sh loading.
 # 
 # @example test.sh, test.sh_/ and test.sh_/*.inc.sh
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
 #
-# @global APP
+# @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
 #--
@@ -30,7 +31,7 @@ function _merge_sh {
 	test -s "$my_app" && md5_old=`_md5 "$my_app"`
 	echo -n "merge $sh_dir into $my_app ... "
 
-	_rks_header "$tmp_app"
+	_rks_header "$tmp_app" 1
 
 	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
 	local a
