@@ -340,13 +340,14 @@ function _apt_remove {
 
 #--
 # Ask question. Skip default answer with SPACE. Loop max. 3 times
-# until answered if $3=1. Use _ASK_DEFAULT=aK if answer selection 
-# <a1|...|an> is used.
+# until answered if $3=1. Use ASK_DEFAULT=aK if answer selection 
+# <a1|...|an> is used. Use AUTOCONFIRM=default to skip question
+# if default answer is provided.
 #
 # @param string label
 # @param default answer or answer selection
 # @param bool required 1|[] (default empty)
-# @global _ASK_DEFAULT
+# @global ASK_DEFAULT
 # @export ANSWER
 #--
 function _ask {
@@ -360,14 +361,20 @@ function _ask {
 		label="$1  $2  "
  		allow="|${2:1: -1}|"
 
-		if ! test -z "$_ASK_DEFAULT"; then
-			default="$_ASK_DEFAULT"
+		if ! test -z "$ASK_DEFAULT"; then
+			default="$ASK_DEFAULT"
 			label="$label [$default]"
-			_ASK_DEFAULT=
+			ASK_DEFAULT=
 		fi
 	else 
 		label="$1  [$2]  "
  		default="$2"
+	fi
+	
+	if test "$AUTOCONFIRM" = "default" && ! test -z "$default"; then
+		ANSWER="$default"
+		AUTOCONFIRM=
+		return
 	fi
 
 	echo -n "$label"
