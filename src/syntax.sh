@@ -28,6 +28,8 @@ function _syntax {
 			grep -E "$a" >/dev/null <<< "$b" && msg="$msg|${b/$prefix/}"
 		done
 		msg="${msg:1}\n"
+	elif [[ "$1" = *'.'* && ! -z "${SYNTAX_CMD[${1%%.*}]}" ]]; then
+		msg="${SYNTAX_CMD[${1%%.*}]}\n"
 	fi
 
 	for a in $2; do
@@ -37,7 +39,7 @@ function _syntax {
 			test "$a" = "cmd:" && a="cmd:$1"
 			test "${a:4}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:4:-2}"'\.[a-zA-Z0-9_]+$'
 			for b in $keys; do
-				grep -E "$a" >/dev/null <<< "$b" && msg="$msg\n$APP ${SYNTAX_CMD[$b]}"
+				grep -E "$a" >/dev/null <<< "$b" && msg="$msg\n$(basename $APP) ${SYNTAX_CMD[$b]}"
 			done
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
@@ -60,9 +62,9 @@ function _syntax {
 	done
 
 	if ! test -z "$APP_PREFIX"; then
-		echo -e "\nSYNTAX: $APP_PREFIX $APP $msg" 1>&2
+		echo -e "\nSYNTAX: $APP_PREFIX $(basename $APP) $msg" 1>&2
 	else
-		echo -e "\nSYNTAX: $APP $msg" 1>&2
+		echo -e "\nSYNTAX: $(basename $APP) $msg" 1>&2
 	fi
 
 	local desc=""
