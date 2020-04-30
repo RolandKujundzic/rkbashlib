@@ -3,9 +3,11 @@
 function test {
 	local L1="local variable 1"
 	local v="L2"
+	local a='init'; local b='first'
+	local a= b c='oho'
 	# declare -g = declare global (only if bash version >= 4.2)
 	declare "$v"="local variable 2"
-	echo "L1=$L1 L2=$L2"
+	echo "L1=$L1 L2=$L2 a=$a b=$b c=$c"
 }
 
 
