@@ -12,7 +12,7 @@ declare -A GITHUB_IS_LATEST
 #--
 function _github_latest {
 	local VNUM=`$2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/'`
-	local REDIR=`curl -Ls -o /dev/null -w %{url_effective} "https://github.com/$1/releases/latest"`
+	local REDIR=`curl -Ls -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest"`
 	local LATEST=`basename "$REDIR" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/'`
 
 	if ! test -z "$LATEST"; then
