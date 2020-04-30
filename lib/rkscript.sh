@@ -5129,8 +5129,8 @@ declare -A SYNTAX_HELP
 # @param info (e.g. cmd:* = show all SYNTAX_CMD otherwise show cmd|help:[name] = SYNTAX_CMD|SYNTAX_HELP[name])
 #--
 function _syntax {
-	local msg="$1\n"
-	local a; local b; local prefix; local i;
+	local msg="$1\n" 
+	local a b prefix
 	local keys=`_sort ${!SYNTAX_CMD[@]}`
 
 	if ! test -z "${SYNTAX_CMD[$1]}"; then
@@ -5147,8 +5147,9 @@ function _syntax {
 		msg="${SYNTAX_CMD[${1%%.*}]}\n"
 	fi
 
+	local old_msg shelp
 	for a in $2; do
-		local old_msg="$msg"
+		old_msg="$msg"
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
@@ -5160,7 +5161,7 @@ function _syntax {
 			test "$a" = "help:" && a="help:$1"
 			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
 
-			local shelp=""
+			shelp=""
 			for b in `_sort ${!SYNTAX_HELP[@]}`; do
 				if test "$b" = "$1"; then
 					shelp="$shelp\n${SYNTAX_HELP[$b]}"
@@ -5182,7 +5183,7 @@ function _syntax {
 		echo -e "\nSYNTAX: $(basename $APP) $msg" 1>&2
 	fi
 
-	local desc=""
+	local desc
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
 		test -z "${!a}" || desc="$desc${!a}\n\n"
 	done
