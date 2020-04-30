@@ -7,21 +7,19 @@
 # @param int flag
 #--
 function _webhome_php {
-	local FLAG=$1
-	local GIT_DIR
+	local flag=$1
+	local git_dir
 
-	test -z "$FLAG" && FLAG=$(($1 & 0))
-	test -z "$CURR" && local CURR=$PWD
-
-	test $((FLAG & 1)) -eq 1 && GIT_DIR=( "rkphplib" )
-	test $((FLAG & 2)) -eq 2 && GIT_DIR=( $GIT_DIR "phplib" )
+	test -z "$flag" && flag=$(($1 & 0))
+	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
+	test $((flag & 2)) -eq 2 && git_dir=( $git_dir "phplib" )
 
 	_mkdir php >/dev/null
 	_cd php 
 
-	local i; local dir;
-	for ((i = 0; i < ${#GIT_DIR[@]}; i++)); do
- 		dir="${GIT_DIR[$i]}"
+	local i dir
+	for ((i = 0; i < ${#git_dir[@]}; i++)); do
+ 		dir="${git_dir[$i]}"
 		_require_dir "/webhome/.php/$dir"
 
 		if test -d "$dir"; then

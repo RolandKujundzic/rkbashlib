@@ -16,34 +16,34 @@ declare -A _SQL_COL
 # @return boolean (if type=select - false = no result)
 #--
 function _sql_select {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_select"
+	local query="$1"
+	test -z "$query" && _abort "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
-	local LNUM=`echo "$DBOUT" | wc -l`
+	local dbout=`$_SQL "$query" || _abort "$query"`
+	local lnum=`echo "$dbout" | wc -l`
 
 	_SQL_COL=()
-	_SQL_COL[_all]="$DBOUT"
-	_SQL_COL[_rows]=$((LNUM - 1))
+	_SQL_COL[_all]="$dbout"
+	_SQL_COL[_rows]=$((lnum - 1))
 
-	if test $LNUM -eq 2; then
-		local LINE1=`echo "$DBOUT" | head -1`
-		local LINE2=`echo "$DBOUT" | tail -1`
-		local CKEY; local CVAL; local i;
+	if test $lnum -eq 2; then
+		local line1=`echo "$dbout" | head -1`
+		local line2=`echo "$dbout" | tail -1`
+		local i ckey cval
 
-		IFS=$'\t' read -ra CKEY <<< "$LINE1"
-		IFS=$'\t' read -ra CVAL <<< "$LINE2"
+		IFS=$'\t' read -ra ckey <<< "$line1"
+		IFS=$'\t' read -ra cval <<< "$line2"
 
-		for (( i=0; i < ${#CKEY[@]}; i++ )); do
-			_SQL_COL[${CKEY[$i]}]="${CVAL[$i]}"
+		for (( i=0; i < ${#ckey[@]}; i++ )); do
+			_SQL_COL[${ckey[$i]}]="${cval[$i]}"
 		done
 
 		return 0  # true single line result
-	elif test $LNUM -lt 2; then
+	elif test $lnum -lt 2; then
 		return 1  # false = no result
 	else
-		_abort "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
+		_abort "_sql select: multi line result ($lnum lines)\nUse _sql list ..."
 	fi
 }
 

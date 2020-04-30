@@ -21,24 +21,24 @@ function _chmod {
 		CHMOD=
 	fi
 
-	local a=; local i=; local PRIV=;
+	local a i priv
 
 	if test -z "$2"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
-			PRIV=
+			priv=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				PRIV=`stat -c "%a" "${FOUND[$i]}"`
+				priv=`stat -c "%a" "${FOUND[$i]}"`
 			fi
 
-			if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
+			if test "$1" != "$priv" && test "$1" != "0$priv"; then
 				_sudo "$CMD $1 '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$2"; then
-		PRIV=`stat -c "%a" "$2"`
+		priv=`stat -c "%a" "$2"`
 
-		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
+		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
 			_sudo "$CMD $1 '$2'" 1
 		fi
 	elif test -d "$2"; then

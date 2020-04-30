@@ -8,8 +8,7 @@
 #--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
-
-	local a=; local has_hash=; 
+	local a has_hash
 	for a in $@; do
 		has_hash="HAS_HASH_$a"
 

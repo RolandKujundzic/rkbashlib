@@ -39,7 +39,7 @@ function _cache {
 	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
 	test -z "$cache_lm" && return 1
 
-	local entry_lm; local a;
+	local a entry_lm
 	for a in $CACHE_REF; do
 		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
 		test $cache_lm -lt $entry_lm && return 1

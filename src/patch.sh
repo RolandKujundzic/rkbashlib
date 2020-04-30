@@ -30,7 +30,7 @@ function _patch {
 	_require_dir "$PATCH_SOURCE_DIR"
 	_require_global PATCH_LIST
 
-	local a; local target;
+	local a target
 	for a in $PATCH_LIST; do
 		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=`find $PATCH_DIR -name "$a"`
 

@@ -13,12 +13,10 @@ declare -A _SQL_SEARCH
 # @return string
 #--
 function _sql_querystring {
-	local QUERY="$1"
-
 	if test "${#_SQL_SEARCH[@]}" -gt 0; then
 		_SQL_PARAM[SEARCH]=
 
-		local val; local key;
+		local val  key
 		for key in ${!_SQL_SEARCH[@]}; do
 			val="${_SQL_SEARCH[$key]}"
 
@@ -34,24 +32,23 @@ function _sql_querystring {
 		done
 	fi
 
+	local query="$1"
 	if ! test -z "${_SQL_PARAM[SEARCH]}"; then
-		QUERY="${QUERY//WHERE_SEARCH/WHERE 1=1 ${_SQL_PARAM[SEARCH]}}"
-		QUERY="${QUERY//AND_SEARCH/${_SQL_PARAM[SEARCH]}}"
+		query="${query//WHERE_SEARCH/WHERE 1=1 ${_SQL_PARAM[SEARCH]}}"
+		query="${query//AND_SEARCH/${_SQL_PARAM[SEARCH]}}"
 		_SQL_PARAM[SEARCH]=
 	fi
 
 	local a
-
 	for a in WHERE_SEARCH AND_SEARCH; do
-		QUERY="${QUERY//$a/}"
+		query="${query//$a/}"
 	done
 
 	for a in "${!_SQL_PARAM[@]}"; do
-		QUERY="${QUERY//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
+		query="${query//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
 	done
 
-	test -z "$QUERY" && _abort "empty query in _sql"
-
-	echo "$QUERY"
+	test -z "$query" && _abort "empty query in _sql"
+	echo "$query"
 }
 

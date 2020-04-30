@@ -445,7 +445,7 @@ function _cache {
 	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
 	test -z "$cache_lm" && return 1
 
-	local entry_lm; local a;
+	local a entry_lm
 	for a in $CACHE_REF; do
 		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
 		test $cache_lm -lt $entry_lm && return 1
@@ -771,24 +771,24 @@ function _chmod {
 		CHMOD=
 	fi
 
-	local a=; local i=; local PRIV=;
+	local a i priv
 
 	if test -z "$2"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
-			PRIV=
+			priv=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				PRIV=`stat -c "%a" "${FOUND[$i]}"`
+				priv=`stat -c "%a" "${FOUND[$i]}"`
 			fi
 
-			if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
+			if test "$1" != "$priv" && test "$1" != "0$priv"; then
 				_sudo "$CMD $1 '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$2"; then
-		PRIV=`stat -c "%a" "$2"`
+		priv=`stat -c "%a" "$2"`
 
-		if test "$1" != "$PRIV" && test "$1" != "0$PRIV"; then
+		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
 			_sudo "$CMD $1 '$2'" 1
 		fi
 	elif test -d "$2"; then
@@ -3654,7 +3654,7 @@ declare ARGV
 function _parse_arg {
 	ARGV=()
 
-	local n=0; local i; local key; local val;
+	local n=0 i key val
 	for (( i = 0; i <= $#; i++ )); do
 		ARGV[$i]="${!i}"
 		val="${!i}"
@@ -3714,7 +3714,7 @@ function _patch {
 	_require_dir "$PATCH_SOURCE_DIR"
 	_require_global PATCH_LIST
 
-	local a; local target;
+	local a target
 	for a in $PATCH_LIST; do
 		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=`find $PATCH_DIR -name "$a"`
 
@@ -4164,8 +4164,7 @@ function _require_file {
 #--
 function _require_global {
 	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
-
-	local a=; local has_hash=; 
+	local a has_hash
 	for a in $@; do
 		has_hash="HAS_HASH_$a"
 
@@ -4430,30 +4429,20 @@ function _rm {
 # @param optional rsync parameter e.g. "--delete --exclude /data"
 #--
 function _rsync {
-	local TARGET="$2"
+	local target="$2"
+	test -z "$target" && target="."
 
-	if test -z "$TARGET"; then
-		TARGET="."
-	fi
+	test -z "$1" && _abort "Empty rsync source"
+	test -d "$target" || _abort "No such directory [$target]"
 
-	if test -z "$1"; then
-		_abort "Empty rsync source"
-	fi
-
-	if ! test -d "$TARGET"; then
-		_abort "No such directory [$TARGET]"
-	fi
-
-	local RSYNC="rsync -av $3 -e ssh '$1' '$2'"; local error=
-	_log "$RSYNC" rsync
-	eval "$RSYNC ${LOG_CMD[rsync]}" || error=1
+	local rsync="rsync -av $3 -e ssh '$1' '$2'"
+	local error
+	_log "$rsync" rsync
+	eval "$rsync ${LOG_CMD[rsync]}" || error=1
 
 	if test "$error" = "1"; then
 		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
-
-		if test -z "$sync_finished"; then
-			_abort "$RSYNC"
-		fi
+		test -z "$sync_finished" && _abort "$rsync"
 	fi
 }
 
@@ -4553,12 +4542,12 @@ function _split {
 #--
 function _split_sh {
 	_require_file "$1"
-	local OUTPUT_DIR=`basename $1`"_"
-	test -d "$OUTPUT_DIR" && _rm "$OUTPUT_DIR" >/dev/null
-	_mkdir "$OUTPUT_DIR" >/dev/null
+	local output_dir=`basename $1`"_"
+	test -d "$output_dir" && _rm "$output_dir" >/dev/null
+	_mkdir "$output_dir" >/dev/null
 
-  local SPLIT_AWK=
-IFS='' read -r -d '' SPLIT_AWK <<'EOF'
+  local split_awk
+IFS='' read -r -d '' split_awk <<'EOF'
 BEGIN{ fn = "_OUT_/split_1.inc.sh"; n = 1; open = 0; }
 {
 	if (substr($0,1,3) == "#--") {
@@ -4579,27 +4568,27 @@ EOF
 
 	_msg "Split $1 into"
 	_mkdir "$RKSCRIPT_DIR" >/dev/null
-	echo -e "$SPLIT_AWK" | sed -E "s/_OUT_/$OUTPUT_DIR/g" >"$RKSCRIPT_DIR/split_sh.awk"
+	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKSCRIPT_DIR/split_sh.awk"
 	awk -f "$RKSCRIPT_DIR/split_sh.awk" "$1"
 
-	local a; local func;
-	for a in "$OUTPUT_DIR"/*.inc.sh; do
+	local a func
+	for a in "$output_dir"/*.inc.sh; do
 		func=`grep -E '^function [a-zA-Z0-9_]+ \{' $a | sed -E 's/function ([a-zA-Z0-9_]+) \{/\1/'`
 
 		if test -z "$func"; then
-			if test "$a" = "$OUTPUT_DIR/split_1.inc.sh"; then
+			if test "$a" = "$output_dir/split_1.inc.sh"; then
 				func="0_header"
 			else
 				func="Z_main"
-				echo -e "#!/bin/bash\n" > "$OUTPUT_DIR/$func.inc.sh"
+				echo -e "#!/bin/bash\n" > "$output_dir/$func.inc.sh"
 			fi
 		else
-			echo -e "#!/bin/bash\n" > "$OUTPUT_DIR/$func.inc.sh"
+			echo -e "#!/bin/bash\n" > "$output_dir/$func.inc.sh"
 		fi
 
-		_msg "  $OUTPUT_DIR/$func.inc.sh"
-		head -n -1 "$a" >> "$OUTPUT_DIR/$func.inc.sh"
-		tail -1 "$a" | sed '/^$/d' >> "$OUTPUT_DIR/$func.inc.sh"
+		_msg "  $output_dir/$func.inc.sh"
+		head -n -1 "$a" >> "$output_dir/$func.inc.sh"
+		tail -1 "$a" | sed '/^$/d' >> "$output_dir/$func.inc.sh"
 		_rm "$a" >/dev/null
 	done
 }
@@ -4682,12 +4671,10 @@ declare -A _SQL_SEARCH
 # @return string
 #--
 function _sql_querystring {
-	local QUERY="$1"
-
 	if test "${#_SQL_SEARCH[@]}" -gt 0; then
 		_SQL_PARAM[SEARCH]=
 
-		local val; local key;
+		local val  key
 		for key in ${!_SQL_SEARCH[@]}; do
 			val="${_SQL_SEARCH[$key]}"
 
@@ -4703,25 +4690,24 @@ function _sql_querystring {
 		done
 	fi
 
+	local query="$1"
 	if ! test -z "${_SQL_PARAM[SEARCH]}"; then
-		QUERY="${QUERY//WHERE_SEARCH/WHERE 1=1 ${_SQL_PARAM[SEARCH]}}"
-		QUERY="${QUERY//AND_SEARCH/${_SQL_PARAM[SEARCH]}}"
+		query="${query//WHERE_SEARCH/WHERE 1=1 ${_SQL_PARAM[SEARCH]}}"
+		query="${query//AND_SEARCH/${_SQL_PARAM[SEARCH]}}"
 		_SQL_PARAM[SEARCH]=
 	fi
 
 	local a
-
 	for a in WHERE_SEARCH AND_SEARCH; do
-		QUERY="${QUERY//$a/}"
+		query="${query//$a/}"
 	done
 
 	for a in "${!_SQL_PARAM[@]}"; do
-		QUERY="${QUERY//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
+		query="${query//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
 	done
 
-	test -z "$QUERY" && _abort "empty query in _sql"
-
-	echo "$QUERY"
+	test -z "$query" && _abort "empty query in _sql"
+	echo "$query"
 }
 
 
@@ -4741,34 +4727,34 @@ declare -A _SQL_COL
 # @return boolean (if type=select - false = no result)
 #--
 function _sql_select {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_select"
+	local query="$1"
+	test -z "$query" && _abort "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local DBOUT=`$_SQL "$QUERY" || _abort "$QUERY"`
-	local LNUM=`echo "$DBOUT" | wc -l`
+	local dbout=`$_SQL "$query" || _abort "$query"`
+	local lnum=`echo "$dbout" | wc -l`
 
 	_SQL_COL=()
-	_SQL_COL[_all]="$DBOUT"
-	_SQL_COL[_rows]=$((LNUM - 1))
+	_SQL_COL[_all]="$dbout"
+	_SQL_COL[_rows]=$((lnum - 1))
 
-	if test $LNUM -eq 2; then
-		local LINE1=`echo "$DBOUT" | head -1`
-		local LINE2=`echo "$DBOUT" | tail -1`
-		local CKEY; local CVAL; local i;
+	if test $lnum -eq 2; then
+		local line1=`echo "$dbout" | head -1`
+		local line2=`echo "$dbout" | tail -1`
+		local i ckey cval
 
-		IFS=$'\t' read -ra CKEY <<< "$LINE1"
-		IFS=$'\t' read -ra CVAL <<< "$LINE2"
+		IFS=$'\t' read -ra ckey <<< "$line1"
+		IFS=$'\t' read -ra cval <<< "$line2"
 
-		for (( i=0; i < ${#CKEY[@]}; i++ )); do
-			_SQL_COL[${CKEY[$i]}]="${CVAL[$i]}"
+		for (( i=0; i < ${#ckey[@]}; i++ )); do
+			_SQL_COL[${ckey[$i]}]="${cval[$i]}"
 		done
 
 		return 0  # true single line result
-	elif test $LNUM -lt 2; then
+	elif test $lnum -lt 2; then
 		return 1  # false = no result
 	else
-		_abort "_sql select: multi line result ($LNUM lines)\nUse _sql list ..."
+		_abort "_sql select: multi line result ($lnum lines)\nUse _sql list ..."
 	fi
 }
 
@@ -5271,21 +5257,19 @@ function _ver3 {
 # @param int flag
 #--
 function _webhome_php {
-	local FLAG=$1
-	local GIT_DIR
+	local flag=$1
+	local git_dir
 
-	test -z "$FLAG" && FLAG=$(($1 & 0))
-	test -z "$CURR" && local CURR=$PWD
-
-	test $((FLAG & 1)) -eq 1 && GIT_DIR=( "rkphplib" )
-	test $((FLAG & 2)) -eq 2 && GIT_DIR=( $GIT_DIR "phplib" )
+	test -z "$flag" && flag=$(($1 & 0))
+	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
+	test $((flag & 2)) -eq 2 && git_dir=( $git_dir "phplib" )
 
 	_mkdir php >/dev/null
 	_cd php 
 
-	local i; local dir;
-	for ((i = 0; i < ${#GIT_DIR[@]}; i++)); do
- 		dir="${GIT_DIR[$i]}"
+	local i dir
+	for ((i = 0; i < ${#git_dir[@]}; i++)); do
+ 		dir="${git_dir[$i]}"
 		_require_dir "/webhome/.php/$dir"
 
 		if test -d "$dir"; then

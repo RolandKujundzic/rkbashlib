@@ -15,7 +15,7 @@ declare ARGV
 function _parse_arg {
 	ARGV=()
 
-	local n=0; local i; local key; local val;
+	local n=0 i key val
 	for (( i = 0; i <= $#; i++ )); do
 		ARGV[$i]="${!i}"
 		val="${!i}"
