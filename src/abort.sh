@@ -13,46 +13,48 @@ fi
 #
 # @exit
 # @global APP NO_ABORT
+# @export ABORT
 # @param string abort message|line number
 # @param abort message (optional - use if $1 = line number)
 #--
 function _abort {
-	local MSG="$1"
-	local LINE=
+	local msg line
+	msg="$1"
 
 	if ! test -z "$2"; then
-		MSG="$2"
-		LINE="[$1]"
+		msg="$2"
+		line="[$1]"
 	fi
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "WARNING$LINE: $MSG"
+		echo "WARNING$line: $msg"
 		return 1
 	fi
 
+	local frame trace
 	if type -t caller >/dev/null 2>/dev/null; then
-		local frame=0
-		local trace=$(while caller $frame; do ((frame++)); done)
-		MSG="$MSG\n\n$trace"
+		frame=0
+		trace=$(while caller $frame; do ((frame++)); done)
+		msg="$msg\n\n$trace"
 	fi
 
-	echo -e "\nABORT$LINE: $MSG\n" 1>&2
+	echo -e "\nABORT$line: $msg\n" 1>&2
 
 	local other_pid=
 
 	if ! test -z "$APP_PID"; then
 		# make shure APP_PID dies
 		for a in $APP_PID; do
-			other_pid=`ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}'`
-			test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+			other_pid=$(ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}')
+			test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2
 		done
 	fi
 
 	if ! test -z "$APP"; then
 		# make shure APP dies
-		other_pid=`ps aux | grep "$APP" | awk '{print $2}'`
-		test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+		other_pid=$(ps aux | grep "$APP" | awk '{print $2}')
+		test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2
 	fi
 
 	exit 1

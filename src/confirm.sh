@@ -29,10 +29,11 @@ function _confirm {
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 	fi
 
-	local FLAG=$(($2 + 0))
+	local flag
+	flag=$(($2 + 0))
 
-	if test $((FLAG & 2)) = 2; then
-		if test $((FLAG & 1)) = 1; then
+	if test $((flag & 2)) = 2; then
+		if test $((flag & 1)) = 1; then
 			CONFIRM=n
 		else
 			CONFIRM=y
@@ -41,14 +42,15 @@ function _confirm {
 		return
 	fi
 
-	while read -d $'\0' 
+	local cckey
+	while read -r -d $'\0' 
 	do
-		local CCKEY="--q$CONFIRM_COUNT"
-		if test "$REPLY" = "$CCKEY=y"; then
-			echo "found $CCKEY=y, accept: $1" 
+		cckey="--q$CONFIRM_COUNT"
+		if test "$REPLY" = "$cckey=y"; then
+			echo "found $cckey=y, accept: $1" 
 			CONFIRM=y
-		elif test "$REPLY" = "$CCKEY=n"; then
-			echo "found $CCKEY=n, reject: $1" 
+		elif test "$REPLY" = "$cckey=n"; then
+			echo "found $cckey=n, reject: $1" 
 			CONFIRM=n
 		fi
 	done < /proc/$$/cmdline
@@ -59,22 +61,21 @@ function _confirm {
 		return
 	fi
 
-	local DEFAULT=
-
-	if test $((FLAG & 1)) -ne 1; then
-		DEFAULT=n
+	local default
+	if test $((flag & 1)) -ne 1; then
+		default=n
 		echo -n "$1  y [n]  "
-		read -n1 -t 10 CONFIRM
+		read -r -n1 -t 10 CONFIRM
 		echo
 	else
-		DEFAULT=y
+		default=y
 		echo -n "$1  [y] n  "
-		read -n1 -t 3 CONFIRM
+		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
 
 	if test -z "$CONFIRM"; then
-		CONFIRM=$DEFAULT
+		CONFIRM="$default"
 	fi
 
 	CONFIRM_TEXT="$CONFIRM"

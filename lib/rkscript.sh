@@ -21,46 +21,48 @@ fi
 #
 # @exit
 # @global APP NO_ABORT
+# @export ABORT
 # @param string abort message|line number
 # @param abort message (optional - use if $1 = line number)
 #--
 function _abort {
-	local MSG="$1"
-	local LINE=
+	local msg line
+	msg="$1"
 
 	if ! test -z "$2"; then
-		MSG="$2"
-		LINE="[$1]"
+		msg="$2"
+		line="[$1]"
 	fi
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "WARNING$LINE: $MSG"
+		echo "WARNING$line: $msg"
 		return 1
 	fi
 
+	local frame trace
 	if type -t caller >/dev/null 2>/dev/null; then
-		local frame=0
-		local trace=$(while caller $frame; do ((frame++)); done)
-		MSG="$MSG\n\n$trace"
+		frame=0
+		trace=$(while caller $frame; do ((frame++)); done)
+		msg="$msg\n\n$trace"
 	fi
 
-	echo -e "\nABORT$LINE: $MSG\n" 1>&2
+	echo -e "\nABORT$line: $msg\n" 1>&2
 
 	local other_pid=
 
 	if ! test -z "$APP_PID"; then
 		# make shure APP_PID dies
 		for a in $APP_PID; do
-			other_pid=`ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}'`
-			test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+			other_pid=$(ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}')
+			test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2
 		done
 	fi
 
 	if ! test -z "$APP"; then
 		# make shure APP dies
-		other_pid=`ps aux | grep "$APP" | awk '{print $2}'`
-		test -z "$other_pid" || kill $other_pid 2> /dev/null 1>&2
+		other_pid=$(ps aux | grep "$APP" | awk '{print $2}')
+		test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2
 	fi
 
 	exit 1
@@ -1116,10 +1118,11 @@ function _confirm {
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 	fi
 
-	local FLAG=$(($2 + 0))
+	local flag
+	flag=$(($2 + 0))
 
-	if test $((FLAG & 2)) = 2; then
-		if test $((FLAG & 1)) = 1; then
+	if test $((flag & 2)) = 2; then
+		if test $((flag & 1)) = 1; then
 			CONFIRM=n
 		else
 			CONFIRM=y
@@ -1128,14 +1131,15 @@ function _confirm {
 		return
 	fi
 
-	while read -d $'\0' 
+	local cckey
+	while read -r -d $'\0' 
 	do
-		local CCKEY="--q$CONFIRM_COUNT"
-		if test "$REPLY" = "$CCKEY=y"; then
-			echo "found $CCKEY=y, accept: $1" 
+		cckey="--q$CONFIRM_COUNT"
+		if test "$REPLY" = "$cckey=y"; then
+			echo "found $cckey=y, accept: $1" 
 			CONFIRM=y
-		elif test "$REPLY" = "$CCKEY=n"; then
-			echo "found $CCKEY=n, reject: $1" 
+		elif test "$REPLY" = "$cckey=n"; then
+			echo "found $cckey=n, reject: $1" 
 			CONFIRM=n
 		fi
 	done < /proc/$$/cmdline
@@ -1146,22 +1150,21 @@ function _confirm {
 		return
 	fi
 
-	local DEFAULT=
-
-	if test $((FLAG & 1)) -ne 1; then
-		DEFAULT=n
+	local default
+	if test $((flag & 1)) -ne 1; then
+		default=n
 		echo -n "$1  y [n]  "
-		read -n1 -t 10 CONFIRM
+		read -r -n1 -t 10 CONFIRM
 		echo
 	else
-		DEFAULT=y
+		default=y
 		echo -n "$1  [y] n  "
-		read -n1 -t 3 CONFIRM
+		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
 
 	if test -z "$CONFIRM"; then
-		CONFIRM=$DEFAULT
+		CONFIRM="$default"
 	fi
 
 	CONFIRM_TEXT="$CONFIRM"
@@ -5115,67 +5118,117 @@ declare -A SYNTAX_HELP
 # @param info (e.g. cmd:* = show all SYNTAX_CMD otherwise show cmd|help:[name] = SYNTAX_CMD|SYNTAX_HELP[name])
 #--
 function _syntax {
-	local msg="$1\n" 
-	local a b prefix
-	local keys=`_sort ${!SYNTAX_CMD[@]}`
+	local a msg old_msg desc base
+	msg=$(_syntax_cmd "$1") 
 
-	if ! test -z "${SYNTAX_CMD[$1]}"; then
-		msg="${SYNTAX_CMD[$1]}\n"
-	elif test "${1: -1}" = "*" && test "${#SYNTAX_CMD[@]}" -gt 0; then
-		test "$1" = "*" && a='^[a-zA-Z0-9_]+$' || { prefix="${1:0:-1}"; a="^${1:0:-2}"'\.[a-zA-Z0-9_\.]+$'; }
-
-		msg=
-		for b in $keys; do
-			grep -E "$a" >/dev/null <<< "$b" && msg="$msg|${b/$prefix/}"
-		done
-		msg="${msg:1}\n"
-	elif [[ "$1" = *'.'* && ! -z "${SYNTAX_CMD[${1%%.*}]}" ]]; then
-		msg="${SYNTAX_CMD[${1%%.*}]}\n"
-	fi
-
-	local old_msg shelp
 	for a in $2; do
 		old_msg="$msg"
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
-			test "${a:4}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:4:-2}"'\.[a-zA-Z0-9_]+$'
-			for b in $keys; do
-				grep -E "$a" >/dev/null <<< "$b" && msg="$msg\n$(basename $APP) ${SYNTAX_CMD[$b]}"
-			done
+			msg="$msg"$(_syntax_cmd_other "$a")
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
-			test "${a:5}" = "*" && a='^[a-zA-Z0-9_]+$' || a="^${a:5:-2}"'\.[a-zA-Z0-9_\.]+$'
-
-			shelp=""
-			for b in `_sort ${!SYNTAX_HELP[@]}`; do
-				if test "$b" = "$1"; then
-					shelp="$shelp\n${SYNTAX_HELP[$b]}"
-				elif grep -E "$a" >/dev/null <<< "$b"; then
-					prefix=`sed -E 's/^[a-zA-Z0-9_]+\.//' <<< $b`
-					shelp="$shelp\n"`printf "%12s: ${SYNTAX_HELP[$b]}" $prefix`
-				fi
-			done
-
-			[[ ! -z "$shelp" && "$shelp" != "\n$APP_DESC" ]] && msg="$msg$shelp"
+			msg="$msg"$(_syntax_help "${a:5}")
 		fi
 
 		test "$old_msg" != "$msg" && msg="$msg\n"
 	done
 
+	base=$(basename "$APP")
 	if ! test -z "$APP_PREFIX"; then
-		echo -e "\nSYNTAX: $APP_PREFIX $(basename $APP) $msg" 1>&2
+		echo -e "\nSYNTAX: $APP_PREFIX $base $msg" 1>&2
 	else
-		echo -e "\nSYNTAX: $(basename $APP) $msg" 1>&2
+		echo -e "\nSYNTAX: $base $msg" 1>&2
 	fi
 
-	local desc
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
 		test -z "${!a}" || desc="$desc${!a}\n\n"
 	done
 	echo -e "$desc" 1>&2
 
 	exit 1
+}
+
+
+#--
+# Return SYNTAX_CMD
+# @param syntax message
+#--
+function _syntax_cmd {
+	local a rx msg keys prefix
+	keys=$(_sort "${!SYNTAX_CMD[@]}")
+	msg="$1\n" 
+
+	if ! test -z "${SYNTAX_CMD[$1]}"; then
+		msg="${SYNTAX_CMD[$1]}\n"
+	elif test "${1: -1}" = "*" && test "${#SYNTAX_CMD[@]}" -gt 0; then
+		if test "$1" = "*"; then
+			rx='^[a-zA-Z0-9_]+$'
+		else
+			prefix="${1:0:-1}"
+			rx="^${1:0:-2}"'\.[a-zA-Z0-9_\.]+$'
+		fi
+
+		msg=
+		for a in $keys; do
+			grep -E "$rx" >/dev/null <<< "$a" && msg="$msg|${a/$prefix/}"
+		done
+		msg="${msg:1}\n"
+	elif [[ "$1" = *'.'* && ! -z "${SYNTAX_CMD[${1%%.*}]}" ]]; then
+		msg="${SYNTAX_CMD[${1%%.*}]}\n"
+	fi
+
+	echo "$msg"
+}
+
+
+#--
+# Return additional SYNTAX_CMD information
+# @param 
+#--
+function _syntax_cmd_other {
+	local a rx msg keys base
+	keys=$(_sort "${!SYNTAX_CMD[@]}")
+	rx="$1"
+
+	test "${rx:4}" = "*" && rx='^[a-zA-Z0-9_]+$' || rx="^${rx:4:-2}"'\.[a-zA-Z0-9_]+$'
+	echo "_sco: 1=$1 rx=$rx" 1>&2
+
+	base=$(basename "$APP")
+	for a in $keys; do
+		grep -E "$rx" >/dev/null <<< "$a" && msg="$msg\n$base ${SYNTAX_CMD[$a]}"
+		echo "_sco: a=$a msg=$msg" 1>&2
+	done
+
+	echo "$msg"
+}
+
+
+#--
+# Return SYNTAX_HELP information
+# @param 
+#--
+function _syntax_help {
+	local a rx msg keys prefix
+	keys=$(_sort "${!SYNTAX_HELP[@]}")
+
+	if test "$1" = '*'; then
+		rx='^[a-zA-Z0-9_]+$'
+	elif test "${1: -1}" = '*'; then
+		rx="^${rx: -2}"'\.[a-zA-Z0-9_\.]+$'
+	fi
+
+	for a in $keys; do
+		if test "$a" = "$1"; then
+			msg="$msg\n${SYNTAX_HELP[$a]}"
+		elif ! test -z "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
+			prefix=$(sed -E 's/^[a-zA-Z0-9_]+\.//' <<< "$a")
+			msg="$msg\n"$(printf "%12s: ${SYNTAX_HELP[$a]}" "$prefix")
+		fi
+	done
+
+	[[ ! -z "$msg" && "$msg" != "\n$APP_DESC" ]] && echo "$msg"
 }
 
 
