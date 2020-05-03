@@ -11,9 +11,10 @@
 # @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
+# shellcheck disable=SC2086,SC2034
 #--
 function _merge_sh {
-	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh
+	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck
 	my_app="${1:-$APP}"
 	sh_dir="${my_app}_"
 
@@ -35,6 +36,8 @@ function _merge_sh {
 	echo -n "merge $sh_dir into $my_app ... "
 
 	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
+	scheck=$(grep '# shellcheck disable=' $inc_sh | sed -E 's/^# shellcheck disable=//' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
+	test -z "$scheck" || RKS_HEADER_SCHECK="shellcheck disable=SC1091,$scheck"
 
 	if test -z "$rkscript_inc"; then
 		_rks_header "$tmp_app" 1
@@ -44,7 +47,7 @@ function _merge_sh {
 	fi
 
 	for a in $inc_sh; do
-		tail -n+2 "$a" >> "$tmp_app"
+		tail -n+2 "$a" | grep -E -v '^# shellcheck disable=' >> "$tmp_app"
 	done
 
 	_add_abort_linenum "$tmp_app"
