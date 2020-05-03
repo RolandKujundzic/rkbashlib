@@ -1,14 +1,14 @@
 # rkscript
-Collection of shell script snipplets (functions).
+Shell script library. More than 150 functions (04/2020).
 
 ## Examples
 
-Include lib/rkscript.sh to use the function collection.
+Include lib/rkscript.sh to use the library.
 
 ```sh
 #!/bin/bash
 
-. lib/rkscript.sh
+source lib/rkscript.sh
 
 _run_as_root
 
@@ -22,8 +22,8 @@ Here is another example.
 ```sh
 #!/bin/bash
 
-. lib/rkscript.sh
+source lib/rkscript.sh
 
-_confirm "Do you wan't to continue?"
+_confirm "Do you want to continue?"
 test "$CONFIRM"="y" || _abort "i quit"
 ```
