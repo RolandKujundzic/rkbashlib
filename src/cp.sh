@@ -9,17 +9,18 @@
 # @global SUDO
 #--
 function _cp {
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+	local curr_lno target_dir md1 md2 pdir
+	curr_lno="$LOG_NO_ECHO"
 	LOG_NO_ECHO=1
 
-	local TARGET_DIR=`dirname "$2"`
-	test -d "$TARGET_DIR" || _abort "no such directory [$TARGET_DIR]"
+	target_dir=$(dirname "$2")
+	test -d "$target_dir" || _abort "no such directory [$target_dir]"
 
 	if test "$3" = "md5" && test -f "$1" && test -f "$2"; then
-		local MD1=`_md5 "$1"`
-		local MD2=`_md5 "$2"`
+		md1=$(_md5 "$1")
+		md2=$(_md5 "$2")
 
-		if test "$MD1" = "$MD2"; then
+		if test "$md1" = "$md2"; then
 			_msg "_cp: keep $2 (same as $1)"
 		else
 			_msg "Copy file $1 to $2 (update)"
@@ -34,10 +35,10 @@ function _cp {
 		_sudo "cp '$1' '$2'" 1
 	elif test -d "$1"; then
 		if test -d "$2"; then
-			local PDIR="$2"
+			pdir="$2"
 			_confirm "Remove existing target directory '$2'?"
 			if test "$CONFIRM" = "y"; then
-				_rm "$PDIR"
+				_rm "$pdir"
 				_msg "Copy directory $1 to $2"
 				_sudo "cp -r '$1' '$2'" 1
 			else
@@ -52,6 +53,6 @@ function _cp {
 		_abort "No such file or directory [$1]"
 	fi
 
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+	LOG_NO_ECHO="$curr_lno"
 }
 

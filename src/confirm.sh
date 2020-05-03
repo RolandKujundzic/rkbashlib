@@ -12,6 +12,7 @@
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @global AUTOCONFIRM --qN
 # @export CONFIRM CONFIRM_TEXT
+# shellcheck disable=SC2034
 #--
 function _confirm {
 	CONFIRM=
@@ -29,7 +30,8 @@ function _confirm {
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 	fi
 
-	local flag
+	local flag cckey default
+
 	flag=$(($2 + 0))
 
 	if test $((flag & 2)) = 2; then
@@ -42,7 +44,6 @@ function _confirm {
 		return
 	fi
 
-	local cckey
 	while read -r -d $'\0' 
 	do
 		cckey="--q$CONFIRM_COUNT"
@@ -61,7 +62,6 @@ function _confirm {
 		return
 	fi
 
-	local default
 	if test $((flag & 1)) -ne 1; then
 		default=n
 		echo -n "$1  y [n]  "

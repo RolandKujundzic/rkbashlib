@@ -11,7 +11,7 @@ function _apt_remove {
 	for a in $1; do
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
-			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
+			apt -y remove --purge "$a" || _abort "apt -y remove --purge $a"
 			_rm "$RKSCRIPT_DIR/apt/$a"
 		fi
 	done

@@ -24,6 +24,7 @@ fi
 # @export ABORT
 # @param string abort message|line number
 # @param abort message (optional - use if $1 = line number)
+# shellcheck disable=SC2034,SC2009
 #--
 function _abort {
 	local msg line
@@ -75,27 +76,29 @@ function _abort {
 # @param string file 
 #--
 function _add_abort_linenum {
+	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	local LINES
-	local NEW_LINE
-
 	_mkdir "$RKSCRIPT_DIR/add_abort_linenum" >/dev/null
-	local TMP_FILE="$RKSCRIPT_DIR/add_abort_linenum/"`basename "$1"`
-	test -f "$TMP_FILE" && _abort "$TMP_FILE already exists"
+	tmp_file="$RKSCRIPT_DIR/add_abort_linenum/"$(basename "$1")
+	test -f "$tmp_file" && _abort "$tmp_file already exists"
 
 	echo -n "add line number to _abort in $1"
-	local CHANGES=0
+	changes=0
 
-	readarray -t LINES < "$1"
-	for ((i = 0; i < ${#LINES[@]}; i++)); do
-		FIX_LINE=`echo "${LINES[$i]}" | grep -E -e '(;| \|\|| &&) _abort ["'"']" -e '^\s*_abort ["'"']" | grep -vE -e '^\s*#' -e '^\s*function '`
-		test -z "$FIX_LINE" && echo "${LINES[$i]}" >> $TMP_FILE || \
-			{ CHANGES=$((CHANGES+1)); echo "${LINES[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g'; } >> "$TMP_FILE"
+	readarray -t lines < "$1"
+	for ((i = 0; i < ${#lines[@]}; i++)); do
+		fix_line=$(echo "${lines[$i]}" | grep -E -e '(;| \|\|| &&) _abort ["'"']" -e '^\s*_abort ["'"']" | grep -vE -e '^\s*#' -e '^\s*function ')
+		if test -z "$fix_line"; then
+			echo "${lines[$i]}" >> "$tmp_file"
+		else
+			changes=$((changes+1))
+			echo "${lines[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g' >> "$tmp_file"
+		fi
 	done
 
-	echo " ($CHANGES)"
-	_cp "$TMP_FILE" "$1" >/dev/null
+	echo " ($changes)"
+	_cp "$tmp_file" "$1" >/dev/null
 }
 
 
@@ -114,7 +117,7 @@ function _apache2_vhost {
 
 	_split '.' "$1" >/dev/null
 
-	local a
+	local a is_xx
 
 	if test "${#_SPLIT[@]}" -eq 2; then
 		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
@@ -128,8 +131,8 @@ function _apache2_vhost {
 		_ln "$2" "${_SPLIT[0]}"
 	fi
 
-	local IS_XX=`echo "$1" | grep -E '\.xx$'`
-	if ! test -z "$IS_XX"; then
+	is_xx=$(echo "$1" | grep -E '\.xx$')
+	if ! test -z "$is_xx"; then
 		_msg "Add $1 domain to /etc/hosts"
 		_append_txt /etc/hosts "127.0.0.1 $1"
 	fi
@@ -222,8 +225,8 @@ function _api_query {
 		_abort "$1 api query not implemented"
 	fi
 
-	test -s "$OUT_F" && API_QUERY[out]=`cat "$OUT_F"`
-	test -s "$LOG_F" && API_QUERY[log]=`cat "$LOG_F"`
+	test -s "$OUT_F" && API_QUERY[out]=$(cat "$OUT_F")
+	test -s "$LOG_F" && API_QUERY[log]=$(cat "$LOG_F")
 	test -z "$ERR_F" || _abort "non-empty error log"
 }
 
@@ -235,10 +238,12 @@ function _api_query {
 # @param source file
 #--
 function _append_file {
-	local FOUND=
+	local found h3
 	test -f "$2" || _abort "no such file [$2]"
-	test -s "$1" && FOUND=$(grep "`head -3 \"$2\"`" "$1")
-	test -z "$FOUND" || { _msg "$2 was already appended to $1"; return; }
+	h3=$(head -3 "$2")
+
+	test -s "$1" && found=$(grep "$h3" "$1")
+	test -z "$found" || { _msg "$2 was already appended to $1"; return; }
 
 	_msg "append file '$2' to '$1'"
 	cat "$2" >> "$1" || _abort "cat '$2' >> '$1'"
@@ -263,11 +268,11 @@ function _append {
 # @param text
 #--
 function _append_txt {
-	local found
+	local dir found
 	test -f "$1" && found=$(grep "$2" "$1")
 	test -z "$found" || { _msg "$2 was already appended to $1"; return; }
 
-	local dir=`dirname "$1"`
+	dir=$(dirname "$1")
 	test -d "$dir" || _mkdir "$dir"
 
 	_msg "append text '$2' to '$1'"
@@ -295,9 +300,11 @@ function _apt_clean {
 
 #--
 # Install apt packages.
+# @global LOG_NO_ECHO
 #--
 function _apt_install {
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+	local curr_lne
+	curr_lne=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
 
 	_run_as_root 1
@@ -309,14 +316,14 @@ function _apt_install {
 		if test -d "$RKSCRIPT_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
-			sudo apt -y install $a || _abort "apt -y install $a"
-			_log "apt -y install $a" apt/$a
+			sudo apt -y install "$a" || _abort "apt -y install $a"
+			_log "apt -y install $a" "apt/$a"
 		fi
 	done
 
 	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+	LOG_NO_ECHO=$curr_lne
 }
 
 
@@ -331,7 +338,7 @@ function _apt_remove {
 	for a in $1; do
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
-			apt -y remove --purge $a || _abort "apt -y remove --purge $a"
+			apt -y remove --purge "$a" || _abort "apt -y remove --purge $a"
 			_rm "$RKSCRIPT_DIR/apt/$a"
 		fi
 	done
@@ -353,9 +360,7 @@ function _apt_remove {
 # @export ANSWER
 #--
 function _ask {
-	local default
-	local allow
-	local label
+	local allow default label recursion
 	
 	if test -z "$2"; then
 		label="$1  "
@@ -380,7 +385,7 @@ function _ask {
 	fi
 
 	echo -n "$label"
-	read
+	read -r
 
 	if test "$REPLY" = " "; then
 		ANSWER=
@@ -394,10 +399,11 @@ function _ask {
 
 	if test -z "$ANSWER" && test "$3" -gt 0; then
 		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
-		local RECURSION=$(($3 + 1))
-		_ask "$1" "$2" "$RECURSION"
+		local recursion=$(($3 + 1))
+		_ask "$1" "$2" "$recursion"
 	fi
 }
+
 
 #--
 # Install Amazon AWS PHP SDK.
@@ -425,35 +431,36 @@ CACHE=
 # @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
 # @export CACHE CACHE_FILE
 # @return bool
+# shellcheck disable=SC2034
 #--
 function _cache {
 	CACHE_FILE=
 	CACHE=
 
 	test -z "$CACHE_OFF" || return 1
+	local a key prefix cdir cache_lm entry_lm
 
 	# $1 = abc.xyz.uvw -> prefix=abc key=xyz.uvw
-	local key="${1#*.}"
-	local prefix="${1%%.*}"
-	local cdir="$CACHE_DIR/$prefix"
+	key="${1#*.}"
+	prefix="${1%%.*}"
+	cdir="$CACHE_DIR/$prefix"
 	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
 	CACHE_FILE="$cdir/$key"
 	_mkdir "$cdir" >/dev/null
 
 	# if pameter $2 is set update CACHE_FILE
-	[ -z ${2+x} ] || echo "$2" > "$CACHE_FILE"
+	test -z "${2+x}" || echo "$2" > "$CACHE_FILE"
 
-	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
+	cache_lm=$(stat -c %Y "$CACHE_FILE" 2>/dev/null)
 	test -z "$cache_lm" && return 1
 
-	local a entry_lm
 	for a in $CACHE_REF; do
-		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
-		test $cache_lm -lt $entry_lm && return 1
+		entry_lm=$(stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'")
+		test "$cache_lm" -lt "$entry_lm" && return 1
 	done
 
-	CACHE=`cat "$CACHE_FILE"`
+	CACHE=$(cat "$CACHE_FILE")
 	return 0
 }
 
@@ -461,43 +468,43 @@ function _cache {
 #--
 # Download source url to target path.
 #
-# @global DOCROOT if not empty and head.inc.html exists copy files here and append to 
-# head.inc.html
-#
+# @global DOCROOT if not empty and head.inc.html exists copy files here and append to head.inc.html
 # @global CDN_DIR path prefix (if empty use ./)
 #
 # @param string source url
 # @param string target path
+# shellcheck disable=SC2046
 #--
 function _cdn_dl {
-	local SUFFIX=`echo "$2" | awk -F . '{print $NF}'`
-	local TARGET="$2"
+	local suffix target has_file
+	suffix=$(echo "$2" | awk -F . '{print $NF}')
+	target="$2"
 
 	if test -z "$CDN_DIR"; then
-		TARGET="./$TARGET"
+		target="./$target"
 	else
-		TARGET="$CDN_DIR/$TARGET"
+		target="$CDN_DIR/$target"
 	fi
 
-	_mkdir `dirname "$TARGET"`
-	_download "$1" "$TARGET"
-	_download "$1.map" "$TARGET.map" 1
+	_mkdir $(dirname "$target")
+	_download "$1" "$target"
+	_download "$1.map" "$target.map" 1
 
 	if ! test -z "$DOCROOT"; then
-		_cp "$TARGET" "$DOCROOT/$2"
+		_cp "$target" "$DOCROOT/$2"
 
-		if test -f "$TARGET.map"; then
-			_cp "$TARGET.map" "$DOCROOT/$2.map"
+		if test -f "$target.map"; then
+			_cp "$target.map" "$DOCROOT/$2.map"
 		fi
 
 		if test -f "$DOCROOT/head.inc.html"; then
-			local HAS_FILE=`grep "=\"$2\"" "$DOCROOT/head.inc.html"`
+			has_file=$(grep "=\"$2\"" "$DOCROOT/head.inc.html")
 
-			if ! test -z "$HAS_FILE"; then
+			if ! test -z "$has_file"; then
 				echo "$2 is already in head.inc.html"
-			elif test "$SUFFIX" = "css" && test -f "$DOCROOT/$2"; then
+			elif test "$suffix" = "css" && test -f "$DOCROOT/$2"; then
 				sed -e "s/<\/head>/<link rel=\"stylesheet\" href=\"$2\" \/>/g" > "$DOCROOT/head.inc.html"
-			elif test "$SUFFIX" = "js" && test -f "$DOCROOT/$2"; then
+			elif test "$suffix" = "js" && test -f "$DOCROOT/$2"; then
 				sed -e "s/<\/head>/<script src=\"$2\"><\/script>/g" > "$DOCROOT/head.inc.html"
 			fi
 		fi
@@ -514,11 +521,12 @@ function _cdn_dl {
 # @export LAST_DIR
 #--
 function _cd {
-	local has_realpath=`which realpath`
+	local has_realpath curr_dir goto_dir
+	has_realpath=$(which realpath)
 
 	if ! test -z "$has_realpath" && ! test -z "$1"; then
-		local curr_dir=`realpath "$PWD"`
-		local goto_dir=`realpath "$1"`
+		curr_dir=$(realpath "$PWD")
+		goto_dir=$(realpath "$1")
 
 		if test "$curr_dir" = "$goto_dir"; then
 			return
@@ -557,23 +565,23 @@ function _cd {
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
 #--
 function _cert_domain {
-	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"
+	local cert_file has_domain
+	cert_file="/etc/letsencrypt/live/$1/fullchain.pem"
 
 	if ! test -z "$2"; then
-		CERT_FILE="/etc/letsencrypt/live/$2/fullchain.pem"
+		cert_file="/etc/letsencrypt/live/$2/fullchain.pem"
 	fi
 
-	if ! test -f "$CERT_FILE"; then
-		_abort "no such file $CERT_FILE"
+	if ! test -f "$cert_file"; then
+		_abort "no such file $cert_file"
 	else   
-		local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
+		has_domain=$(openssl x509 -text -noout -in "$cert_file" | grep "DNS:$1")
          
-		if test -z "$HAS_DOMAIN"; then
-			_abort "missing domain $1 in $CERT_FILE"
+		if test -z "$has_domain"; then
+			_abort "missing domain $1 in $cert_file"
 		fi
  	fi
 }
-
 
 
 #--
@@ -591,8 +599,9 @@ function _change_fullname {
 	_require_program getent
 	_require_program cut
 
-	local FULLNAME=`getent passwd "$1" | cut -d ':' -f 5 | cut -d ',' -f 1`
-	test "$2" = "$FULLNAME" && return
+	local fullname
+	fullname=$(getent passwd "$1" | cut -d ':' -f 5 | cut -d ',' -f 1)
+	test "$2" = "$fullname" && return
 
 	_msg "Change full name of $1 to $2"
 	chfn -f "$2" "$1" || _abort "chfn -f '$2' '$1'"
@@ -605,17 +614,18 @@ function _change_fullname {
 # @param hostname
 #--
 function _change_hostname {
-	local NEW_HNAME="$1"
-	test -z "$NEW_HNAME" && return
+	local new_hname curr_hname
+	new_hname="$1"
+	test -z "$new_hname" && return
 
 	_run_as_root
 	_require_program hostname
-	local CURR_HNAME=`hostname`
-	test "$NEW_HNAME" = "$CURR_HNAME" && return
+	curr_hname=$(hostname)
+	test "$new_hname" = "$curr_hname" && return
 
 	_require_program hostnamectl
-	_msg "change hostname '$CURR_HNAME' to '$NEW_HNAME'"
-	hostnamectl set-hostname "$NEW_HNAME" || _abort "hostnamectl set-hostname '$NEW_HNAME'"
+	_msg "change hostname '$curr_hname' to '$new_hname'"
+	hostnamectl set-hostname "$new_hname" || _abort "hostnamectl set-hostname '$new_hname'"
 }
 
 
@@ -627,33 +637,43 @@ function _change_hostname {
 # @param new_login
 #--
 function _change_login {
-	local OLD="$1"
-	local NEW="$2"
-	test "$OLD" = "$NEW" && return
+	local old new has_new has_old old_gname
+	old="$1"
+	new="$2"
+	test "$old" = "$new" && return
 
 	_run_as_root
 	_require_file '/etc/passwd'
 
-	local HAS_NEW=`grep -E "^$NEW:" '/etc/passwd'`
-	test -z "$HAS_NEW" || return
+	has_new=$(grep -E "^$new:" '/etc/passwd')
+	test -z "$has_new" || return
 
-	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
-	test -z "$HAS_OLD" && _abort "no such user $OLD"
+	has_old=$(grep -E "^$old:" '/etc/passwd')
+	test -z "$has_old" && _abort "no such user $old"
 
-	local OLD_GNAME=`id -g -n "$OLD"`
+	old_gname=$(id -g -n "$old")
 
 	killall -u username
 
 	_require_program usermod
 	_require_program groupmod
 
-	usermod -l "$NEW" "$OLD" && _msg "changed login '$OLD' to '$NEW'" || _abort "usermod -l '$NEW' '$OLD'"
+	if usermod -l "$new" "$old"; then
+		_msg "changed login '$old' to '$new'"
+	else
+		_abort "usermod -l '$new' '$old'"
+	fi
 
-	{ test "$OLD_GNAME" = "$OLD" && groupmod --new-name "$NEW" "$OLD"; } \
-		&& _msg "changed group '$OLD' to '$NEW'" || _abort "groupmod --new-name '$NEW' '$OLD'"
+	if test "$old_gname" = "$old" && groupmod --new-name "$new" "$old"; then
+		_msg "changed group '$old' to '$new'"
+	else
+		_abort "groupmod --new-name '$new' '$old'"
+	fi
 
-	{ [[ -d "/home/$OLD" && ! -d "/home/$NEW" ]] && usermod -d "/home/$NEW" -m "$NEW"; } \
-		&& _msg "moved '/home/$OLD' to '/home/$NEW'" || _abort "usermod -d '/home/$NEW' -m '$NEW'"
+	if [[ -d "/home/$old" && ! -d "/home/$new" ]]; then
+		usermod -d "/home/$new" -m "$new" || _abort "usermod -d '/home/$new' -m '$new'"
+		_msg "moved '/home/$old' to '/home/$new'"
+	fi
 }
 
 
@@ -662,6 +682,7 @@ function _change_login {
 #
 # @param user
 # @param password
+# shellcheck disable=SC2016
 #--
 function _change_password {
 	[[ -z "$1" || -z "$2" ]] && return
@@ -670,11 +691,12 @@ function _change_password {
 	_require_file '/etc/shadow'
 	_require_program 'getent'
 
-	local SALT=`getent shadow "$1" | cut -d'$' -f3`
-	local EPASS=`getent shadow "$1" | cut -d':' -f2`
-	MATCH=`python -c 'import crypt; print crypt.crypt("'"$2"'", "$6$'"$SALT"'")'`
+	local salt epass match
+	salt=$(getent shadow "$1" | cut -d'$' -f3)
+	epass=$(getent shadow "$1" | cut -d':' -f2)
+	match=$(python -c 'import crypt; print crypt.crypt("'"$2"'", "$6$'"$salt"'")')
 
-	[ ${MATCH} == ${EPASS} ] && return
+	test "${match}" = "${epass}" && return
 
 	_require_program 'chpasswd'
 	_msg "change $1 password"
@@ -690,14 +712,11 @@ function _change_password {
 # @param domain
 #--
 function _check_ip {
+	local ip_ok
 	_require_program ping
-
-	local IP_OK=`ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS"`
-	if test -z "$IP_OK"; then
-		_abort "$1 does not point to server ip $IP_ADDRESS"
-	fi
+	ip_ok=$(ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS")
+	test -z "$ip_ok" && _abort "$1 does not point to server ip $IP_ADDRESS"
 }
-
 
 
 #--
@@ -708,16 +727,15 @@ function _check_ip {
 # @print valid, missing or expired
 #--
 function _check_ssl {
-	if ! test -f /etc/letsencrypt/live/$1/fullchain.pem; then
-		echo "missing"
+	if ! test -f "/etc/letsencrypt/live/$1/fullchain.pem"; then
+		echo 'missing'
 		return
 	fi
 
-	ENDDATE=`openssl x509 -enddate -noout -in /etc/letsencrypt/live/$1/fullchain.pem`
+	ENDDATE=$(openssl x509 -enddate -noout -in "/etc/letsencrypt/live/$1/fullchain.pem")
 	export ENDDATE=${ENDDATE:9}
-	local STATUS=$(php -r 'print strtotime(getenv("ENDDATE")) > time() + 3600 * 24 * 14 ? "valid" : "expired";')
 
-	echo $STATUS
+	php -r 'print strtotime(getenv("ENDDATE")) > time() + 3600 * 24 * 14 ? "valid" : "expired";'
 }
 
 
@@ -759,21 +777,21 @@ function _chmod_df {
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
+# shellcheck disable=SC2006
 #--
 function _chmod {
+	local tmp cmd i priv
 	test -z "$1" && _abort "empty privileges parameter"
 	test -z "$2" && _abort "empty path"
 
-	local tmp=`echo "$1" | sed -e 's/[012345678]*//'`
+	tmp=$(echo "$1" | sed -E 's/[012345678]*//')
 	test -z "$tmp" || _abort "invalid octal privileges '$1'"
 
-	local CMD="chmod -R"
+	cmd="chmod -R"
 	if ! test -z "$CHMOD"; then
-		CMD="$CHMOD"
+		cmd="$CHMOD"
 		CHMOD=
 	fi
-
-	local a i priv
 
 	if test -z "$2"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
@@ -784,18 +802,18 @@ function _chmod {
 			fi
 
 			if test "$1" != "$priv" && test "$1" != "0$priv"; then
-				_sudo "$CMD $1 '${FOUND[$i]}'" 1
+				_sudo "$cmd $1 '${FOUND[$i]}'" 1
 			fi
 		done
 	elif test -f "$2"; then
 		priv=`stat -c "%a" "$2"`
 
 		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
-			_sudo "$CMD $1 '$2'" 1
+			_sudo "$cmd $1 '$2'" 1
 		fi
 	elif test -d "$2"; then
 		# no stat compare because subdir entry may have changed
-		_sudo "$CMD $1 '$2'" 1
+		_sudo "$cmd $1 '$2'" 1
 	fi
 }
 
@@ -810,6 +828,8 @@ function _chmod {
 # @global CHOWN (default chown -R)
 #--
 function _chown {
+	local cmd modify curr_owner curr_group has_group me
+
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
@@ -822,12 +842,10 @@ function _chown {
 		CHOWN=
 	fi
 
-	local modify
-
 	if test -z "$1"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
-			local curr_owner=
-			local curr_group=
+			curr_owner=
+			curr_group=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
 				curr_owner=$(stat -c '%U' "${FOUND[$i]}")
@@ -839,8 +857,8 @@ function _chown {
 			fi
 		done
 	elif test -f "$1"; then
-		local curr_owner=$(stat -c '%U' "$1")
-		local curr_group=$(stat -c '%G' "$1")
+		curr_owner=$(stat -c '%U' "$1")
+		curr_group=$(stat -c '%G' "$1")
 
 		[[ -z "$curr_owner" || -z "$curr_group" ]] && _abort "stat owner [$curr_owner] or group [$curr_group] of [$1] failed"
 		[[ "$curr_owner" != "$2" || "$curr_group" != "$3" ]] && modify=1
@@ -851,9 +869,9 @@ function _chown {
 
 	test -z "$modify" && return
 
-	local me=`basename "$HOME"`
+	me=$(basename "$HOME")
 	if test "$me" = "$2"; then
-		local has_group=`groups $me | grep " $3 "`
+		has_group=$(groups "$me" | grep " $3 ")
 		if ! test -z "$has_group"; then
 			_msg "$cmd $2.$3 '$1'"
 			$cmd "$2.$3" "$1" 2>/dev/null && return
@@ -950,29 +968,31 @@ EOL
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
+# shellcheck disable=SC2046
 #--
 function _composer_phar {
-  local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
-  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-  local ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+	local expected_sig actual_sig install_as sudo result
+	expected_sig="$(_wget "https://composer.github.io/installer.sig" -)"
+	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+	actual_sig="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
 
-  if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]; then
+  if test "$expected_sig" != "$actual_sig"; then
     _rm composer-setup.php
     _abort 'Invalid installer signature'
   fi
 
-	local INSTALL_AS="$1"
-	local SUDO=sudo
+	install_as="$1"
+	sudo='sudo'
 
-	if test -z "$INSTALL_AS"; then
-		INSTALL_AS="./composer.phar"
-		SUDO=
+	if test -z "$install_as"; then
+		install_as="./composer.phar"
+		sudo=
 	fi
 
-  $SUDO php composer-setup.php --quiet --install-dir=`dirname "$INSTALL_AS"` --filename=`basename "$INSTALL_AS"`
-  local RESULT=$?
+  $sudo php composer-setup.php --quiet --install-dir=$(dirname "$install_as") --filename=$(basename "$install_as")
+	result=$?
 
-	if ! test "$RESULT" = "0" || ! test -s "$INSTALL_AS"; then
+	if ! test "$result" = "0" || ! test -s "$install_as"; then
 		_abort "composer installation failed"
 	fi
 
@@ -984,18 +1004,19 @@ function _composer_phar {
 # Install php package with composer. Target directory is vendor/$1
 #
 # @param composer-vendor-directory
+# shellcheck disable=SC2046
 #--
 function _composer_pkg {
 	if ! test -f composer.phar; then
 		_abort "Install composer first"
 	fi
 
-	if test -d "vendor/$1" && test -f composer.json && ! test -z `grep "$1" composer.json`; then
-		echo "Update composer package $1 in vendor/" 
-		php composer.phar update $1
+	if test -d "vendor/$1" && test -f composer.json && ! test -z $(grep "$1" 'composer.json'); then
+		echo "Update composer package $1 in vendor/"
+		php composer.phar update "$1"
 	else
-		echo "Install composer package $1 in vendor/" 
-		php composer.phar require $1
+		echo "Install composer package $1 in vendor/"
+		php composer.phar require "$1"
 	fi
 }
 
@@ -1008,60 +1029,51 @@ function _composer_pkg {
 # @param [install|update|remove] (empty = default = update or install)
 #--
 function _composer {
-	local DO="$1"
-	local GLOBAL_COMPOSER=`which composer`
-	local LOCAL_COMPOSER=
+	local action global_comp local_comp user_action cmd
+	global_comp=$(which composer)
+	action="$1"
 
-	if test -f "composer.phar"; then
-		LOCAL_COMPOSER=composer.phar
-	fi
+	test -f "composer.phar" && local_comp=composer.phar
 
-	if test -z "$DO"; then
+	if test -z "$action"; then
 		echo -e "\nWhat do you want to do?\n"
 
-		if test -z "$GLOBAL_COMPOSER" && test -z "$LOCAL_COMPOSER"; then
-			DO=l
+		if test -z "$global_comp" && test -z "$local_comp"; then
+			action=l
 			echo "[g] = global composer installation: /usr/local/bin/composer"
 			echo "[l] = local composer installation: composer.phar"
 		else
 			if test -f composer.json; then
-				DO=i
-				if test -d vendor; then
-					DO=u
-				fi
+				action=i
+				test -d vendor && action=u
 
 				echo "[i] = install packages from composer.json"
 				echo "[u] = update packages from composer.json"
 				echo "[a] = update vendor/composer/autoload*"
 			fi
 
-			if ! test -z "$LOCAL_COMPOSER"; then
+			if ! test -z "$local_comp"; then
 				echo "[r] = remove local composer.phar"
 			fi
 		fi
 
  		echo -e "[q] = quit\n\n"
-		echo -n "Type ENTER or wait 10 sec to select default. Your Choice? [$DO]  "
-		read -n1 -t 10 USER_DO
+		echo -n "Type ENTER or wait 10 sec to select default. Your Choice? [$action]  "
+		read -n1 -r -t 10 user_action
 		echo
 
-		if ! test -z "$USER_DO"; then
-			DO=$USER_DO
-		fi
-
-		if test "$DO" = "q"; then
-			return
-		fi
+		test -z "$user_action" || action=$user_action
+		test "$action" = "q" && return
 	fi
 
-	if test "$DO" = "remove" || test "$DO" = "r"; then
+	if test "$action" = "remove" || test "$action" = "r"; then
 		echo "remove composer"
 		_rm "composer.phar vendor composer.lock ~/.composer"
 	fi
 
-	if test "$DO" = "g" || test "$DO" = "l"; then
+	if test "$action" = "g" || test "$action" = "l"; then
 		echo -n "install composer as "
-		if test "$DO" = "g"; then
+		if test "$action" = "g"; then
 			echo "/usr/local/bin/composer - Enter root password if asked"
 			_composer_phar /usr/local/bin/composer
 		else
@@ -1070,20 +1082,19 @@ function _composer {
 		fi
 	fi
 
-	local COMPOSER=
-	if ! test -z "$LOCAL_COMPOSER"; then
-		COMPOSER="php composer.phar"
-	elif ! test -z "$GLOBAL_COMPOSER"; then
-		COMPOSER="composer"
+	if ! test -z "$local_comp"; then
+		cmd="php composer.phar"
+	elif ! test -z "$global_comp"; then
+		cmd="composer"
 	fi
 
 	if test -f composer.json; then
-		if test "$DO" = "install" || test "$DO" = "i"; then
-			$COMPOSER install
-		elif test "$DO" = "update" || test "$DO" = "u"; then
-			$COMPOSER update
-		elif test "$DO" = "a"; then
-			$COMPOSER dump-autoload -o
+		if test "$action" = "install" || test "$action" = "i"; then
+			$cmd install
+		elif test "$action" = "update" || test "$action" = "u"; then
+			$cmd update
+		elif test "$action" = "a"; then
+			$cmd dump-autoload -o
 		fi
 	fi
 }
@@ -1101,6 +1112,7 @@ function _composer {
 # @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @global AUTOCONFIRM --qN
 # @export CONFIRM CONFIRM_TEXT
+# shellcheck disable=SC2034
 #--
 function _confirm {
 	CONFIRM=
@@ -1118,7 +1130,8 @@ function _confirm {
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
 	fi
 
-	local flag
+	local flag cckey default
+
 	flag=$(($2 + 0))
 
 	if test $((flag & 2)) = 2; then
@@ -1131,7 +1144,6 @@ function _confirm {
 		return
 	fi
 
-	local cckey
 	while read -r -d $'\0' 
 	do
 		cckey="--q$CONFIRM_COUNT"
@@ -1150,7 +1162,6 @@ function _confirm {
 		return
 	fi
 
-	local default
 	if test $((flag & 1)) -ne 1; then
 		default=n
 		echo -n "$1  y [n]  "
@@ -1180,6 +1191,7 @@ function _confirm {
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
+# shellcheck disable=SC2120
 #--
 function _cordova_add_android {
 
@@ -1200,12 +1212,14 @@ function _cordova_add_android {
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
+# shellcheck disable=SC2120
 #--
 function _cordova_add_ios {
-	local OS_TYPE=$(_os_type)
+	local os_type
+	os_type=$(_os_type)
 
-	if test "$OS_TYPE" != "macos"; then
-		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
+	if test "$os_type" != "macos"; then
+		echo "os type = $os_type != macos - do not add cordova ios" 
 		return
 	fi
 
@@ -1225,31 +1239,30 @@ function _cordova_add_ios {
 # Create corodva project in app/ directory.
 # 
 # @param app name
+# shellcheck disable=SC2119
 #--
 function _cordova_create {
-	if test -d "app/$1"; then
-		_abort "Cordova project app/$1 already exists"
-	fi
-
+	test -d "app/$1" && _abort "Cordova project app/$1 already exists"
 	test -d app || _mkdir app
 
-	cd app
-	cordova create $1
-	cd $1
+	_cd app
+	cordova create "$1"
+	_cd "$1"
 
-	local OS_TYPE=$(_os_type)
+	local os_type
+	os_type=$(_os_type)
 
-	if "$OS_TYPE" = "linux"; then
+	if "$os_type" = "linux"; then
 		_cordova_add_android
 		test -d www_src/patch/android || _mkdir www_src/patch/android
 		echo -e "PATCH_LIST=\nPATCH_DIR=\n" > www_src/patch/android/patch.sh
-	elif "$OS_TYPE" = "macos"; then
+	elif "$os_type" = "macos"; then
 		_cordova_add_ios
 		test -d www_src/patch/ios || _mkdir www_src/patch/ios
 		echo -e "PATCH_LIST=\nPATCH_DIR=\n" > www_src/patch/ios/patch.sh
 	fi
 
-	cd ../..
+	_cd ../..
 }
 
 
@@ -1262,17 +1275,18 @@ function _cordova_create {
 # @global SUDO
 #--
 function _cp {
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+	local curr_lno target_dir md1 md2 pdir
+	curr_lno="$LOG_NO_ECHO"
 	LOG_NO_ECHO=1
 
-	local TARGET_DIR=`dirname "$2"`
-	test -d "$TARGET_DIR" || _abort "no such directory [$TARGET_DIR]"
+	target_dir=$(dirname "$2")
+	test -d "$target_dir" || _abort "no such directory [$target_dir]"
 
 	if test "$3" = "md5" && test -f "$1" && test -f "$2"; then
-		local MD1=`_md5 "$1"`
-		local MD2=`_md5 "$2"`
+		md1=$(_md5 "$1")
+		md2=$(_md5 "$2")
 
-		if test "$MD1" = "$MD2"; then
+		if test "$md1" = "$md2"; then
 			_msg "_cp: keep $2 (same as $1)"
 		else
 			_msg "Copy file $1 to $2 (update)"
@@ -1287,10 +1301,10 @@ function _cp {
 		_sudo "cp '$1' '$2'" 1
 	elif test -d "$1"; then
 		if test -d "$2"; then
-			local PDIR="$2"
+			pdir="$2"
 			_confirm "Remove existing target directory '$2'?"
 			if test "$CONFIRM" = "y"; then
-				_rm "$PDIR"
+				_rm "$pdir"
 				_msg "Copy directory $1 to $2"
 				_sudo "cp -r '$1' '$2'" 1
 			else
@@ -1305,7 +1319,7 @@ function _cp {
 		_abort "No such file or directory [$1]"
 	fi
 
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+	LOG_NO_ECHO="$curr_lno"
 }
 
 
@@ -1319,16 +1333,16 @@ function _cp {
 function _create_tgz {
 	test -z "$1" && _abort "Empty archive path"
 
-	local a
+	local a seconds
 	for a in $2; do
-		if ! test -f $a && ! test -d $a; then
+		if ! test -f "$a" && ! test -d "$a"; then
 			_abort "No such file or directory $a"
 		fi
 	done
 
 	# compare existing archive
 	if test -s "$1"; then	
-		if tar -d --file="$1" $2 >/dev/null 2>/dev/null; then
+		if tar -d --file="$1" "$2" >/dev/null 2>/dev/null; then
 			return
 		else
 			_confirm "Update archive $1?" 1
@@ -1337,11 +1351,11 @@ function _create_tgz {
 	fi
 
   _msg "create archive $1"
-  SECONDS=0
-  tar -czf "$1" $2 >/dev/null 2>/dev/null || _abort "tar -czf '$1' $2 failed"
-  _msg "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+  seconds=0
+  tar -czf "$1" "$2" >/dev/null 2>/dev/null || _abort "tar -czf '$1' $2 failed"
+  _msg "$((seconds / 60)) minutes and $((seconds % 60)) seconds elapsed."
 
-	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "invalid archive '$1'" 
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "invalid archive '$1'"
 }
 
 	
@@ -1353,14 +1367,23 @@ function _create_tgz {
 # @param string command
 #--
 function _crontab {
-	local CRONTAB_DIR="/var/spool/cron/crontabs"
 	_msg "install '$1' crontab: [$2 $3] ... " -n
-	_mkdir "$CRONTAB_DIR" >/dev/null
-
 	_require_program crontab
-	{ crontab -l -u "$1" 2>/dev/null | grep "$3" >/dev/null; } && { _msg "skip (already installed)"; return; }
-	{ ( crontab -l -u root 2>/dev/null; echo "$2 $3" ) | crontab -u "$1" -; } && _msg "ok" || \
-		{ _msg "failed"; _abort "failed to add [$2 $3] to '$1' cron"; }
+	_mkdir '/var/spool/cron/crontabs' >/dev/null
+
+	test "$(whoami)" = "$1" || _run_as_root
+
+	if crontab -l -u "$1" 2>/dev/null | grep "$3" >/dev/null; then
+		_msg "skip (already installed)"
+		return
+	fi
+
+	if { crontab -l -u "$1" 2>/dev/null; echo "$2 $3"; } | crontab -u "$1" -; then
+		_msg "ok"
+	else
+		_msg "failed"
+		_abort "failed to add [$2 $3] to '$1' cron"
+	fi
 }
 
 
@@ -2646,26 +2669,28 @@ function _md5 {
 # @param output file (optional if $APP is used)
 #--
 function _merge_sh {
-	local my_app="${1:-$APP}"
-	local sh_dir="${my_app}_"
+	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh
+	my_app="${1:-$APP}"
+	sh_dir="${my_app}_"
 
 	if ! test -z "$2"; then
 		my_app="$2"
 		sh_dir="$1"
 	else
 		_require_file "$my_app"
-		test -d "$sh_dir" || { test -d `basename $my_app` && sh_dir=`basename $my_app`; }
+		mb_app=$(basename "$my_app")
+		test -d "$sh_dir" || { test -d "$mb_app" && sh_dir="$mb_app"; }
 	fi
 
-	local rkscript_inc
-	test "${ARG[static]}" = "1" && rkscript_inc=`_merge_static "$sh_dir"`
+	test "${ARG[static]}" = "1" && rkscript_inc=$(_merge_static "$sh_dir")
 
 	_require_dir "$sh_dir"
 
-	local tmp_app="$sh_dir"'_'
-	local md5_old=
-	test -s "$my_app" && md5_old=`_md5 "$my_app"`
+	tmp_app="$sh_dir"'_'
+	test -s "$my_app" && md5_old=$(_md5 "$my_app")
 	echo -n "merge $sh_dir into $my_app ... "
+
+	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
 
 	if test -z "$rkscript_inc"; then
 		_rks_header "$tmp_app" 1
@@ -2674,16 +2699,13 @@ function _merge_sh {
 		echo "$rkscript_inc" >> "$tmp_app"
 	fi
 
-	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
-	local a
 	for a in $inc_sh; do
 		tail -n+2 "$a" >> "$tmp_app"
 	done
 
 	_add_abort_linenum "$tmp_app"
 
-	local md5_new=`_md5 "$tmp_app"`
-
+	md5_new=$(_md5 "$tmp_app")
 	if test "$md5_old" = "$md5_new"; then
 		echo "no change"
 		_rm "$tmp_app" >/dev/null
@@ -2700,18 +2722,18 @@ function _merge_sh {
 #--
 # Return include code
 # @param script source dir
+# shellcheck disable=SC2153,SC2086
 #--
 function _merge_static {
-	local inc_sh=`ls "$1"/*.inc.sh "$1"/*/*.inc.sh "$1"/*/*/*.inc.sh 2>/dev/null`
-	local rks_inc
-	local a
+	local a rks_inc inc_sh
+	inc_sh=$(find "$1" -name '*.inc.sh' 2>/dev/null | sort)
 
 	for a in $inc_sh; do
 		_rkscript_inc "$a"
 		rks_inc="$rks_inc $RKSCRIPT_INC"
 	done
 
-	for a in `_sort $rks_inc`; do
+	for a in $(_sort $rks_inc); do
 		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#'
 	done
 }
@@ -4291,13 +4313,18 @@ function _rks_app {
 # @export RKSCRIPT_INC RKSCRIPT_INC_NUM
 # @export_local _HAS_SCRIPT
 # @param file path
+# shellcheck disable=SC2034,SC2068
 #--
 function _rkscript_inc {
 	local _HAS_SCRIPT
 	declare -A _HAS_SCRIPT
 
 	if test -z "$RKSCRIPT_PATH"; then
-		test -s "src/abort.sh" && RKSCRIPT_PATH='.' || _abort 'set RKSCRIPT_PATH'
+		if test -s "src/abort.sh"; then
+			RKSCRIPT_PATH='.'
+		else
+			_abort 'set RKSCRIPT_PATH'
+		fi
 	elif ! test -s "$RKSCRIPT_PATH/src/abort.sh"; then
 		_abort "invalid RKSCRIPT_PATH='$RKSCRIPT_PATH'"
 	fi
@@ -4305,7 +4332,7 @@ function _rkscript_inc {
 	test -s "$1" || _abort "no such file '$1'"
 	_rrs_scan "$1"
 
-	RKSCRIPT_INC=`_sort ${!_HAS_SCRIPT[@]}`
+	RKSCRIPT_INC=$(_sort ${!_HAS_SCRIPT[@]})
 	RKSCRIPT_INC_NUM="${#_HAS_SCRIPT[@]}"
 }
 
@@ -4318,11 +4345,10 @@ function _rkscript_inc {
 # @param file path
 #--
 function _rrs_scan {
+	local a func_list
 	test -f "$1" || _abort "no such file '$1'"
-	local func_list=`grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs`
+	func_list=$(grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs)
 
-	local a
-	local b
 	for a in $func_list; do
 		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKSCRIPT_PATH/src/${a:1}.sh" ]]; then
 			_HAS_SCRIPT[$a]=1
@@ -4515,7 +4541,7 @@ function _show_list {
 }
 
 #--
-# Sort (unique) whitespace list.
+# Sort (unique) whitespace list. No whitespace in list elements allowed.
 # @param $@ list elements
 #--
 function _sort {

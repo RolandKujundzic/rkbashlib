@@ -5,12 +5,14 @@
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
+# shellcheck disable=SC2120
 #--
 function _cordova_add_ios {
-	local OS_TYPE=$(_os_type)
+	local os_type
+	os_type=$(_os_type)
 
-	if test "$OS_TYPE" != "macos"; then
-		echo "os type = $OS_TYPE != macos - do not add cordova ios" 
+	if test "$os_type" != "macos"; then
+		echo "os type = $os_type != macos - do not add cordova ios" 
 		return
 	fi
 

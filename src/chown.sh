@@ -10,6 +10,8 @@
 # @global CHOWN (default chown -R)
 #--
 function _chown {
+	local cmd modify curr_owner curr_group has_group me
+
 	if test -z "$2" || test -z "$3"; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
@@ -22,12 +24,10 @@ function _chown {
 		CHOWN=
 	fi
 
-	local modify
-
 	if test -z "$1"; then
 		for ((i = 0; i < ${#FOUND[@]}; i++)); do
-			local curr_owner=
-			local curr_group=
+			curr_owner=
+			curr_group=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
 				curr_owner=$(stat -c '%U' "${FOUND[$i]}")
@@ -39,8 +39,8 @@ function _chown {
 			fi
 		done
 	elif test -f "$1"; then
-		local curr_owner=$(stat -c '%U' "$1")
-		local curr_group=$(stat -c '%G' "$1")
+		curr_owner=$(stat -c '%U' "$1")
+		curr_group=$(stat -c '%G' "$1")
 
 		[[ -z "$curr_owner" || -z "$curr_group" ]] && _abort "stat owner [$curr_owner] or group [$curr_group] of [$1] failed"
 		[[ "$curr_owner" != "$2" || "$curr_group" != "$3" ]] && modify=1
@@ -51,9 +51,9 @@ function _chown {
 
 	test -z "$modify" && return
 
-	local me=`basename "$HOME"`
+	me=$(basename "$HOME")
 	if test "$me" = "$2"; then
-		local has_group=`groups $me | grep " $3 "`
+		has_group=$(groups "$me" | grep " $3 ")
 		if ! test -z "$has_group"; then
 			_msg "$cmd $2.$3 '$1'"
 			$cmd "$2.$3" "$1" 2>/dev/null && return

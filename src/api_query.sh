@@ -31,8 +31,8 @@ function _api_query {
 		_abort "$1 api query not implemented"
 	fi
 
-	test -s "$OUT_F" && API_QUERY[out]=`cat "$OUT_F"`
-	test -s "$LOG_F" && API_QUERY[log]=`cat "$LOG_F"`
+	test -s "$OUT_F" && API_QUERY[out]=$(cat "$OUT_F")
+	test -s "$LOG_F" && API_QUERY[log]=$(cat "$LOG_F")
 	test -z "$ERR_F" || _abort "non-empty error log"
 }
 

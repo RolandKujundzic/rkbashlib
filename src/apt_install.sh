@@ -2,9 +2,11 @@
 
 #--
 # Install apt packages.
+# @global LOG_NO_ECHO
 #--
 function _apt_install {
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
+	local curr_lne
+	curr_lne=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
 
 	_run_as_root 1
@@ -16,13 +18,13 @@ function _apt_install {
 		if test -d "$RKSCRIPT_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
-			sudo apt -y install $a || _abort "apt -y install $a"
-			_log "apt -y install $a" apt/$a
+			sudo apt -y install "$a" || _abort "apt -y install $a"
+			_log "apt -y install $a" "apt/$a"
 		fi
 	done
 
 	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+	LOG_NO_ECHO=$curr_lne
 }
 

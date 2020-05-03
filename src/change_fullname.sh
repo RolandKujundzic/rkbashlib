@@ -15,8 +15,9 @@ function _change_fullname {
 	_require_program getent
 	_require_program cut
 
-	local FULLNAME=`getent passwd "$1" | cut -d ':' -f 5 | cut -d ',' -f 1`
-	test "$2" = "$FULLNAME" && return
+	local fullname
+	fullname=$(getent passwd "$1" | cut -d ':' -f 5 | cut -d ',' -f 1)
+	test "$2" = "$fullname" && return
 
 	_msg "Change full name of $1 to $2"
 	chfn -f "$2" "$1" || _abort "chfn -f '$2' '$1'"

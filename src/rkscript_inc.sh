@@ -7,13 +7,18 @@
 # @export RKSCRIPT_INC RKSCRIPT_INC_NUM
 # @export_local _HAS_SCRIPT
 # @param file path
+# shellcheck disable=SC2034,SC2068
 #--
 function _rkscript_inc {
 	local _HAS_SCRIPT
 	declare -A _HAS_SCRIPT
 
 	if test -z "$RKSCRIPT_PATH"; then
-		test -s "src/abort.sh" && RKSCRIPT_PATH='.' || _abort 'set RKSCRIPT_PATH'
+		if test -s "src/abort.sh"; then
+			RKSCRIPT_PATH='.'
+		else
+			_abort 'set RKSCRIPT_PATH'
+		fi
 	elif ! test -s "$RKSCRIPT_PATH/src/abort.sh"; then
 		_abort "invalid RKSCRIPT_PATH='$RKSCRIPT_PATH'"
 	fi
@@ -21,7 +26,7 @@ function _rkscript_inc {
 	test -s "$1" || _abort "no such file '$1'"
 	_rrs_scan "$1"
 
-	RKSCRIPT_INC=`_sort ${!_HAS_SCRIPT[@]}`
+	RKSCRIPT_INC=$(_sort ${!_HAS_SCRIPT[@]})
 	RKSCRIPT_INC_NUM="${#_HAS_SCRIPT[@]}"
 }
 
@@ -34,11 +39,10 @@ function _rkscript_inc {
 # @param file path
 #--
 function _rrs_scan {
+	local a func_list
 	test -f "$1" || _abort "no such file '$1'"
-	local func_list=`grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs`
+	func_list=$(grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs)
 
-	local a
-	local b
 	for a in $func_list; do
 		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKSCRIPT_PATH/src/${a:1}.sh" ]]; then
 			_HAS_SCRIPT[$a]=1

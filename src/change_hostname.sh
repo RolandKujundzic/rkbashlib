@@ -6,16 +6,17 @@
 # @param hostname
 #--
 function _change_hostname {
-	local NEW_HNAME="$1"
-	test -z "$NEW_HNAME" && return
+	local new_hname curr_hname
+	new_hname="$1"
+	test -z "$new_hname" && return
 
 	_run_as_root
 	_require_program hostname
-	local CURR_HNAME=`hostname`
-	test "$NEW_HNAME" = "$CURR_HNAME" && return
+	curr_hname=$(hostname)
+	test "$new_hname" = "$curr_hname" && return
 
 	_require_program hostnamectl
-	_msg "change hostname '$CURR_HNAME' to '$NEW_HNAME'"
-	hostnamectl set-hostname "$NEW_HNAME" || _abort "hostnamectl set-hostname '$NEW_HNAME'"
+	_msg "change hostname '$curr_hname' to '$new_hname'"
+	hostnamectl set-hostname "$new_hname" || _abort "hostnamectl set-hostname '$new_hname'"
 }
 

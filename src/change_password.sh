@@ -5,6 +5,7 @@
 #
 # @param user
 # @param password
+# shellcheck disable=SC2016
 #--
 function _change_password {
 	[[ -z "$1" || -z "$2" ]] && return
@@ -13,11 +14,12 @@ function _change_password {
 	_require_file '/etc/shadow'
 	_require_program 'getent'
 
-	local SALT=`getent shadow "$1" | cut -d'$' -f3`
-	local EPASS=`getent shadow "$1" | cut -d':' -f2`
-	MATCH=`python -c 'import crypt; print crypt.crypt("'"$2"'", "$6$'"$SALT"'")'`
+	local salt epass match
+	salt=$(getent shadow "$1" | cut -d'$' -f3)
+	epass=$(getent shadow "$1" | cut -d':' -f2)
+	match=$(python -c 'import crypt; print crypt.crypt("'"$2"'", "$6$'"$salt"'")')
 
-	[ ${MATCH} == ${EPASS} ] && return
+	test "${match}" = "${epass}" && return
 
 	_require_program 'chpasswd'
 	_msg "change $1 password"

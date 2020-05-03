@@ -6,26 +6,28 @@
 # @param string file 
 #--
 function _add_abort_linenum {
+	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	local LINES
-	local NEW_LINE
-
 	_mkdir "$RKSCRIPT_DIR/add_abort_linenum" >/dev/null
-	local TMP_FILE="$RKSCRIPT_DIR/add_abort_linenum/"`basename "$1"`
-	test -f "$TMP_FILE" && _abort "$TMP_FILE already exists"
+	tmp_file="$RKSCRIPT_DIR/add_abort_linenum/"$(basename "$1")
+	test -f "$tmp_file" && _abort "$tmp_file already exists"
 
 	echo -n "add line number to _abort in $1"
-	local CHANGES=0
+	changes=0
 
-	readarray -t LINES < "$1"
-	for ((i = 0; i < ${#LINES[@]}; i++)); do
-		FIX_LINE=`echo "${LINES[$i]}" | grep -E -e '(;| \|\|| &&) _abort ["'"']" -e '^\s*_abort ["'"']" | grep -vE -e '^\s*#' -e '^\s*function '`
-		test -z "$FIX_LINE" && echo "${LINES[$i]}" >> $TMP_FILE || \
-			{ CHANGES=$((CHANGES+1)); echo "${LINES[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g'; } >> "$TMP_FILE"
+	readarray -t lines < "$1"
+	for ((i = 0; i < ${#lines[@]}; i++)); do
+		fix_line=$(echo "${lines[$i]}" | grep -E -e '(;| \|\|| &&) _abort ["'"']" -e '^\s*_abort ["'"']" | grep -vE -e '^\s*#' -e '^\s*function ')
+		if test -z "$fix_line"; then
+			echo "${lines[$i]}" >> "$tmp_file"
+		else
+			changes=$((changes+1))
+			echo "${lines[$i]}" | sed -E 's/^(.*)_abort (.+)$/\1_abort '$((i+1))' \2/g' >> "$tmp_file"
+		fi
 	done
 
-	echo " ($CHANGES)"
-	_cp "$TMP_FILE" "$1" >/dev/null
+	echo " ($changes)"
+	_cp "$tmp_file" "$1" >/dev/null
 }
 

@@ -17,35 +17,36 @@ CACHE=
 # @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
 # @export CACHE CACHE_FILE
 # @return bool
+# shellcheck disable=SC2034
 #--
 function _cache {
 	CACHE_FILE=
 	CACHE=
 
 	test -z "$CACHE_OFF" || return 1
+	local a key prefix cdir cache_lm entry_lm
 
 	# $1 = abc.xyz.uvw -> prefix=abc key=xyz.uvw
-	local key="${1#*.}"
-	local prefix="${1%%.*}"
-	local cdir="$CACHE_DIR/$prefix"
+	key="${1#*.}"
+	prefix="${1%%.*}"
+	cdir="$CACHE_DIR/$prefix"
 	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
 	CACHE_FILE="$cdir/$key"
 	_mkdir "$cdir" >/dev/null
 
 	# if pameter $2 is set update CACHE_FILE
-	[ -z ${2+x} ] || echo "$2" > "$CACHE_FILE"
+	test -z "${2+x}" || echo "$2" > "$CACHE_FILE"
 
-	local cache_lm=`stat -c %Y "$CACHE_FILE" 2>/dev/null`
+	cache_lm=$(stat -c %Y "$CACHE_FILE" 2>/dev/null)
 	test -z "$cache_lm" && return 1
 
-	local a entry_lm
 	for a in $CACHE_REF; do
-		entry_lm=`stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'"`
-		test $cache_lm -lt $entry_lm && return 1
+		entry_lm=$(stat -c %Y "$a" 2>/dev/null || _abort "invalid CACHE_REF entry '$a'")
+		test "$cache_lm" -lt "$entry_lm" && return 1
 	done
 
-	CACHE=`cat "$CACHE_FILE"`
+	CACHE=$(cat "$CACHE_FILE")
 	return 0
 }
 

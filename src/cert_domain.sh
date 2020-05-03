@@ -7,21 +7,21 @@
 # @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
 #--
 function _cert_domain {
-	local CERT_FILE="/etc/letsencrypt/live/$1/fullchain.pem"
+	local cert_file has_domain
+	cert_file="/etc/letsencrypt/live/$1/fullchain.pem"
 
 	if ! test -z "$2"; then
-		CERT_FILE="/etc/letsencrypt/live/$2/fullchain.pem"
+		cert_file="/etc/letsencrypt/live/$2/fullchain.pem"
 	fi
 
-	if ! test -f "$CERT_FILE"; then
-		_abort "no such file $CERT_FILE"
+	if ! test -f "$cert_file"; then
+		_abort "no such file $cert_file"
 	else   
-		local HAS_DOMAIN=`openssl x509 -text -noout -in "$CERT_FILE" | grep "DNS:$1"`
+		has_domain=$(openssl x509 -text -noout -in "$cert_file" | grep "DNS:$1")
          
-		if test -z "$HAS_DOMAIN"; then
-			_abort "missing domain $1 in $CERT_FILE"
+		if test -z "$has_domain"; then
+			_abort "missing domain $1 in $cert_file"
 		fi
  	fi
 }
-
 

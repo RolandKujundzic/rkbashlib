@@ -7,11 +7,11 @@
 # @param text
 #--
 function _append_txt {
-	local found
+	local dir found
 	test -f "$1" && found=$(grep "$2" "$1")
 	test -z "$found" || { _msg "$2 was already appended to $1"; return; }
 
-	local dir=`dirname "$1"`
+	dir=$(dirname "$1")
 	test -d "$dir" || _mkdir "$dir"
 
 	_msg "append text '$2' to '$1'"

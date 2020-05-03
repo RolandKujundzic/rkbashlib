@@ -8,32 +8,42 @@
 # @param new_login
 #--
 function _change_login {
-	local OLD="$1"
-	local NEW="$2"
-	test "$OLD" = "$NEW" && return
+	local old new has_new has_old old_gname
+	old="$1"
+	new="$2"
+	test "$old" = "$new" && return
 
 	_run_as_root
 	_require_file '/etc/passwd'
 
-	local HAS_NEW=`grep -E "^$NEW:" '/etc/passwd'`
-	test -z "$HAS_NEW" || return
+	has_new=$(grep -E "^$new:" '/etc/passwd')
+	test -z "$has_new" || return
 
-	local HAS_OLD=`grep -E "^$OLD:" '/etc/passwd'`
-	test -z "$HAS_OLD" && _abort "no such user $OLD"
+	has_old=$(grep -E "^$old:" '/etc/passwd')
+	test -z "$has_old" && _abort "no such user $old"
 
-	local OLD_GNAME=`id -g -n "$OLD"`
+	old_gname=$(id -g -n "$old")
 
 	killall -u username
 
 	_require_program usermod
 	_require_program groupmod
 
-	usermod -l "$NEW" "$OLD" && _msg "changed login '$OLD' to '$NEW'" || _abort "usermod -l '$NEW' '$OLD'"
+	if usermod -l "$new" "$old"; then
+		_msg "changed login '$old' to '$new'"
+	else
+		_abort "usermod -l '$new' '$old'"
+	fi
 
-	{ test "$OLD_GNAME" = "$OLD" && groupmod --new-name "$NEW" "$OLD"; } \
-		&& _msg "changed group '$OLD' to '$NEW'" || _abort "groupmod --new-name '$NEW' '$OLD'"
+	if test "$old_gname" = "$old" && groupmod --new-name "$new" "$old"; then
+		_msg "changed group '$old' to '$new'"
+	else
+		_abort "groupmod --new-name '$new' '$old'"
+	fi
 
-	{ [[ -d "/home/$OLD" && ! -d "/home/$NEW" ]] && usermod -d "/home/$NEW" -m "$NEW"; } \
-		&& _msg "moved '/home/$OLD' to '/home/$NEW'" || _abort "usermod -d '/home/$NEW' -m '$NEW'"
+	if [[ -d "/home/$old" && ! -d "/home/$new" ]]; then
+		usermod -d "/home/$new" -m "$new" || _abort "usermod -d '/home/$new' -m '$new'"
+		_msg "moved '/home/$old' to '/home/$new'"
+	fi
 }
 

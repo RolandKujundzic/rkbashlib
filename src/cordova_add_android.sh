@@ -5,6 +5,7 @@
 # Apply patches from www_src/patch if found.
 #
 # @param optional action e.g. clean
+# shellcheck disable=SC2120
 #--
 function _cordova_add_android {
 

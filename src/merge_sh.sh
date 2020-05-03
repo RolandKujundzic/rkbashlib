@@ -13,26 +13,28 @@
 # @param output file (optional if $APP is used)
 #--
 function _merge_sh {
-	local my_app="${1:-$APP}"
-	local sh_dir="${my_app}_"
+	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh
+	my_app="${1:-$APP}"
+	sh_dir="${my_app}_"
 
 	if ! test -z "$2"; then
 		my_app="$2"
 		sh_dir="$1"
 	else
 		_require_file "$my_app"
-		test -d "$sh_dir" || { test -d `basename $my_app` && sh_dir=`basename $my_app`; }
+		mb_app=$(basename "$my_app")
+		test -d "$sh_dir" || { test -d "$mb_app" && sh_dir="$mb_app"; }
 	fi
 
-	local rkscript_inc
-	test "${ARG[static]}" = "1" && rkscript_inc=`_merge_static "$sh_dir"`
+	test "${ARG[static]}" = "1" && rkscript_inc=$(_merge_static "$sh_dir")
 
 	_require_dir "$sh_dir"
 
-	local tmp_app="$sh_dir"'_'
-	local md5_old=
-	test -s "$my_app" && md5_old=`_md5 "$my_app"`
+	tmp_app="$sh_dir"'_'
+	test -s "$my_app" && md5_old=$(_md5 "$my_app")
 	echo -n "merge $sh_dir into $my_app ... "
+
+	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
 
 	if test -z "$rkscript_inc"; then
 		_rks_header "$tmp_app" 1
@@ -41,16 +43,13 @@ function _merge_sh {
 		echo "$rkscript_inc" >> "$tmp_app"
 	fi
 
-	local inc_sh=`ls "$sh_dir"/*.inc.sh "$sh_dir"/*/*.inc.sh "$sh_dir"/*/*/*.inc.sh 2>/dev/null | sort`
-	local a
 	for a in $inc_sh; do
 		tail -n+2 "$a" >> "$tmp_app"
 	done
 
 	_add_abort_linenum "$tmp_app"
 
-	local md5_new=`_md5 "$tmp_app"`
-
+	md5_new=$(_md5 "$tmp_app")
 	if test "$md5_old" = "$md5_new"; then
 		echo "no change"
 		_rm "$tmp_app" >/dev/null
@@ -67,18 +66,18 @@ function _merge_sh {
 #--
 # Return include code
 # @param script source dir
+# shellcheck disable=SC2153,SC2086
 #--
 function _merge_static {
-	local inc_sh=`ls "$1"/*.inc.sh "$1"/*/*.inc.sh "$1"/*/*/*.inc.sh 2>/dev/null`
-	local rks_inc
-	local a
+	local a rks_inc inc_sh
+	inc_sh=$(find "$1" -name '*.inc.sh' 2>/dev/null | sort)
 
 	for a in $inc_sh; do
 		_rkscript_inc "$a"
 		rks_inc="$rks_inc $RKSCRIPT_INC"
 	done
 
-	for a in `_sort $rks_inc`; do
+	for a in $(_sort $rks_inc); do
 		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#'
 	done
 }

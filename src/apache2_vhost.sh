@@ -15,7 +15,7 @@ function _apache2_vhost {
 
 	_split '.' "$1" >/dev/null
 
-	local a
+	local a is_xx
 
 	if test "${#_SPLIT[@]}" -eq 2; then
 		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
@@ -29,8 +29,8 @@ function _apache2_vhost {
 		_ln "$2" "${_SPLIT[0]}"
 	fi
 
-	local IS_XX=`echo "$1" | grep -E '\.xx$'`
-	if ! test -z "$IS_XX"; then
+	is_xx=$(echo "$1" | grep -E '\.xx$')
+	if ! test -z "$is_xx"; then
 		_msg "Add $1 domain to /etc/hosts"
 		_append_txt /etc/hosts "127.0.0.1 $1"
 	fi

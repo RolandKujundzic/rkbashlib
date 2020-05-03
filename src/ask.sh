@@ -13,9 +13,7 @@
 # @export ANSWER
 #--
 function _ask {
-	local default
-	local allow
-	local label
+	local allow default label recursion
 	
 	if test -z "$2"; then
 		label="$1  "
@@ -40,7 +38,7 @@ function _ask {
 	fi
 
 	echo -n "$label"
-	read
+	read -r
 
 	if test "$REPLY" = " "; then
 		ANSWER=
@@ -54,7 +52,8 @@ function _ask {
 
 	if test -z "$ANSWER" && test "$3" -gt 0; then
 		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
-		local RECURSION=$(($3 + 1))
-		_ask "$1" "$2" "$RECURSION"
+		local recursion=$(($3 + 1))
+		_ask "$1" "$2" "$recursion"
 	fi
 }
+

@@ -4,29 +4,31 @@
 # Install composer.phar in current directory
 #
 # @param install_as (default = './composer.phar')
+# shellcheck disable=SC2046
 #--
 function _composer_phar {
-  local EXPECTED_SIGNATURE="$(_wget "https://composer.github.io/installer.sig" -)"
-  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-  local ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+	local expected_sig actual_sig install_as sudo result
+	expected_sig="$(_wget "https://composer.github.io/installer.sig" -)"
+	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+	actual_sig="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
 
-  if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]; then
+  if test "$expected_sig" != "$actual_sig"; then
     _rm composer-setup.php
     _abort 'Invalid installer signature'
   fi
 
-	local INSTALL_AS="$1"
-	local SUDO=sudo
+	install_as="$1"
+	sudo='sudo'
 
-	if test -z "$INSTALL_AS"; then
-		INSTALL_AS="./composer.phar"
-		SUDO=
+	if test -z "$install_as"; then
+		install_as="./composer.phar"
+		sudo=
 	fi
 
-  $SUDO php composer-setup.php --quiet --install-dir=`dirname "$INSTALL_AS"` --filename=`basename "$INSTALL_AS"`
-  local RESULT=$?
+  $sudo php composer-setup.php --quiet --install-dir=$(dirname "$install_as") --filename=$(basename "$install_as")
+	result=$?
 
-	if ! test "$RESULT" = "0" || ! test -s "$INSTALL_AS"; then
+	if ! test "$result" = "0" || ! test -s "$install_as"; then
 		_abort "composer installation failed"
 	fi
 

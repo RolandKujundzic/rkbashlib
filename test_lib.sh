@@ -1,7 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
-#. /usr/local/lib/rkscript.sh || { echo "ERROR: . /usr/local/lib/rkscript.sh"; exit 1; }
-. lib/rkscript.sh || { echo "ERROR: . lib/rkscript.sh"; exit 1; }
+source lib/rkscript.sh || { echo "ERROR: source lib/rkscript.sh"; exit 1; }
 
 
 #--

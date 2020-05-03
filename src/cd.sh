@@ -9,11 +9,12 @@
 # @export LAST_DIR
 #--
 function _cd {
-	local has_realpath=`which realpath`
+	local has_realpath curr_dir goto_dir
+	has_realpath=$(which realpath)
 
 	if ! test -z "$has_realpath" && ! test -z "$1"; then
-		local curr_dir=`realpath "$PWD"`
-		local goto_dir=`realpath "$1"`
+		curr_dir=$(realpath "$PWD")
+		goto_dir=$(realpath "$1")
 
 		if test "$curr_dir" = "$goto_dir"; then
 			return

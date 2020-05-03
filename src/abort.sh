@@ -16,6 +16,7 @@ fi
 # @export ABORT
 # @param string abort message|line number
 # @param abort message (optional - use if $1 = line number)
+# shellcheck disable=SC2034,SC2009
 #--
 function _abort {
 	local msg line
