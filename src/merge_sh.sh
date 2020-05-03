@@ -36,7 +36,7 @@ function _merge_sh {
 	echo -n "merge $sh_dir into $my_app ... "
 
 	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
-	scheck=$(grep '# shellcheck disable=' $inc_sh | sed -E 's/^# shellcheck disable=//' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
+	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
 	test -z "$scheck" || RKS_HEADER_SCHECK="shellcheck disable=SC1091,$scheck"
 
 	if test -z "$rkscript_inc"; then
