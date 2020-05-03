@@ -11,9 +11,10 @@ function _ssh_auth {
 		ssh-keygen -t rsa
 	fi
 
-	local SSH_OK=`ssh -o 'PreferredAuthentications=publickey' $1 "echo" 2>&1`
+	local ssh_ok
+	ssh_ok=$(ssh -o 'PreferredAuthentications=publickey' $1 "echo" 2>&1)
 
-	if ! test -z "$SSH_OK"; then
+	if ! test -z "$ssh_ok"; then
 		echo "copy ~/.ssh/id_rsa.pub to $1"
 
 		if test -d /Applications/iTunes.app; then

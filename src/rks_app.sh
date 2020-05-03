@@ -9,7 +9,7 @@
 #--
 function _rks_app {
 	local me="$1"
-	test -z "$me" && _abort "call _rks_app '$0' $@"
+	test -z "$me" && _abort "call _rks_app '$0' $*"
 	shift
 
 	if test -z "$APP"; then
