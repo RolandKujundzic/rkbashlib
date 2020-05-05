@@ -14,23 +14,24 @@
 # @echo 
 #--
 function _join {
-	local IFS="$1"
-	local OUT=""
+	local out IFS
+
+	IFS="$1"
 
 	if test $# -eq 2; then
 		if test "$2" != '_' && local -n array=$2 2>/dev/null; then
-			OUT="${array[0]}"
+			out="${array[0]}"
 			local i
 			for (( i=1; i < ${#array[@]}; i++ )); do
-				OUT="$OUT$1${array[i]}"
+				out="$out$1${array[i]}"
 			done
 		else
-			OUT="${*:2}"
+			out="${*:2}"
 		fi
 	else
-  	OUT="${*:2}"
+  	out="${*:2}"
 	fi
 
-	echo "$OUT"
+	echo "$out"
 }
 

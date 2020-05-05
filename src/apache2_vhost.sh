@@ -17,16 +17,16 @@ function _apache2_vhost {
 
 	local a is_xx
 
-	if test "${#_SPLIT[@]}" -eq 2; then
-		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
+	if test "${#SPLIT[@]}" -eq 2; then
+		a="/website/${SPLIT[0]}"'_'"${SPLIT[1]}"
 		_mkdir "$a"
 		_cd "$a"
 		_ln "$2" '_'
 	else
-		a="/website/${_SPLIT[1]}"'_'"${_SPLIT[2]}"
+		a="/website/${SPLIT[1]}"'_'"${SPLIT[2]}"
 		_mkdir "$a"
 		_cd "$a"
-		_ln "$2" "${_SPLIT[0]}"
+		_ln "$2" "${SPLIT[0]}"
 	fi
 
 	is_xx=$(echo "$1" | grep -E '\.xx$')

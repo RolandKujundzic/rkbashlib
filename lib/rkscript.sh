@@ -119,16 +119,16 @@ function _apache2_vhost {
 
 	local a is_xx
 
-	if test "${#_SPLIT[@]}" -eq 2; then
-		a="/website/${_SPLIT[0]}"'_'"${_SPLIT[1]}"
+	if test "${#SPLIT[@]}" -eq 2; then
+		a="/website/${SPLIT[0]}"'_'"${SPLIT[1]}"
 		_mkdir "$a"
 		_cd "$a"
 		_ln "$2" '_'
 	else
-		a="/website/${_SPLIT[1]}"'_'"${_SPLIT[2]}"
+		a="/website/${SPLIT[1]}"'_'"${SPLIT[2]}"
 		_mkdir "$a"
 		_cd "$a"
-		_ln "$2" "${_SPLIT[0]}"
+		_ln "$2" "${SPLIT[0]}"
 	fi
 
 	is_xx=$(echo "$1" | grep -E '\.xx$')
@@ -2143,22 +2143,24 @@ function _has_process {
 # @param option (deny|auth:user:pass)
 #--
 function _htaccess {
+	local htpasswd basic_auth
+
 	if test "$2" = "deny"; then
 		_append_txt "$1/.htaccess" "Require all denied"
 	elif test "${2:0:5}" = "auth:"; then
 		_split ":" "$2" >/dev/null
-		test -z "${_SPLIT[1]}" && _abort "empty username"
-		test -z "${_SPLIT[2]}" && _abort "empty password"
+		test -z "${SPLIT[1]}" && _abort "empty username"
+		test -z "${SPLIT[2]}" && _abort "empty password"
 
-		local HTPASSWD=`realpath "$1"`"/.htpasswd"
-		local BASIC_AUTH="AuthType Basic
+		htpasswd=$(realpath "$1")"/.htpasswd"
+		basic_auth="AuthType Basic
 AuthName \"Require Authentication\"
-AuthUserFile \"$HTPASSWD\"
+AuthUserFile \"$htpasswd\"
 require valid-user"
-		_append_txt "$1/.htaccess" "$BASIC_AUTH"
+		_append_txt "$1/.htaccess" "$basic_auth"
 
-		_msg "add user ${_SPLIT[1]} to $1/.htpasswd"
-		htpasswd -cb "$1/.htpasswd" "${_SPLIT[1]}" "${_SPLIT[2]}" 2>/dev/null
+		_msg "add user ${SPLIT[1]} to $1/.htpasswd"
+		htpasswd -cb "$1/.htpasswd" "${SPLIT[1]}" "${SPLIT[2]}" 2>/dev/null
 
 		_chown "$1/.htpasswd" rk www-data
 		_chmod 660 "$1/.htpasswd"
@@ -2169,6 +2171,7 @@ require valid-user"
 	_chown "$1/.htaccess" rk www-data
 	_chmod 660 "$1/.htaccess"
 }
+
 
 #--
 # Install files from APP_FILE_LIST and APP_DIR_LIST to APP_PREFIX.
@@ -2398,24 +2401,25 @@ function _is_running {
 # @echo 
 #--
 function _join {
-	local IFS="$1"
-	local OUT=""
+	local out IFS
+
+	IFS="$1"
 
 	if test $# -eq 2; then
 		if test "$2" != '_' && local -n array=$2 2>/dev/null; then
-			OUT="${array[0]}"
+			out="${array[0]}"
 			local i
 			for (( i=1; i < ${#array[@]}; i++ )); do
-				OUT="$OUT$1${array[i]}"
+				out="$out$1${array[i]}"
 			done
 		else
-			OUT="${*:2}"
+			out="${*:2}"
 		fi
 	else
-  	OUT="${*:2}"
+  	out="${*:2}"
 	fi
 
-	echo "$OUT"
+	echo "$out"
 }
 
 
@@ -4603,15 +4607,18 @@ function _sort {
 
 
 #--
-# Split string "$2" at "$1" (export as $_SPLIT[@]).
+# Split string "$2" at "$1" (export as $SPLIT[@]).
 # @param delimter
-# @param string
-# @export array _SPLIT
+# @param string (or /dev/stdin if unset)
+# @export array SPLIT
 # @echo
 #--
 function _split {
-	IFS="$1" read -ra _SPLIT <<< "$2"
-	echo "${_SPLIT[@]}"
+	local txt
+	test -z "${2+x}" && txt=$(cat /dev/stdin) || txt="$2"
+
+	IFS="$1" read -ra SPLIT <<< "$txt"
+	echo "${SPLIT[@]}"
 }
 
 
