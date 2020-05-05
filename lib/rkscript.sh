@@ -559,28 +559,63 @@ function _cd {
 
 
 #--
-# Abort if domain is missing or /.../$2/fullchain.pem doesn not contain DNS:$1.
+# Abort if ssl certificate is missing or does not contain subdomain.
 #
 # @param string domain
-# @param string domain_dir (/etc/letsencrypt/live/$domain_dir/fullchain.pem
+# @param string subdomain list (optional)
 #--
 function _cert_domain {
-	local cert_file has_domain
-	cert_file="/etc/letsencrypt/live/$1/fullchain.pem"
+	_cert_file "$1"
+	local has_domain
 
-	if ! test -z "$2"; then
-		cert_file="/etc/letsencrypt/live/$2/fullchain.pem"
+	has_domain=$(openssl x509 -text -noout -in "$CERT_FULL" | grep "DNS:*.$1")
+	test -z "$has_domain" || return
+
+	has_domain=$(openssl x509 -text -noout -in "$CERT_FULL" | grep "DNS:$1")
+	test -z "$has_domain" && _abort "missing domain $1 in $CERT_FULL"
+
+	for a in $2; do
+		has_domain=$(openssl x509 -text -noout -in "$CERT_FULL" | grep "DNS:$a.$1")
+		test -z "$has_domain" && _abort "missing domain $a.$1 in $CERT_FULL"
+	done
+}
+
+
+#--
+# Export path to SSL certificate files:
+#
+# - CERT_ENGINE=acme.sh|certbot
+# - CERT_FULL=~/.acme.sh/domain.tld/fullchain.cer or /etc/letsencrypt/live/domain.tld/fullchain.pem
+# - CERT_KEY=~/.acme.sh/domain.tld/domain.tld.key or /etc/letsencrypt/live/domain.tld/privkey.pem
+# - CERT_PUB=~/.acme.sh/domain.tld/domain.tld.cer or /etc/letsencrypt/live/domain.tld/cert.pem
+# - CERT_CA=~/.acme.sh/domain.tld/ca.cer or /etc/letsencrypt/live/domain.tld/chain.pem
+#
+# @param domain.tld
+# @export CERT_ENGINE|FULL|KEY|CA|PUB
+# shellcheck disable=SC2034
+#--
+function _cert_file {
+	local domain
+	domain="$1"
+	
+	test -z "$domain" && _abort "empty domain parameter"
+
+	if test -s "$HOME/.acme.sh/$domain/fullchain.cer"; then
+		CERT_ENGINE="acme.sh"
+		CERT_FULL="$HOME/.acme.sh/$domain/fullchain.cer"
+		CERT_KEY="$HOME/.acme.sh/$domain/$domain.key"
+		CERT_PUB="$HOME/.acme.sh/$domain/$domain.cer"
+		CERT_CA="$HOME/.acme.sh/$domain/ca.cer"
+	elif test -d "/etc/letsencrypt/archive/$domain" && test -L "/etc/letsencrypt/live/$domain/fullchain.pem"; then
+		_run_as_root
+		CERT_ENGINE="certbot"
+		CERT_FULL="/etc/letsencrypt/live/$domain/fullchain.pem"
+		CERT_KEY="/etc/letsencrypt/live/$domain/privkey.pem"
+		CERT_PUB="/etc/letsencrypt/live/$domain/cert.pem"
+		CERT_CA="/etc/letsencrypt/live/$domain/chain.pem"
+	else
+		_abort "found neither $HOME/.acme.sh/$domain/fullchain.cer nor /etc/letsencrypt/live/$domain/fullchain.pem"
 	fi
-
-	if ! test -f "$cert_file"; then
-		_abort "no such file $cert_file"
-	else   
-		has_domain=$(openssl x509 -text -noout -in "$cert_file" | grep "DNS:$1")
-         
-		if test -z "$has_domain"; then
-			_abort "missing domain $1 in $cert_file"
-		fi
- 	fi
 }
 
 
