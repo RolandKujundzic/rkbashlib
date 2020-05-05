@@ -3,8 +3,10 @@
 #--
 # Print trimmed string. 
 #
-# @param string name
+# @param string name (use /dev/stdin if not set)
 #--
 function _trim {
-	echo -e "$1" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
+	local input
+	test -z "${1+x}" && input=$(cat /dev/stdin) || input="$1"
+	echo -e "$input" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
 }
