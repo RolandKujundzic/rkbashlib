@@ -602,10 +602,25 @@ function _cert_file {
 
 	if test -s "$HOME/.acme.sh/$domain/fullchain.cer"; then
 		CERT_ENGINE="acme.sh"
-		CERT_FULL="$HOME/.acme.sh/$domain/fullchain.cer"
-		CERT_KEY="$HOME/.acme.sh/$domain/$domain.key"
-		CERT_PUB="$HOME/.acme.sh/$domain/$domain.cer"
-		CERT_CA="$HOME/.acme.sh/$domain/ca.cer"
+
+		if test "$UID" = "0" && test -s "/etc/letsencrypt/acme.sh/$domain/fullchain.pem"; then
+			if test -L "/etc/letsencrypt/live/$domain"; then
+				CERT_FULL="/etc/letsencrypt/live/$domain/fullchain.pem"
+				CERT_KEY="/etc/letsencrypt/live/$domain/privkey.pem"
+				CERT_PUB="/etc/letsencrypt/live/$domain/cert.pem"
+				CERT_CA="/etc/letsencrypt/live/$domain/chain.pem"
+			else
+				CERT_FULL="/etc/letsencrypt/acme.sh/$domain/fullchain.pem"
+				CERT_KEY="/etc/letsencrypt/acme.sh/$domain/privkey.pem"
+				CERT_PUB="/etc/letsencrypt/acme.sh/$domain/cert.pem"
+				CERT_CA="/etc/letsencrypt/acme.sh/$domain/chain.pem"
+			fi
+		else
+			CERT_FULL="$HOME/.acme.sh/$domain/fullchain.cer"
+			CERT_KEY="$HOME/.acme.sh/$domain/$domain.key"
+			CERT_PUB="$HOME/.acme.sh/$domain/$domain.cer"
+			CERT_CA="$HOME/.acme.sh/$domain/ca.cer"
+		fi
 	elif test -d "/etc/letsencrypt/archive/$domain" && test -L "/etc/letsencrypt/live/$domain/fullchain.pem"; then
 		_run_as_root
 		CERT_ENGINE="certbot"
