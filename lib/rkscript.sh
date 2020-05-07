@@ -562,14 +562,20 @@ function _cd {
 # Abort if ssl certificate is missing or does not contain subdomain.
 #
 # @param string domain
-# @export CERT_DNS
+# @export CERT_DNS CERT_GMT CERT_DOMAINS
 # @param string subdomain list (optional)
 # shellcheck disable=SC2034
 #--
 function _cert_domain {
 	_cert_file "$1"
 
-	CERT_DNS=$(openssl x509 -text -noout -in "$CERT_FULL" | grep "DNS:" | _trim)
+	local certinfo dns
+	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
+	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/DNS://g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/, / /g')
+
+	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
+	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
+	CERT_DOMAINS=( $dns )
 
 	[[ "$CERT_DNS" =~ DNS:*.$1 ]] && return
 	[[ "$CERT_DNS" =~ DNS:$1 ]] || _abort "missing domain $1 in $CERT_FULL"
@@ -590,14 +596,23 @@ function _cert_domain {
 # - CERT_CA=~/.acme.sh/domain.tld/ca.cer or /etc/letsencrypt/live/domain.tld/chain.pem
 #
 # @param domain.tld
+# @param abort if missing (default = 1)
 # @export CERT_ENGINE|FULL|KEY|CA|PUB
 # shellcheck disable=SC2034
+# return boolean
 #--
 function _cert_file {
-	local domain
+	local domain res
 	domain="$1"
-	
+
 	test -z "$domain" && _abort "empty domain parameter"
+
+	CERT_ENGINE=
+	CERT_FULL=
+	CERT_KEY=
+	CERT_PUB=
+	CERT_CA=
+	res=1
 
 	if test -s "$HOME/.acme.sh/$domain/fullchain.cer"; then
 		CERT_ENGINE="acme.sh"
@@ -608,17 +623,20 @@ function _cert_file {
 				CERT_KEY="/etc/letsencrypt/live/$domain/privkey.pem"
 				CERT_PUB="/etc/letsencrypt/live/$domain/cert.pem"
 				CERT_CA="/etc/letsencrypt/live/$domain/chain.pem"
+				res=0
 			else
 				CERT_FULL="/etc/letsencrypt/acme.sh/$domain/fullchain.pem"
 				CERT_KEY="/etc/letsencrypt/acme.sh/$domain/privkey.pem"
 				CERT_PUB="/etc/letsencrypt/acme.sh/$domain/cert.pem"
 				CERT_CA="/etc/letsencrypt/acme.sh/$domain/chain.pem"
+				res=0
 			fi
 		else
 			CERT_FULL="$HOME/.acme.sh/$domain/fullchain.cer"
 			CERT_KEY="$HOME/.acme.sh/$domain/$domain.key"
 			CERT_PUB="$HOME/.acme.sh/$domain/$domain.cer"
 			CERT_CA="$HOME/.acme.sh/$domain/ca.cer"
+			res=0
 		fi
 	elif test -d "/etc/letsencrypt/archive/$domain" && test -L "/etc/letsencrypt/live/$domain/fullchain.pem"; then
 		_run_as_root
@@ -627,9 +645,12 @@ function _cert_file {
 		CERT_KEY="/etc/letsencrypt/live/$domain/privkey.pem"
 		CERT_PUB="/etc/letsencrypt/live/$domain/cert.pem"
 		CERT_CA="/etc/letsencrypt/live/$domain/chain.pem"
+		res=0
 	else
-		_abort "found neither $HOME/.acme.sh/$domain/fullchain.cer nor /etc/letsencrypt/live/$domain/fullchain.pem"
+		test "$2" = "0" || _abort "found neither $HOME/.acme.sh/$domain/fullchain.cer nor /etc/letsencrypt/live/$domain/fullchain.pem"
 	fi
+
+	return $res
 }
 
 
@@ -773,18 +794,22 @@ function _check_ip {
 # 
 # @export ENDDATE
 # @param string domain
+# @param string min days (default = 14)
 # @print valid, missing or expired
 #--
 function _check_ssl {
-	if ! test -f "/etc/letsencrypt/live/$1/fullchain.pem"; then
+	if ! _cert_file "$1"; then
 		echo 'missing'
 		return
 	fi
 
+	local min_days
+	min_days="${2:-14}"
+
 	ENDDATE=$(openssl x509 -enddate -noout -in "/etc/letsencrypt/live/$1/fullchain.pem")
 	export ENDDATE=${ENDDATE:9}
 
-	php -r 'print strtotime(getenv("ENDDATE")) > time() + 3600 * 24 * 14 ? "valid" : "expired";'
+	php -r 'print strtotime(getenv("ENDDATE")) > time() + 3600 * 24 * '"$min_days"' ? "valid" : "expired";'
 }
 
 
@@ -3730,12 +3755,14 @@ declare ARGV
 # Use _parse_arg "$@" to preserve whitespace.
 #
 # @param "$@"
-# @export ARG (hash)
+# @export ARG (hash) ARGV (array)
+# shellcheck disable=SC2034
 #--
 function _parse_arg {
 	ARGV=()
 
-	local n=0 i key val
+	local i n key val
+	n=0
 	for (( i = 0; i <= $#; i++ )); do
 		ARGV[$i]="${!i}"
 		val="${!i}"
@@ -3756,8 +3783,10 @@ function _parse_arg {
 		if test -z "$key"; then
 			ARG[$n]="$val"
 			n=$(( n + 1 ))
-		else
+		elif test -z "${ARG[$key]}"; then
 			ARG[$key]="$val"
+		else
+			ARG[$key]="${ARG[$key]} $val"
 		fi
 	done
 

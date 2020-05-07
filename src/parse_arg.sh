@@ -10,12 +10,14 @@ declare ARGV
 # Use _parse_arg "$@" to preserve whitespace.
 #
 # @param "$@"
-# @export ARG (hash)
+# @export ARG (hash) ARGV (array)
+# shellcheck disable=SC2034
 #--
 function _parse_arg {
 	ARGV=()
 
-	local n=0 i key val
+	local i n key val
+	n=0
 	for (( i = 0; i <= $#; i++ )); do
 		ARGV[$i]="${!i}"
 		val="${!i}"
@@ -36,8 +38,10 @@ function _parse_arg {
 		if test -z "$key"; then
 			ARG[$n]="$val"
 			n=$(( n + 1 ))
-		else
+		elif test -z "${ARG[$key]}"; then
 			ARG[$key]="$val"
+		else
+			ARG[$key]="${ARG[$key]} $val"
 		fi
 	done
 
