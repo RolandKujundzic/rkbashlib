@@ -17,7 +17,7 @@ function _check_ssl {
 	local min_days
 	min_days="${2:-14}"
 
-	ENDDATE=$(openssl x509 -enddate -noout -in "/etc/letsencrypt/live/$1/fullchain.pem")
+	ENDDATE=$(openssl x509 -enddate -noout -in "$CERT_FULL")
 	export ENDDATE=${ENDDATE:9}
 
 	php -r 'print strtotime(getenv("ENDDATE")) > time() + 3600 * 24 * '"$min_days"' ? "valid" : "expired";'
