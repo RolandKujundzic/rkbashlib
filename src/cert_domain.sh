@@ -13,7 +13,7 @@ function _cert_domain {
 
 	local certinfo dns
 	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
-	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/DNS://g' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/, / /g')
+	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/,? ?DNS\:/ /g' | _trim)
 
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
