@@ -10,9 +10,17 @@ test -z "$CURR" && CURR="$PWD"
 
 test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
 
+if declare -A __hash=([key]=value) 2>/dev/null; then
+	test "${__hash[key]}" = 'value' || { echo -e "\nERROR: declare -A\n"; exit 1; }
+	unset __hash
+else
+	echo -e "\nERROR: declare -A\n"
+	exit 1  
+fi  
+
 if test "${@: -1}" = 'help'; then
 	for a in ps tr xargs head grep awk find sed sudo cd chown chmod mkdir rm ls; do
-		command -v $a >/dev/null || { echo "ERROR: missing $a"; exit 1; }
+		command -v $a >/dev/null || { echo -e "\nERROR: missing $a\n"; exit 1; }
 	done
 fi
 
