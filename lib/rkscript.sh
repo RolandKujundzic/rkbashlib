@@ -3595,18 +3595,11 @@ if [ "$(uname)" = "Darwin" ]; then
 # enable alias expansion
 shopt -s expand_aliases 
 
+# osx has no md5sum
+test -z "$(which md5sum)" && _abort "install brew (https://brew.sh/)"
+
 # osx has no realpath
-alias realpath="python -c 'import os,sys;print os.path.realpath(sys.argv[1])'"
-
-
-#--
-# OSX has md5 instead of md5sum. Use md5sum function wrapper.
-#
-# @param file
-#--
-function md5sum {
-	md5 -q "$1"
-}
+test -z "$(which realpath)" && _abort "brew install coreutils"
 
 
 #--
@@ -3614,6 +3607,7 @@ function md5sum {
 #
 # @param -c
 # @param -
+# shellcheck disable=SC2012
 #--
 function stat {
 	if test "$1" = "-c"; then
@@ -3626,9 +3620,11 @@ function stat {
 			ls -la "$3" | awk '{print $3}'
 		elif test "$2" = "%a"; then
 			/usr/bin/stat -f %A "$3"
+		else
+			_abort "ToDo: stat $*"
 		fi
 	else
-		_abort "ToDo: stat $@"
+		_abort "ToDo: stat $*"
 	fi
 }
 
