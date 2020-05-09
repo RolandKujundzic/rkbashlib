@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
-# Copyright (c) 2019 Roland Kujundzic <roland@kujundzic.de>
+# Copyright (c) 2019-2020 Roland Kujundzic <roland@kujundzic.de>
+#
+# shellcheck disable=SC1090,SC2016,SC2034
 #
 
 
@@ -8,30 +10,33 @@
 # Build lib/rkscript.sh.
 #--
 function do_build {
+	local lib_tmp
 	echo "Build lib/rkscript.sh"
 
 	_mkdir "lib"
 	_mkdir "$RKSCRIPT_DIR" > /dev/null
 
-	local LIB_TMP="$RKSCRIPT_DIR/rkscript.sh"
+	lib_tmp="$RKSCRIPT_DIR/rkscript.sh"
 
-	echo '#!/bin/bash' > $LIB_TMP
-	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n" >> $LIB_TMP
-	echo 'test -z "$APP" && APP="$0"' >> $LIB_TMP
-	echo 'test -z "$APP_PID" && export APP_PID="$APP_PID $$"' >> $LIB_TMP
-	echo 'test -z "$CURR" && CURR="$PWD"' >> $LIB_TMP
-	echo >> $LIB_TMP
+	{ 
+	echo '#!/bin/bash' 
+	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n"
+	echo 'test -z "$APP" && APP="$0"'
+	echo 'test -z "$APP_PID" && export APP_PID="$APP_PID $$"'
+	echo 'test -z "$CURR" && CURR="$PWD"'
+	echo
+	} > "$lib_tmp"
 
-	echo "append $SCRIPT_SRC/*.sh to $LIB_TMP"
+	echo "append $SCRIPT_SRC/*.sh to $lib_tmp"
 	for a in $SCRIPT_SRC/*.sh
 	do
-		tail -n+2 $a >> $LIB_TMP
+		tail -n+2 "$a" >> "$lib_tmp"
 	done
 
-	_add_abort_linenum $LIB_TMP
-	_chmod 644 "$LIB_TMP"
+	_add_abort_linenum "$lib_tmp"
+	_chmod 644 "$lib_tmp"
 
-	_cp $LIB_TMP lib/rkscript.sh md5
+	_cp "$lib_tmp" lib/rkscript.sh md5
 }
 
 
@@ -52,18 +57,16 @@ function do_install {
 		return
 	fi
 
-	local HAS_DOCKER=`docker ps 2> /dev/null | grep "$1"`
-
 	if test "$1" = "localhost"; then
 		_cp lib/rkscript.sh /usr/local/lib/rkscript.sh md5
-	elif ! test -z "$HAS_DOCKER"; then
+	elif ! test -z "$(docker ps 2> /dev/null | grep "$1")"; then
 		echo "docker cp lib/rkscript.sh $1:/usr/local/lib/"
-		docker cp lib/rkscript.sh $1:/usr/local/lib/
+		docker cp lib/rkscript.sh "$1:/usr/local/lib/"
 	elif test -d "$1"; then
 		_cp lib/rkscript.sh "$1/rkscript.sh" md5
 	else
 		echo "scp lib/rkscript.sh $1:/usr/local/lib/"
-		scp lib/rkscript.sh $1:/usr/local/lib/
+		scp lib/rkscript.sh "$1:/usr/local/lib/"
 	fi
 }
 
@@ -78,13 +81,13 @@ export APP_PID="$APP_PID $$"
 
 APP_DESC="install to /usr/local/lib/rkscript.sh"
 
-command -v realpath > /dev/null 2>&1 && APP=`realpath "$0"`
+command -v realpath > /dev/null 2>&1 && APP=$(realpath "$0")
 
-SCRIPT_SRC=`dirname "$APP"`"/src"
+SCRIPT_SRC=$(dirname "$APP")"/src"
 INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh"
 
 for a in $INCLUDE_FUNC; do
-	. "$SCRIPT_SRC/$a"
+	source "$SCRIPT_SRC/$a"
 done
 
 echo
