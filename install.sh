@@ -29,7 +29,7 @@ function do_build {
 	} > "$lib_tmp"
 
 	echo "append $SCRIPT_SRC/*.sh to $lib_tmp"
-	for a in $(ls $SCRIPT_SRC/*.sh | sort -u); do
+	for a in $(ls $SCRIPT_SRC/*.sh | sort); do
 		tail -n+2 "$a" >> "$lib_tmp"
 	done
 
