@@ -17,6 +17,9 @@ test -f "/usr/local/bin/bash" || _abort "brew install bash"
 # osx has no realpath
 test -z "$(which realpath)" && _abort "brew install coreutils"
 
+test "$(echo -e "a_c\naa_b" | sort | xargs)" != "aa_b a_c" && \
+	_abort "UTF-8 sort is broken - fix /usr/share/locale/${LC_ALL}/LC_COLLATE"
+
 
 #--
 # OSX /usr/bin/stat is incompatible with linux. Use stat function wrapper.
