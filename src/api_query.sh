@@ -9,30 +9,32 @@ declare -A API_QUERY
 # @param string query string
 # @param hash query parameter
 # @global API_QUERY
+# shellcheck disable=SC2154
 #--
 function _api_query {
 	test -z "$1" && _abort "missing query type - use curl|func|wget"
 	test -z "$2" && _abort "missing query string"
 
-	local OUT_F="$RKSCRIPT_DIR/api_query.res"	
-	local LOG_F="$RKSCRIPT_DIR/api_query.log"	
-	local ERR_F="$RKSCRIPT_DIR/api_query.err"
+	local out_f log_f err_f
+	out_f="$RKSCRIPT_DIR/api_query.res"	
+	log_f="$RKSCRIPT_DIR/api_query.log"	
+	err_f="$RKSCRIPT_DIR/api_query.err"
 
-	echo '' > "$OUT_F"
+	echo '' > "$out_f"
 
 	API_QUERY[out]=
 	API_QUERY[log]=
 
 	if test "$1" = "wget"; then
 		_msg "wget ${API_QUERY[url]}/$2"
-		wget -q -O "$OUT_F" "${API_QUERY[url]}/$2" >"$LOG_F" 2>"$ERR_F" || _abort "wget failed"
-		test -s "$OUT_F" || _abort "no result"
+		wget -q -O "$out_f" "${API_QUERY[url]}/$2" >"$log_f" 2>"$err_f" || _abort "wget failed"
+		test -s "$out_f" || _abort "no result"
 	else
 		_abort "$1 api query not implemented"
 	fi
 
-	test -s "$OUT_F" && API_QUERY[out]=$(cat "$OUT_F")
-	test -s "$LOG_F" && API_QUERY[log]=$(cat "$LOG_F")
-	test -z "$ERR_F" || _abort "non-empty error log"
+	test -s "$out_f" && API_QUERY[out]=$(cat "$out_f")
+	test -s "$log_f" && API_QUERY[log]=$(cat "$log_f")
+	test -z "$err_f" || _abort "non-empty error log"
 }
 
