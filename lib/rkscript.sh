@@ -203,31 +203,33 @@ declare -A API_QUERY
 # @param string query string
 # @param hash query parameter
 # @global API_QUERY
+# shellcheck disable=SC2154
 #--
 function _api_query {
 	test -z "$1" && _abort "missing query type - use curl|func|wget"
 	test -z "$2" && _abort "missing query string"
 
-	local OUT_F="$RKSCRIPT_DIR/api_query.res"	
-	local LOG_F="$RKSCRIPT_DIR/api_query.log"	
-	local ERR_F="$RKSCRIPT_DIR/api_query.err"
+	local out_f log_f err_f
+	out_f="$RKSCRIPT_DIR/api_query.res"	
+	log_f="$RKSCRIPT_DIR/api_query.log"	
+	err_f="$RKSCRIPT_DIR/api_query.err"
 
-	echo '' > "$OUT_F"
+	echo '' > "$out_f"
 
 	API_QUERY[out]=
 	API_QUERY[log]=
 
 	if test "$1" = "wget"; then
 		_msg "wget ${API_QUERY[url]}/$2"
-		wget -q -O "$OUT_F" "${API_QUERY[url]}/$2" >"$LOG_F" 2>"$ERR_F" || _abort "wget failed"
-		test -s "$OUT_F" || _abort "no result"
+		wget -q -O "$out_f" "${API_QUERY[url]}/$2" >"$log_f" 2>"$err_f" || _abort "wget failed"
+		test -s "$out_f" || _abort "no result"
 	else
 		_abort "$1 api query not implemented"
 	fi
 
-	test -s "$OUT_F" && API_QUERY[out]=$(cat "$OUT_F")
-	test -s "$LOG_F" && API_QUERY[log]=$(cat "$LOG_F")
-	test -z "$ERR_F" || _abort "non-empty error log"
+	test -s "$out_f" && API_QUERY[out]=$(cat "$out_f")
+	test -s "$log_f" && API_QUERY[log]=$(cat "$log_f")
+	test -z "$err_f" || _abort "non-empty error log"
 }
 
 
@@ -2006,17 +2008,19 @@ declare -A GITHUB_IS_LATEST
 # @export $GITHUB_LATEST[$1] = NN.NN and GITHUB_IS_LATEST[$1]=1|''
 # @param $1 user/project (latest github url = https://github.com/[user/project]/releases/latest)
 # @param $2 app
+# shellcheck disable=SC2034
 #--
 function _github_latest {
-	local VNUM=`$2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/'`
-	local REDIR=`curl -Ls -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest"`
-	local LATEST=`basename "$REDIR" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/'`
+	local vnum redir latest
+	vnum=$($2 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/')
+	redir=$(curl -Ls -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest")
+	latest=$(basename "$redir" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/')
 
-	if ! test -z "$LATEST"; then
-		GITHUB_LATEST[$2]=`basename "$REDIR"`
+	if ! test -z "$latest"; then
+		GITHUB_LATEST[$2]=$(basename "$redir")
 		GITHUB_IS_LATEST[$2]=''
 
-		if ! test -z "$VNUM" && test `echo "$VNUM >= $LATEST" | bc -l` == 1; then
+		if ! test -z "$vnum" && test "$(echo "$vnum >= $latest" | bc -l)" == 1; then
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi
@@ -2110,13 +2114,12 @@ declare -A PROCESS
 # @param command (e.g. "convert", "rx:node https.js", "bash:/tmp/test.sh")
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
-# @export PROCESS[pid|start|command] 
+# @export PROCESS[pid|start|command]
+# shellcheck disable=SC2009,SC2154 
 #--
 function _has_process {
-	local flag=$(($2 + 0))
-	local logfile_pid=
-	local process=
-	local rx=
+	local rx flag process logfile_pid
+	flag=$(($2 + 0))
 
 	case $1 in
 		bash:*)
@@ -2141,10 +2144,10 @@ function _has_process {
 
 	if test $((flag & 16)) = 16; then
 		if test -s "${PROCESS[log]}" || test $((flag & 2)) = 2; then
-			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$'`
+			logfile_pid=$(head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$')
 
 			if test -z "$logfile_pid"; then
-				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-9][0-9]{0,4}$'`
+				logfile_pid=$(grep -E '^[1-9][0-9]{0,4}$' "${PROCESS[log]}")
 			fi
 
 			if test -z "$logfile_pid"; then
@@ -2156,9 +2159,9 @@ function _has_process {
 	fi
 		
 	if test -z "$logfile_pid"; then
-		process=`ps -aux | grep -E "$rx"`
+		process=$(ps -aux | grep -E "$rx")
 	else
-		process=`ps -aux | grep -E "$rx" | grep " $logfile_pid "`		
+		process=$(ps -aux | grep -E "$rx" | grep " $logfile_pid ")
 	fi
 
 	if test $((flag & 4)) = 4 && test -z "$process"; then
@@ -2167,9 +2170,9 @@ function _has_process {
 		_abort "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
 	fi
 	
-	PROCESS[pid]=`echo "$process" | awk '{print $2}'`
-	PROCESS[start]=`echo "$process" | awk '{print $9, $10}'`
-	PROCESS[command]=`echo "$process" | awk '{print $11, $12, $13, $14, $15, $16, $17, $18, $19, $20}'`
+	PROCESS[pid]=$(echo "$process" | awk '{print $2}')
+	PROCESS[start]=$(echo "$process" | awk '{print $9, $10}')
+	PROCESS[command]=$(echo "$process" | awk '{print $11, $12, $13, $14, $15, $16, $17, $18, $19, $20}')
 
 	# reset option
 	PROCESS[log]=
@@ -4525,7 +4528,7 @@ function _rks_header {
 	test $((flag & 1)) = 1 && \
 		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
 
-	printf '\x23!/bin/bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
+	printf '\x23!/bin/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
 		"$copyright" "$RKS_HEADER_SCHECK" > "$1"
 	test -z "$header" || echo "$header" >> "$1"
 }
