@@ -16,13 +16,12 @@ declare -A PROCESS
 # @param command (e.g. "convert", "rx:node https.js", "bash:/tmp/test.sh")
 # @param flag optional 2^n value
 # @option PROCESS[log]=$1.log if empty and (flag & 2^1 = 2) or (flag & 2^4 = 16)
-# @export PROCESS[pid|start|command] 
+# @export PROCESS[pid|start|command]
+# shellcheck disable=SC2009,SC2154 
 #--
 function _has_process {
-	local flag=$(($2 + 0))
-	local logfile_pid=
-	local process=
-	local rx=
+	local rx flag process logfile_pid
+	flag=$(($2 + 0))
 
 	case $1 in
 		bash:*)
@@ -47,10 +46,10 @@ function _has_process {
 
 	if test $((flag & 16)) = 16; then
 		if test -s "${PROCESS[log]}" || test $((flag & 2)) = 2; then
-			logfile_pid=`head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$'`
+			logfile_pid=$(head -3 "${PROCESS[log]}" | grep "PID=" | sed -e "s/PID=//" | grep -E '^[1-9][0-9]{0,4}$')
 
 			if test -z "$logfile_pid"; then
-				logfile_pid=`cat "${PROCESS[log]}" | grep -E '^[1-9][0-9]{0,4}$'`
+				logfile_pid=$(grep -E '^[1-9][0-9]{0,4}$' "${PROCESS[log]}")
 			fi
 
 			if test -z "$logfile_pid"; then
@@ -62,9 +61,9 @@ function _has_process {
 	fi
 		
 	if test -z "$logfile_pid"; then
-		process=`ps -aux | grep -E "$rx"`
+		process=$(ps -aux | grep -E "$rx")
 	else
-		process=`ps -aux | grep -E "$rx" | grep " $logfile_pid "`		
+		process=$(ps -aux | grep -E "$rx" | grep " $logfile_pid ")
 	fi
 
 	if test $((flag & 4)) = 4 && test -z "$process"; then
@@ -73,9 +72,9 @@ function _has_process {
 		_abort "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
 	fi
 	
-	PROCESS[pid]=`echo "$process" | awk '{print $2}'`
-	PROCESS[start]=`echo "$process" | awk '{print $9, $10}'`
-	PROCESS[command]=`echo "$process" | awk '{print $11, $12, $13, $14, $15, $16, $17, $18, $19, $20}'`
+	PROCESS[pid]=$(echo "$process" | awk '{print $2}')
+	PROCESS[start]=$(echo "$process" | awk '{print $9, $10}')
+	PROCESS[command]=$(echo "$process" | awk '{print $11, $12, $13, $14, $15, $16, $17, $18, $19, $20}')
 
 	# reset option
 	PROCESS[log]=
