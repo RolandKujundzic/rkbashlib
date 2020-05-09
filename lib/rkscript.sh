@@ -4533,7 +4533,7 @@ function _rks_header {
 	test $((flag & 1)) = 1 && \
 		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
 
-	printf '\x23!/bin/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
+	printf '\x23!/usr/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
 		"$copyright" "$RKS_HEADER_SCHECK" > "$1"
 	test -z "$header" || echo "$header" >> "$1"
 }
