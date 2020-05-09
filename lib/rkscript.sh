@@ -3598,6 +3598,12 @@ shopt -s expand_aliases
 # osx has no md5sum
 test -z "$(which md5sum)" && _abort "install brew (https://brew.sh/)"
 
+# osx bash is outdated
+test -f "/usr/local/bin/bash" || _abort "brew install bash"
+
+# enable brew bash
+[[ "$BASH_VERSION" =~ 5. ]] || _abort 'change shebang to: #!/usr/bin/env bash'  
+
 # osx has no realpath
 test -z "$(which realpath)" && _abort "brew install coreutils"
 
