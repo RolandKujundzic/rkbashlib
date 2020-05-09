@@ -8,6 +8,7 @@
 
 #--
 # Build lib/rkscript.sh.
+# shellcheck disable=SC2012,SC2086
 #--
 function do_build {
 	local lib_tmp
@@ -28,8 +29,7 @@ function do_build {
 	} > "$lib_tmp"
 
 	echo "append $SCRIPT_SRC/*.sh to $lib_tmp"
-	for a in $SCRIPT_SRC/*.sh
-	do
+	for a in $(ls $SCRIPT_SRC/*.sh | sort -u); do
 		tail -n+2 "$a" >> "$lib_tmp"
 	done
 
