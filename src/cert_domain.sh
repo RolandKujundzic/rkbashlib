@@ -23,9 +23,8 @@ function _cert_domain {
 	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
 	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/,? ?DNS\:/ /g' | _trim)
 
-	if test -z "$domain"; then
-		domain=$(echo "$certinfo" | grep -E -o 'CN = .+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
-	fi
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+' | sed 's/Subject: CN=//')
 
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
