@@ -8,9 +8,16 @@
 # @param domain
 #--
 function _check_ip {
-	local ip_ok
+	local ip_ok ping4
 	_require_program ping
-	ip_ok=$(ping -4 -c 1 "$1" 2> /dev/null | grep "$IP_ADDRESS")
+
+	if ping -4 -c1 localhost &>/dev/null; then
+		ping4="ping -4 -c 1"
+	else
+		ping4="ping -c 1"
+	fi
+
+	ip_ok=$($ping4 "$1" 2> /dev/null | grep "$IP_ADDRESS")
 	test -z "$ip_ok" && _abort "$1 does not point to server ip $IP_ADDRESS"
 }
 

@@ -22,15 +22,22 @@ function _ip_address {
 		DYNAMIC_IP=1
 	fi
 
+	local ping4
 	_require_program ping
+  if ping -4 -c1 localhost &>/dev/null; then
+    ping4="ping -4 -c 1"
+  else
+    ping4="ping -c 1"
+  fi
+
 	host=$(hostname)
-	ping_ok=$(ping -4 -c 1 "$host" 2>/dev/null | grep "$IP_ADDRESS")
+	ping_ok=$($ping4 "$host" 2>/dev/null | grep "$IP_ADDRESS")
 
 	if test -z "$ping_ok"; then
-		ping_ok=$(ping -4 -c 1 "$host" 2>/dev/null | grep "127.0.")
+		ping_ok=$($ping4 "$host" 2>/dev/null | grep "127.0.")
 
 		if test -z "$ping_ok"; then
-			_abort "failed to detect IP_ADDRESS (ping -4 -c 1 $host != $IP_ADDRESS)"
+			_abort "failed to detect IP_ADDRESS ($ping4 $host != $IP_ADDRESS)"
 		fi
 	fi
 }
