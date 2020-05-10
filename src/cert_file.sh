@@ -10,7 +10,7 @@
 # - CERT_PUB=~/.acme.sh/domain.tld/domain.tld.cer or /etc/letsencrypt/live/domain.tld/cert.pem
 # - CERT_CA=~/.acme.sh/domain.tld/ca.cer or /etc/letsencrypt/live/domain.tld/chain.pem
 #
-# @param domain.tld
+# @param domain.tld|.../domain.tld/fullchain.cer
 # @param abort if missing (default = 1)
 # @export CERT_ENGINE|FULL|KEY|CA|PUB
 # shellcheck disable=SC2034,SC2086
@@ -18,12 +18,18 @@
 #--
 function _cert_file {
 	local domain res acme_dir le_live le_acme subdomain
-	acme_dir="$HOME/.acme.sh/$1"
-	le_live="/etc/letsencrypt/live/$1"
-	le_acme="/etc/letsencrypt/acme.sh/$1"
 	domain="$1"
 
 	test -z "$domain" && _abort "empty domain parameter"
+	if [[ "${1: -13}" = 'fullchain.cer' ]]; then
+		domain=$(dirname "$1")
+		domain=$(basename "$domain")
+		[[ "$domain" =~ ^.+\..+\..+$ ]] && domain="${domain#*.}"
+	fi	
+
+	acme_dir="$HOME/.acme.sh/$domain"
+	le_live="/etc/letsencrypt/live/$domain"
+	le_acme="/etc/letsencrypt/acme.sh/$domain"
 
 	CERT_ENGINE=
 	CERT_SUB=
