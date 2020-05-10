@@ -9,7 +9,7 @@
 # @print valid, missing or expired
 #--
 function _check_ssl {
-	if ! _cert_file "$1"; then
+	if ! _cert_file "$1" 0; then
 		echo 'missing'
 		return
 	fi
