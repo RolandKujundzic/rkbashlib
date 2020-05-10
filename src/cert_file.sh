@@ -4,7 +4,7 @@
 # Export path to SSL certificate files:
 #
 # - CERT_ENGINE=acme.sh|certbot
-# - CERT_SUB=1|0
+# - CERT_SUB=sub.domain.tld
 # - CERT_FULL=~/.acme.sh/domain.tld/fullchain.cer or /etc/letsencrypt/live/domain.tld/fullchain.pem
 # - CERT_KEY=~/.acme.sh/domain.tld/domain.tld.key or /etc/letsencrypt/live/domain.tld/privkey.pem
 # - CERT_PUB=~/.acme.sh/domain.tld/domain.tld.cer or /etc/letsencrypt/live/domain.tld/cert.pem
@@ -40,7 +40,7 @@ function _cert_file {
 		if ! test -z "$subdomain" && test -s "$subdomain"; then
 			acme_dir=$(dirname $subdomain)
 			CERT_ENGINE="acme.sh"
-			CERT_SUB=1
+			CERT_SUB=$(basename $acme_dir)
 		fi
 	fi
 
