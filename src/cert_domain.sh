@@ -16,6 +16,7 @@ function _cert_domain {
 	else
 		_cert_file "$1"
 		domain="$1"
+		test -z "$CERT_SUB" || domain="$CERT_SUB"
 	fi
 
 	local certinfo dns
