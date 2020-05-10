@@ -10,7 +10,7 @@ else
 	exit 1  
 fi  
 
-if test "${@: -1}" = 'help'; then
+if test "${@: -1}" = 'help' 2>/dev/null; then
 	for a in ps tr xargs head grep awk find sed sudo cd chown chmod mkdir rm ls; do
 		command -v $a >/dev/null || { echo -e "\nERROR: missing $a\n"; exit 1; }
 	done
