@@ -12,7 +12,7 @@
 #
 # @param domain.tld|.../domain.tld/fullchain.cer
 # @param abort if missing (default = 1)
-# @export CERT_ENGINE|FULL|KEY|CA|PUB
+# @export CERT_ENGINE|SUB|FULL|KEY|CA|PUB
 # shellcheck disable=SC2034,SC2086
 # return boolean
 #--

@@ -4,11 +4,11 @@
 # Abort if ssl certificate is missing or does not contain subdomain.
 #
 # @param string domain|path/to/fullchain.pem
-# @export CERT_DNS CERT_GMT CERT_DOMAINS CERT_UNTIL CERT_FULL
+# @export CERT_DNS CERT_GMT CERT_DOMAIN CERT_DOMAINS CERT_ISSUER CERT_UNTIL CERT_FULL
 # @param string subdomain list (optional)
 # shellcheck disable=SC2034
 #--
-function _cert_domain {
+function _cert_info {
 	local domain
 
 	if test -f "$1"; then
@@ -25,7 +25,9 @@ function _cert_domain {
 
 	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
 	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+' | sed 's/Subject: CN=//')
-
+	
+	CERT_DOMAIN="$domain"
+	CERT_ISSUER=$(echo "$certinfo" | grep 'Issuer:' | sed -E 's/.+O = (.+), CN =.+/\1/')
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
 	CERT_UNTIL=$(echo "$certinfo" | grep "GMT" | grep -o -E 'Not After .+' | sed -E -e 's/.+\: (.+ GMT).*/\1/i') 
