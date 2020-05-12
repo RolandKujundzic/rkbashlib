@@ -11,6 +11,6 @@ function _is_gitmodule {
 		return
 	fi
 
-	cat .gitmodules | grep -E "\[submodule \".*$1\"\]" | sed -E "s/\[submodule \"(.*$1)\"\]/\1/"
+	grep -E "\[submodule \".*$1\"\]" .gitmodules | sed -E "s/\[submodule \"(.*$1)\"\]/\1/"
 }
 
