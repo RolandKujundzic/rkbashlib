@@ -6,7 +6,7 @@
 # @param string domain|path/to/fullchain.pem
 # @export CERT_DNS CERT_GMT CERT_DOMAIN CERT_DOMAINS CERT_ISSUER CERT_UNTIL CERT_FULL
 # @param string subdomain list (optional)
-# shellcheck disable=SC2034
+# shellcheck disable=SC2119,SC2034
 #--
 function _cert_info {
 	local domain

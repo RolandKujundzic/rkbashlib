@@ -12,35 +12,36 @@ function _decrypt {
 	test -s "$1" || _abort "no such file '$1'"
 	_require_program ccrypt
 
-	local TARGET=`basename "$1" | sed -E 's/\.cpt$//'`
-	local PDIR=`dirname "$1"`
+	local target pdir pbase pfile pass
+	target=$(basename "$1" | sed -E 's/\.cpt$//')
+	pdir=$(dirname "$1")
 
-	if test -s "$TARGET"; then
-		_confirm "Overwrite existing file $PDIR/$TARGET?" 1
+	if test -s "$target"; then
+		_confirm "Overwrite existing file $pdir/$target?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
 	if ! test -z "$2"; then
-		local PBASE=`basename "$2"`
-		local PASS="$2"
-		if test "${PBASE:0:1}" = "." && test -s "$PASS"; then
-			_msg "decrypt $1 (use password from $2)"
-			PASS=`cat "$2"`
+		pfile="$2"
+		pbase=$(basename "$pfile")
+		if test "${pbase:0:1}" = "." && test -s "$pfile"; then
+			_msg "decrypt $1 (use password from $pfile)"
+			pass=$(cat "$pfile")
 		else
 			_msg "decrypt $1 (use supplied password)"
 		fi
 
-		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -d "$1" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -d '$1'"
+		CCRYPT_PASS="$pass" ccrypt -f -E CCRYPT_PASS -d "$1" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -d '$1'"
 	else
 		_msg "decrypt $1 - Please input password"
 		ccrypt -f -d "$1" || _abort "ccrypt -d '$1'"
 	fi
 
-	_require_file "$PDIR/$TARGET"
+	_require_file "$pdir/$target"
 
-	if test "${TARGET: -4}" = ".tgz"; then
-		_extract_tgz "$PDIR/$TARGET"
-		_rm "$PDIR/$TARGET" >/dev/null
+	if test "${target: -4}" = ".tgz"; then
+		_extract_tgz "$pdir/$target"
+		_rm "$pdir/$target" >/dev/null
 	fi
 }
 
