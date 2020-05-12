@@ -1950,9 +1950,9 @@ function _find {
 
 	_require_program find
 
-	while read a; do
+	while read -r a; do
 		FOUND+=("$a")
-	done <<< `find $@ 2>/dev/null`
+	done <<< "$(find "$@" 2>/dev/null)"
 }
 
 
@@ -2697,6 +2697,7 @@ LOG_NO_ECHO=
 # @param message
 # @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# shellcheck disable=SC2086
 #--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
@@ -2720,8 +2721,9 @@ function _log {
 		fi
 	fi
 
-	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
-	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
+	local now
+	now=$(date +'%d.%m.%Y %H:%M:%S')
+	echo -e "# _$2: $now\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
 	if ! test -z "$SUDO_USER"; then
 		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"
@@ -2978,9 +2980,10 @@ function _mv {
 		_abort "Empty target path"
 	fi
 
-	local PDIR=`dirname "$2"`
-	if ! test -d "$PDIR"; then
-		_abort "No such directory [$PDIR]"
+	local pdir
+	pdir=$(dirname "$2")
+	if ! test -d "$pdir"; then
+		_abort "No such directory [$pdir]"
 	fi
 
 	local AFTER_LAST_SLASH=${1##*/}
@@ -2988,7 +2991,7 @@ function _mv {
 	if test "$AFTER_LAST_SLASH" = "*"
 	then
 		echo "mv $1 $2"
-		mv $1 $2 || _abort "mv $1 $2 failed"
+		mv "$1" "$2" || _abort "mv $1 $2 failed"
 	else
 		echo "mv '$1' '$2'"
 		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
@@ -4344,12 +4347,13 @@ function _require_file {
 # @param name list (e.g. "GLOBAL", "GLOB1 GLOB2 ...", GLOB1 GLOB2 ...)
 #--
 function _require_global {
-	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
-	local a has_hash
-	for a in $@; do
+	local a has_hash bash_version
+	bash_version=$(bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i')
+
+	for a in "$@"; do
 		has_hash="HAS_HASH_$a"
 
-		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
+		if (( $(echo "$bash_version >= 4.4" | bc -l) )); then
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
@@ -4360,6 +4364,7 @@ function _require_global {
 		fi
 	done
 }
+
 
 #--
 # Abort if file or directory owner:group don't match.
@@ -4372,10 +4377,11 @@ function _require_owner {
 		_abort "no such file or directory '$1'"
 	fi
 
-	local arr=( ${2//:/ } )
-	local owner=`stat -c '%U' "$1" 2>/dev/null`
+	local arr owner group
+	arr=( ${2//:/ } )
+	owner=$(stat -c '%U' "$1" 2>/dev/null)
 	test -z "$owner" && _abort "stat -c '%U' '$1'"
-	local group=`stat -c '%G' "$1" 2>/dev/null`
+	group=$(stat -c '%G' "$1" 2>/dev/null)
 	test -z "$group" && _abort "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
@@ -4396,7 +4402,8 @@ function _require_owner {
 #--
 function _require_priv {
 	test -z "$2" && _abort "empty privileges"
-	local priv=`stat -c '%a' "$1" 2>/dev/null`
+	local priv
+	priv=$(stat -c '%a' "$1" 2>/dev/null)
 	test -z "$priv" && _abort "stat -c '%a' '$1'"
 	test "$2" = "$priv" || _abort "invalid privileges [$priv] - chmod -R $2 '$1'"
 }
@@ -4410,10 +4417,10 @@ function _require_priv {
 # @return bool (if $2==1)
 #--
 function _require_program {
-	local TYPE=`type -t "$1"`
-	local CHECK="$2"
+	local ptype
+	ptype=$(type -t "$1")
 
-	test "$TYPE" = "function" && return
+	test "$ptype" = "function" && return
 	command -v "$1" >/dev/null 2>&1 && return
 	command -v "./$1" >/dev/null 2>&1 && return
 
@@ -4627,7 +4634,8 @@ function _rsync {
 	eval "$rsync ${LOG_CMD[rsync]}" || error=1
 
 	if test "$error" = "1"; then
-		local sync_finished=`tail -4 ${LOG_FILE[rsync]} | grep 'speedup is '`
+		local sync_finished
+		sync_finished=$(tail -4 "${LOG_FILE[rsync]}" | grep 'speedup is ')
 		test -z "$sync_finished" && _abort "$rsync"
 	fi
 }

@@ -7,12 +7,13 @@
 # @param name list (e.g. "GLOBAL", "GLOB1 GLOB2 ...", GLOB1 GLOB2 ...)
 #--
 function _require_global {
-	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
-	local a has_hash
-	for a in $@; do
+	local a has_hash bash_version
+	bash_version=$(bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i')
+
+	for a in "$@"; do
 		has_hash="HAS_HASH_$a"
 
-		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
+		if (( $(echo "$bash_version >= 4.4" | bc -l) )); then
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
@@ -23,3 +24,4 @@ function _require_global {
 		fi
 	done
 }
+

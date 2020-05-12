@@ -12,8 +12,8 @@ function _find {
 
 	_require_program find
 
-	while read a; do
+	while read -r a; do
 		FOUND+=("$a")
-	done <<< `find $@ 2>/dev/null`
+	done <<< "$(find "$@" 2>/dev/null)"
 }
 

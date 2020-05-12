@@ -12,6 +12,7 @@ LOG_NO_ECHO=
 # @param message
 # @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# shellcheck disable=SC2086
 #--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
@@ -35,8 +36,9 @@ function _log {
 		fi
 	fi
 
-	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
-	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
+	local now
+	now=$(date +'%d.%m.%Y %H:%M:%S')
+	echo -e "# _$2: $now\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
 	if ! test -z "$SUDO_USER"; then
 		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"

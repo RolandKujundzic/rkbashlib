@@ -9,6 +9,7 @@
 # 
 # @export OUT MERGE_SH
 # @param $@
+# shellcheck disable=SC1090
 #--
 function merge_list {
 	OUT="run.sh"
@@ -17,10 +18,10 @@ function merge_list {
 	test -s "sh/run/merge2$1" && OUT="$1"
 
 	if [[ "$#" -gt 0 && -s "$1" ]]; then
-		MERGE_SH="$@"
+		MERGE_SH="$*"
 	elif test -s "sh/run/merge2$OUT"; then
 		echo "load sh/run/merge2$OUT"
-		. "sh/run/merge2$OUT"
+		source "sh/run/merge2$OUT"
 
 		local a
 		for a in $MERGE2RUN; do
@@ -37,6 +38,7 @@ function merge_list {
 # Compute include list.
 #
 # @export INCLUDE
+# shellcheck disable=SC2086
 #--
 function include_list {
 	echo "Scan for rkscript functions"
@@ -50,7 +52,7 @@ function include_list {
 		INCLUDE="$RKSCRIPT_INC $INCLUDE"
 	done
 
-	INCLUDE=`_sort $INCLUDE`
+	INCLUDE=$(_sort $INCLUDE)
 }
 
 
@@ -58,15 +60,24 @@ function include_list {
 # Join INCLUDE and MERGE_SH snipplets into OUT.
 #
 # @global RKSCRIPT_PATH INCLUDE MERGE_SH OUT
+# shellcheck disable=SC2034,SC2086
 #--
 function join_include {
+	local a src_inc scheck
 	echo -e "Include: $INCLUDE\nCreate $OUT"
+
+	for a in $INCLUDE; do
+		src_inc="$src_inc $RKSCRIPT_PATH/src/${a:1}.sh"
+	done
+
+	scheck=$(grep -E '^# shellcheck disable=' $src_inc $MERGE_SH | \
+		sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
+	test -z "$scheck" || RKS_HEADER_SCHECK="shellcheck disable=SC1091,$scheck"
 
 	_rks_header "$OUT"
 
-	local a
-	for a in $INCLUDE; do
-		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#' >> "$OUT"
+	for a in $src_inc; do
+		tail -n +2 "$a" | grep -E -v '^\s*#' >> "$OUT"
 	done
 
 	for a in $MERGE_SH; do
@@ -84,6 +95,7 @@ function join_include {
 #--
 
 APP=$0
+# shellcheck disable=SC2034
 CWD="$PWD"
 APP_DESC="Merge shell code snipplets"
 export APP_PID="$APP_PID $$"
@@ -92,7 +104,7 @@ echo -e "\n$APP_DESC"
 
 # Load necessary src/* functions - don't put in function (declare -A will be lost)
 if test -z "$RKSCRIPT_PATH"; then
-	RKSCRIPT_PATH=`realpath "$APP" | xargs dirname`
+	RKSCRIPT_PATH=$(realpath "$APP" | xargs dirname)
 fi
 
 load_func="abort add_abort_linenum chmod confirm cp find log md5
@@ -104,7 +116,7 @@ for a in $load_func; do
 	source "$RKSCRIPT_PATH/src/$a.sh"
 done
 
-_parse_arg $@
+_parse_arg "$@"
 
 if [[ ! -z "${ARG[scan]}" && -s "${ARG[scan]}" ]]; then
 	_rkscript_inc "${ARG[scan]}" #>/dev/null
@@ -113,7 +125,7 @@ elif [[ ! -z "${ARG[self_update]}" && -f "${ARG[self_update]}" && -d "${ARG[self
 	echo "_merge_sh '${ARG[self_update]}_' '${ARG[self_update]}'"
 	_merge_sh "${ARG[self_update]}_" "${ARG[self_update]}" 
 else
-	merge_list $@
+	merge_list "$@"
 	include_list
 	join_include
 fi

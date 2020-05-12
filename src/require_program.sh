@@ -8,10 +8,10 @@
 # @return bool (if $2==1)
 #--
 function _require_program {
-	local TYPE=`type -t "$1"`
-	local CHECK="$2"
+	local ptype
+	ptype=$(type -t "$1")
 
-	test "$TYPE" = "function" && return
+	test "$ptype" = "function" && return
 	command -v "$1" >/dev/null 2>&1 && return
 	command -v "./$1" >/dev/null 2>&1 && return
 

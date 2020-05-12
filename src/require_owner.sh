@@ -11,10 +11,11 @@ function _require_owner {
 		_abort "no such file or directory '$1'"
 	fi
 
-	local arr=( ${2//:/ } )
-	local owner=`stat -c '%U' "$1" 2>/dev/null`
+	local arr owner group
+	arr=( ${2//:/ } )
+	owner=$(stat -c '%U' "$1" 2>/dev/null)
 	test -z "$owner" && _abort "stat -c '%U' '$1'"
-	local group=`stat -c '%G' "$1" 2>/dev/null`
+	group=$(stat -c '%G' "$1" 2>/dev/null)
 	test -z "$group" && _abort "stat -c '%G' '$1'"
 
 	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
