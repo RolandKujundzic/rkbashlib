@@ -6,12 +6,13 @@
 # @param string name
 #--
 function _get {
-	local DIR="$RKSCRIPT_DIR"
-	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
-	DIR="$DIR/"`basename "$APP"`
+	local dir
+	dir="$RKSCRIPT_DIR"
+	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$dir/$(basename "$APP")"
 
-	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
+	test -f "$dir/$1.nfo" || _abort "no such file $dir/$1.nfo"
 
-	cat "$DIR/$1.nfo"
+	cat "$dir/$1.nfo"
 }
 

@@ -6,6 +6,6 @@
 #--
 function _git_update {
 	_msg "DEPRECATED: use _git_update_php"
-  _git_update_php $1
+  _git_update_php "$1"
 }
 

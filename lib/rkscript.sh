@@ -1931,13 +1931,14 @@ function _find {
 # @param string name
 #--
 function _get {
-	local DIR="$RKSCRIPT_DIR"
-	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
-	DIR="$DIR/"`basename "$APP"`
+	local dir
+	dir="$RKSCRIPT_DIR"
+	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$dir/$(basename "$APP")"
 
-	test -f "$DIR/$1.nfo" || _abort "no such file $DIR/$1.nfo"
+	test -f "$dir/$1.nfo" || _abort "no such file $dir/$1.nfo"
 
-	cat "$DIR/$1.nfo"
+	cat "$dir/$1.nfo"
 }
 
 
@@ -1954,15 +1955,17 @@ function _get {
 # @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
 # @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
+# shellcheck disable=SC2086
 #--
 function _git_checkout {
-	local CURR="$PWD"
-	local GIT_DIR="${2:-`basename "$1" | sed -E 's/\.git$//'`}"
+	local curr git_dir
+	curr="$PWD"
+	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
 
-	if test -d "$GIT_DIR"; then
-		_confirm "Update $GIT_DIR (git pull)?" 1
+	if test -d "$git_dir"; then
+		_confirm "Update $git_dir (git pull)?" 1
 	elif ! test -z "$CONFIRM_CHECKOUT"; then
-		_confirm "Checkout $1 to $GIT_DIR (git clone)?" 1
+		_confirm "Checkout $1 to $git_dir (git clone)?" 1
 	fi
 
 	if test "$CONFIRM" = "n"; then
@@ -1970,34 +1973,34 @@ function _git_checkout {
 		return
 	fi
 
-	if test -d "$GIT_DIR"; then
-		_cd "$GIT_DIR"
-		echo "git pull $GIT_DIR"
+	if test -d "$git_dir"; then
+		_cd "$git_dir"
+		echo "git pull $git_dir"
 		git pull
 		test -s .gitmodules && git submodule update --init --recursive --remote
 		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-		_cd "$CURR"
-	elif test -d "../../$GIT_DIR/.git" && ! test -L "../../$GIT_DIR"; then
-		_ln "../../$GIT_DIR" "$GIT_DIR"
-		_git_checkout "$1" "$GIT_DIR"
+		_cd "$curr"
+	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
+		_ln "../../$git_dir" "$git_dir"
+		_git_checkout "$1" "$git_dir"
 	else
-		echo -e "git clone $GIT_PARAMETER '$1' '$GIT_DIR'\nEnter password if necessary"
-		git clone $GIT_PARAMETER "$1" "$GIT_DIR"
+		echo -e "git clone $GIT_PARAMETER '$1' '$git_dir'\nEnter password if necessary"
+		git clone $GIT_PARAMETER "$1" "$git_dir"
 
-		if ! test -d "$GIT_DIR/.git"; then
-			_abort "git clone failed - no $GIT_DIR/.git directory"
+		if ! test -d "$git_dir/.git"; then
+			_abort "git clone failed - no $git_dir/.git directory"
 		fi
 
-		if test -s "$GIT_DIR/.gitmodules"; then
-			_cd "$GIT_DIR"
+		if test -s "$git_dir/.gitmodules"; then
+			_cd "$git_dir"
 			test -s .gitmodules && git submodule update --init --recursive --remote
 			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
 			_cd ..
 		fi
 
 		if ! test -z "$3"; then
-			_cd "$GIT_DIR"
-			echo "run [$3] in $GIT_DIR"
+			_cd "$git_dir"
+			echo "run [$3] in $git_dir"
 			$3
 			_cd ..
 		fi
@@ -2062,7 +2065,7 @@ function _git_update_php {
 #--
 function _git_update {
 	_msg "DEPRECATED: use _git_update_php"
-  _git_update_php $1
+  _git_update_php "$1"
 }
 
 
