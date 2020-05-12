@@ -11,42 +11,41 @@ function _encrypt {
 	test -z "$1" && _abort "_encrypt: first parameter (path/to/source) missing"
 	_require_program ccrypt
 
-	local SRC="$1"
-	local PASS="$2"
+	local src pass base
+	src="$1"
+	pass="$2"
+	base=$(basename "$2")
 
 	if test -d "$1"; then
-		SRC="$1.tgz"
-		_create_tgz "$SRC" "$1"
+		src="$1.tgz"
+		_create_tgz "$src" "$1"
 	fi
 
-	test -s "$SRC" || _abort "_encrypt: no such file [$SRC]"
-
-	local IS_CPT_FILE=`echo "$1" | grep -E '\.cpt$'`
-	test -z "$IS_CPT_FILE" || _abort "$SRC has already suffix .cpt"
+	test -s "$src" || _abort "_encrypt: no such file [$src]"
+	test -z "$(echo "$1" | grep -E '\.cpt$')" || _abort "$src has already suffix .cpt"
 	
-	if test -s "$SRC.cpt"; then
-		_confirm "Overwrite existing $SRC.cpt?" 1
+	if test -s "$src.cpt"; then
+		_confirm "Overwrite existing $src.cpt?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if ! test -z "$PASS"; then
-		local BASE=`basename "$2"`
-		if test "${BASE:0:1}" = "." && test -s "$2"; then
-			_msg "encrypt '$SRC' as *.cpt (use password from '$2')"
-			PASS=`cat "$2"`
+	if ! test -z "$pass"; then
+		if test "${base:0:1}" = "." && test -s "$2"; then
+			_msg "encrypt '$src' as *.cpt (use password from '$2')"
+			pass=$(cat "$2")
 		else
-			_msg "encrypt '$SRC' as *.cpt (use supplied password)"
+			_msg "encrypt '$src' as *.cpt (use supplied password)"
 		fi
 
-		CCRYPT_PASS="$PASS" ccrypt -f -E CCRYPT_PASS -e "$SRC" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -e '$SRC'"
+		CCRYPT_PASS="$pass" ccrypt -f -E CCRYPT_PASS -e "$src" || _abort "CCRYPT_PASS='***' ccrypt -E CCRYPT_PASS -e '$src'"
 	else
-		_msg "encrypt '$SRC' as *.cpt - Please input password"
-		ccrypt -f -e "$SRC" || _abort "ccrypt -e '$SRC'"
+		_msg "encrypt '$src' as *.cpt - Please input password"
+		ccrypt -f -e "$src" || _abort "ccrypt -e '$src'"
 	fi
 
-	test -s "$SRC.cpt" || _abort "no such file $SRC.cpt"
+	test -s "$src.cpt" || _abort "no such file $src.cpt"
 
-	_rm "$SRC" >/dev/null
+	_rm "$src" >/dev/null
 	if test -d "$1"; then
 		_confirm "Remove source directory $1?" 1
 		test "$CONFIRM" = "y" && _rm "$1" >/dev/null
