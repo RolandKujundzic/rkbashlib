@@ -9,23 +9,23 @@
 function _stop_http {
 	_os_type linux
 
-	if ! _is_running PORT 80; then
+	if ! _is_running port:80; then
 		echo "no service on port 80"
 		return
 	fi
 
-	if _is_running DOCKER_PORT_80; then
+	if _is_running docker:80; then
 		echo "ignore docker service on port 80"
 		return
 	fi
 
-	if _is_running NGINX; then
+	if _is_running nginx; then
 		echo "stop nginx"
 		sudo service nginx stop
 		return
 	fi
 
-	if _is_running APACHE2; then
+	if _is_running apache; then
 		echo "stop apache2"
 		sudo service apache2 stop
 		return

@@ -7,51 +7,43 @@
 #
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
+# shellcheck disable=SC2009
 #--
 function _kill_process {
-	local MY_PID=
+	local msg my_pid pid_file
 
 	case $1 in
 		file:*)
-			local PID_FILE="${1#*:}"
+			pid_file="${1#*:}"
 
-			if ! test -s "$PID_FILE"; then
-				_abort "no such pid file $PID_FILE"
+			if ! test -s "$pid_file"; then
+				_abort "no such pid file $pid_file"
 			fi
 
-			MY_PID=`head -3 "$PID_FILE" | grep "PID=" | sed -e "s/PID=//"`
-			if test -z "$MY_PID"; then
-				MY_PID=`cat "$PID_FILE" | grep -E '^[1-9][0-9]{0,4}$'`
+			my_pid=$(head -3 "$pid_file" | grep "PID=" | sed -e "s/PID=//")
+			if test -z "$my_pid"; then
+				my_pid=$(grep -E '^[1-9][0-9]{0,4}$' "$pid_file")
 			fi
 			;;
 		pid:*)
-			MY_PID="${1#*:}"
-			;;
+			my_pid="${1#*:}";;
 		rx:*)
-			MY_PID=`ps aux | grep -E "${1#*:}" | awk '{print $2}'`
-			;;
+			my_pid=$(ps aux | grep -E "${1#*:}" | awk '{print $2}');;
 	esac
 
-	if test -z "$MY_PID"; then
+	if test -z "$my_pid"; then
 		_abort "no pid found ($1)"
 	fi
 
-	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
-	if test -z "$FOUND_PID"; then
-		local MSG="no such pid $MY_PID"
+	if test -z "$(ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$my_pid")"; then
+		msg="no such pid $my_pid"
 
-		if test "${1:0:5}" = "file:"; then
-			MSG="$MSG - update ${1:5}" 
-		fi
-
-		if ! test -z "$2"; then
-			_abort "$MSG"
-		fi
-
-		echo "$MSG"
+		test "${1:0:5}" = "file:" && msg="$msg - update ${1:5}" 
+		test -z "$2" || _abort "$msg"
+		echo "$msg"
 	else
-		echo "kill $MY_PID"
-		kill "$MY_PID" || _abort "kill '$MY_PID'"
+		echo "kill $my_pid"
+		kill "$my_pid" || _abort "kill '$my_pid'"
 	fi
 }
 

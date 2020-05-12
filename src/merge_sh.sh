@@ -11,7 +11,7 @@
 # @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# shellcheck disable=SC2086,SC2034
+# shellcheck disable=SC2086,SC2034,SC2120
 #--
 function _merge_sh {
 	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck

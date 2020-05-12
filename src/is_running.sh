@@ -1,50 +1,39 @@
 #!/bin/bash
 
 #--
-# Abort with error message. Process Expression is either CUSTOM with 
-# regular expression as second parameter (first character must be in brackets)
-# or PORT with port number as second parameter or expression name from list:
+# Abort with error message. Process name is either
+# apache|nginx|docker:N|port:N (N is port number) 
+# or [n]ame. Example:
 #
-# NGINX, APACHE2, DOCKER_PORT_80, DOCKER_PORT_443 
+# if test _is_running apache; then
+# if test _is_running port:80; then
+# if test _is_running [m]ysql; then
 #
-# Example:
-#
-# if test "$(_is_running APACHE2)" = "APACHE2_running"; then
-# if test "$(_is_running PORT 80)" != "PORT_running"; then
-# if test "$(_is_running CUSTOM [a]pache2)" = "CUSTOM_running"; then
-#
-# @param Process Expression Name 
-# @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
+# @param Process name or expression apache|ngnix|docker:N|port:N|[n]ame
 # @os linux
 # @return bool
+# shellcheck disable=SC2009
 #--
 function _is_running {
 	_os_type linux
+	local rx out res
+	res=0
 
-	test -z "$1" && _abort "no process name"
-
-	# use [a] = a to ignore "grep process"
-	local APACHE2='[a]pache2.*k start'
-	local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
-	local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
-	local NGINX='[n]ginx.*master process'
-	local IS_RUNNING=
-
-	if ! test -z "$2"; then
-		if test "$1" = "CUSTOM"; then
-			IS_RUNNING=$(ps aux 2>/dev/null | grep -E "$2")
-		elif test "$1" = "PORT"; then
-			IS_RUNNING=$(netstat -tulpn 2>/dev/null | grep -E ":$2 .+:* .+LISTEN.*")
-		fi
-	elif test -z "${!1}"; then
-		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
+	if test "$1" = 'apache'; then
+		rx='[a]pache2.*k start'
+	elif test "$1" = 'nginx'; then
+		rx='[n]ginx.*master process'
+	elif test "${1:0:7}" = 'docker:'; then
+		rx="[d]ocker-proxy.* -host-port ${1:7}"
+	elif test "${1:0:5}" = 'port:'; then
+		out=$(netstat -tulpn 2>/dev/null | grep -E ":${1:5} .+:* .+LISTEN.*")
 	else
-		IS_RUNNING=$(ps aux 2>/dev/null | grep -E "${!1}")
+		_abort "invalid [$1] use apache|nginx|docker:PORT|port:N|rx:[n]ame"
 	fi
 
-	local RES=1  # not running
-	test -z "$IS_RUNNING" || RES=0
+	test -z "$rx" || out=$(ps aux 2>/dev/null | grep -E "$rx")
 
-	return $RES
+	test -z "$out" && res=1
+	return $res	
 }
 

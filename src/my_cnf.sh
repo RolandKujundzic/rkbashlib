@@ -7,24 +7,22 @@
 # @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
 # @param path to .my.cnf (default = .my.cnf)
+# shellcheck disable=SC2120
 #--
 function _my_cnf {
-	local MY_CNF="$1"
+	local my_cnf mysql_sql
+	my_cnf="$1"
 
-	if ! test -z "$SQL_PASS" && ! test -z "$MYSQL"; then
-		local MYSQL_SQL="$MYSQL"
-	fi
+	[[ -z "$SQL_PASS" || -z "$MYSQL" ]] || mysql_sql="$MYSQL"
 
-	test -z "$MY_CNF" && MY_CNF=".my.cnf"
-	test -s "$MY_CNF" || return
+	test -z "$my_cnf" && my_cnf=".my.cnf"
+	test -s "$my_cnf" || return
+	test -z "$(cat ".my.cnf" 2>/dev/null)" && return
 
-	local MY_CNF_CONTENT=`cat ".my.cnf" 2> /dev/null`
-	test -z "$MY_CNF_CONTENT" && return
+	DB_PASS=$(grep password "$my_cnf" | sed -E 's/.*=\s*//g')
+	DB_NAME=$(grep user "$my_cnf" | sed -E 's/.*=\s*//g')
 
-	DB_PASS=`grep password "$MY_CNF" | sed -E 's/.*=\s*//g'`
-	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`
-
-	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$MYSQL_SQL"; then
+	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$mysql_sql"; then
 		MYSQL="mysql --defaults-file=.my.cnf"
 	fi
 }

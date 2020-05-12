@@ -3,6 +3,7 @@
 #--
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
 # For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
+# Use ARG[docroot] to checkout into ARG[docroot] and link.
 #
 # Example: git_checkout rk@git.tld:/path/to/repo test
 # - if test/ exists: cd test; git pull; cd ..
@@ -12,15 +13,30 @@
 # @param git url
 # @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
-# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
+# @global ARG[docroot] CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # shellcheck disable=SC2086
 #--
 function _git_checkout {
-	local curr git_dir
+	local curr git_dir lnk_dir
 	curr="$PWD"
 	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
 
-	if test -d "$git_dir"; then
+	if ! test -z "${ARG[docroot]}"; then
+		lnk_dir="$2"
+		git_dir="${ARG[docroot]}"
+
+		if [[ -L "$lnk_dir" && "$(realpath "$lnk_dir")" = "$(realpath "$git_dir")" ]]; then
+			_confirm "Update $git_dir (git pull)?" 1
+		elif [[ ! -L "$lnk_dir" && ! -d "$lnk_dir" && ! -d "$git_dir" ]]; then
+			_confirm "Checkout $1 to $git_dir (git clone)?" 1
+		elif test -d "$git_dir"; then
+			_abort "link to $git_dir missing ($lnk_dir)"
+		elif test -L "$lnk_dir"; then
+			_abort "$lnk_dir does not link to $git_dir"
+		elif test -d "$lnk_dir"; then
+			_abort "directory $lnk_dir already exists"
+		fi
+	elif test -d "$git_dir"; then
 		_confirm "Update $git_dir (git pull)?" 1
 	elif ! test -z "$CONFIRM_CHECKOUT"; then
 		_confirm "Checkout $1 to $git_dir (git clone)?" 1
@@ -63,6 +79,8 @@ function _git_checkout {
 			_cd ..
 		fi
 	fi
+
+	[[ ! -z "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
 
 	GIT_PARAMETER=
 }

@@ -8,37 +8,35 @@
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
+# shellcheck disable=SC2086
 #--
 function _mysql_backup {
+	local a dump daily_dump files
+	dump="mysql_dump.$(date +"%H%M").tgz"
+	daily_dump="mysql_dump.$(date +"%Y%m%d").tgz"
+	files="tables.txt"
 
-	local DUMP="mysql_dump."`date +"%H%M"`".tgz"
-	local DAILY_DUMP="mysql_dump."`date +"%Y%m%d"`".tgz"
-	local FILES="tables.txt"
+	test -f "tables.txt" && _abort "last dump failed or is still running"
 
-	if test -f "tables.txt"; then
-		_abort "last dump failed or is still running"
-	fi
+	_cd "$1"
 
-	_cd $1
-
-	echo "update $DUMP and $DAILY_DUMP"
+	echo "update $dump and $daily_dump"
 
 	# dump structure
 	echo "create_tables" > tables.txt
 	_mysql_dump "create_tables.sql" "-d"
-	FILES="$FILES create_tables.sql"
+	files="$files create_tables.sql"
 
-	local T=; for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
-	do
+	for a in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names); do
 		# dump table
-		echo "$T" >> tables.txt
-		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE $T"
-		FILES="$FILES $T"".sql"
+		echo "$a" >> tables.txt
+		_mysql_dump "$a.sql" "--extended-insert=FALSE --no-create-info=TRUE $a"
+		files="$files $a.sql"
 	done
 
-	_create_tgz $DUMP "$FILES"
-	_cp "$DUMP" "$DAILY_DUMP"
-	_rm "$FILES"
+	_create_tgz "$dump" "$files"
+	_cp "$dump" "$daily_dump"
+	_rm "$files"
 
 	_cd
 }

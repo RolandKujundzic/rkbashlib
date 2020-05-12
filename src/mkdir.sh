@@ -8,21 +8,17 @@
 # @global SUDO
 #--
 function _mkdir {
-
-	if test -z "$1"; then	
-		_abort "Empty directory path"
-	fi
-
-	local FLAG=$(($2 + 0))
+	test -z "$1" && _abort "Empty directory path"
+	local flag=$(($2 + 0))
 
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
-		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
+		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
 	else
-		test $((FLAG & 1)) = 1 && _abort "directory $1 already exists"
+		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
 		echo "directory $1 already exists"
 	fi
 
-	test $((FLAG & 2)) = 2 && _chmod 777 "$1"
+	test $((flag & 2)) = 2 && _chmod 777 "$1"
 }
 

@@ -17,22 +17,22 @@ function _license {
 		LICENSE="gpl-3.0"
 	fi
 
-	local LFILE="./LICENSE"
+	local lfile is_gpl3
+	lfile="./LICENSE"
 
-	if test -s "$LFILE"; then
-		local IS_GPL3=`head -n 2 "$LFILE" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3'`
-
-		if ! test -z "$IS_GPL3"; then
-			echo "keep existing gpl-3.0 LICENSE ($LFILE)"
+	if test -s "$lfile"; then
+		is_gpl3=$(head -n 2 "$lfile" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3')
+		if ! test -z "$is_gpl3"; then
+			echo "keep existing gpl-3.0 LICENSE ($lfile)"
 			return
 		fi
 
-		_confirm "overwrite existing $LFILE file with $LICENSE"
+		_confirm "overwrite existing $lfile file with $LICENSE"
 		if test "$CONFIRM" != "y"; then
-			echo "keep existing $LFILE file"
+			echo "keep existing $lfile file"
 			return
 		fi
 	fi
 
-	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$LFILE"
+	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$lfile"
 }

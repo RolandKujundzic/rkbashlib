@@ -1945,6 +1945,7 @@ function _get {
 #--
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
 # For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
+# Use ARG[docroot] to checkout into ARG[docroot] and link.
 #
 # Example: git_checkout rk@git.tld:/path/to/repo test
 # - if test/ exists: cd test; git pull; cd ..
@@ -1954,15 +1955,30 @@ function _get {
 # @param git url
 # @param local directory (optional, default = basename $1 without .git)
 # @param after_checkout (e.g. "./run.sh build")
-# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
+# @global ARG[docroot] CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # shellcheck disable=SC2086
 #--
 function _git_checkout {
-	local curr git_dir
+	local curr git_dir lnk_dir
 	curr="$PWD"
 	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
 
-	if test -d "$git_dir"; then
+	if ! test -z "${ARG[docroot]}"; then
+		lnk_dir="$2"
+		git_dir="${ARG[docroot]}"
+
+		if [[ -L "$lnk_dir" && "$(realpath "$lnk_dir")" = "$(realpath "$git_dir")" ]]; then
+			_confirm "Update $git_dir (git pull)?" 1
+		elif [[ ! -L "$lnk_dir" && ! -d "$lnk_dir" && ! -d "$git_dir" ]]; then
+			_confirm "Checkout $1 to $git_dir (git clone)?" 1
+		elif test -d "$git_dir"; then
+			_abort "link to $git_dir missing ($lnk_dir)"
+		elif test -L "$lnk_dir"; then
+			_abort "$lnk_dir does not link to $git_dir"
+		elif test -d "$lnk_dir"; then
+			_abort "directory $lnk_dir already exists"
+		fi
+	elif test -d "$git_dir"; then
 		_confirm "Update $git_dir (git pull)?" 1
 	elif ! test -z "$CONFIRM_CHECKOUT"; then
 		_confirm "Checkout $1 to $git_dir (git clone)?" 1
@@ -2005,6 +2021,8 @@ function _git_checkout {
 			_cd ..
 		fi
 	fi
+
+	[[ ! -z "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
 
 	GIT_PARAMETER=
 }
@@ -2356,92 +2374,77 @@ function _is_integer {
 
 
 #--
-# Check if ip_address is ip4. IP can be empty if flag & 1.
+# Check if ip_address is ip4.
 #
 # @param ip_address
-# @param flag
+# @param 2^n flag (1 = ip can be empty)
 #--
 function _is_ip4 {
-	local FLAG=$(($2 + 0))
-	if test -z "$1" && test $((FLAG & 1)) = 1; then
-		return;
-	fi
+	local x flag=$(($2 + 0))
 
-	local is_ip4=`echo "$1" | grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'`
+	[[ -z "$1" && $((flag & 1)) = 1 ]] && return
 
-	if test -z "$is_ip4"; then
+	x='\.[0-9]{1,3}'
+	if test -z "$(echo "$1" | grep -E "^[0-9]{1,3}$x$x$x\$")"; then
 		_abort "Invalid ip4 address [$1] use e.g. 32.123.7.38"
 	fi
 }
 
 
 #--
-# Check if ip_address is ip6. IP can be empty if flag & 1.
+# Check if ip_address is ip6.
 #
 # @param ip_address
-# @param flag
+# @param 2^n flag (1 = ip can be empty)
 #--
 function _is_ip6 {
-	local FLAG=$(($2 + 0))
-	if test -z "$1" && test $((FLAG & 1)) = 1; then
-		return;
-	fi
+	local flag x
 
-	local is_ip6=`echo "$3" | \
-		grep -E '^[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}\:[0-9a-f]{1,4}$'`
+	flag=$(($2 + 0))
+	[[ -z "$1" && $((flag & 1)) = 1 ]] && return
 
-	if test -z "$is_ip6"; then
+	x='\:[0-9a-f]{1,4}'
+	if test -z "$(echo "$3" | grep -E "^[0-9a-f]{1,4}$x$x$x$x$x$x$x\$")"; then
 		_abort "Invalid ip6 [$1] use e.g. 2001:4dd1:4fa3:0:95b2:572a:1d5e:4df5"
 	fi
 }
 
 
 #--
-# Abort with error message. Process Expression is either CUSTOM with 
-# regular expression as second parameter (first character must be in brackets)
-# or PORT with port number as second parameter or expression name from list:
+# Abort with error message. Process name is either
+# apache|nginx|docker:N|port:N (N is port number) 
+# or [n]ame. Example:
 #
-# NGINX, APACHE2, DOCKER_PORT_80, DOCKER_PORT_443 
+# if test _is_running apache; then
+# if test _is_running port:80; then
+# if test _is_running [m]ysql; then
 #
-# Example:
-#
-# if test "$(_is_running APACHE2)" = "APACHE2_running"; then
-# if test "$(_is_running PORT 80)" != "PORT_running"; then
-# if test "$(_is_running CUSTOM [a]pache2)" = "CUSTOM_running"; then
-#
-# @param Process Expression Name 
-# @param Regular Expression if first parameter is CUSTOM e.g. [a]pache2
+# @param Process name or expression apache|ngnix|docker:N|port:N|[n]ame
 # @os linux
 # @return bool
+# shellcheck disable=SC2009
 #--
 function _is_running {
 	_os_type linux
+	local rx out res
+	res=0
 
-	test -z "$1" && _abort "no process name"
-
-	# use [a] = a to ignore "grep process"
-	local APACHE2='[a]pache2.*k start'
-	local DOCKER_PORT_80='[d]ocker-proxy.* -host-port 80'
-	local DOCKER_PORT_443='[d]ocker-proxy.* -host-port 443'
-	local NGINX='[n]ginx.*master process'
-	local IS_RUNNING=
-
-	if ! test -z "$2"; then
-		if test "$1" = "CUSTOM"; then
-			IS_RUNNING=$(ps aux 2>/dev/null | grep -E "$2")
-		elif test "$1" = "PORT"; then
-			IS_RUNNING=$(netstat -tulpn 2>/dev/null | grep -E ":$2 .+:* .+LISTEN.*")
-		fi
-	elif test -z "${!1}"; then
-		_abort "invalid grep expression name $1 (use NGINX, APACHE2, DOCKER_PORT80, ... or CUSTOM '[n]ame')"
+	if test "$1" = 'apache'; then
+		rx='[a]pache2.*k start'
+	elif test "$1" = 'nginx'; then
+		rx='[n]ginx.*master process'
+	elif test "${1:0:7}" = 'docker:'; then
+		rx="[d]ocker-proxy.* -host-port ${1:7}"
+	elif test "${1:0:5}" = 'port:'; then
+		out=$(netstat -tulpn 2>/dev/null | grep -E ":${1:5} .+:* .+LISTEN.*")
 	else
-		IS_RUNNING=$(ps aux 2>/dev/null | grep -E "${!1}")
+		_abort "invalid [$1] use apache|nginx|docker:PORT|port:N|rx:[n]ame"
 	fi
 
-	local RES=1  # not running
-	test -z "$IS_RUNNING" || RES=0
+	test -z "$rx" || out=$(ps aux 2>/dev/null | grep -E "$rx")
 
-	return $RES
+	test -z "$out" && res=1
+	return $res	
 }
 
 
@@ -2506,51 +2509,43 @@ function _jq {
 #
 # @param pid [pid|file|rx]:...
 # @param abort if process does not exist (optional)
+# shellcheck disable=SC2009
 #--
 function _kill_process {
-	local MY_PID=
+	local msg my_pid pid_file
 
 	case $1 in
 		file:*)
-			local PID_FILE="${1#*:}"
+			pid_file="${1#*:}"
 
-			if ! test -s "$PID_FILE"; then
-				_abort "no such pid file $PID_FILE"
+			if ! test -s "$pid_file"; then
+				_abort "no such pid file $pid_file"
 			fi
 
-			MY_PID=`head -3 "$PID_FILE" | grep "PID=" | sed -e "s/PID=//"`
-			if test -z "$MY_PID"; then
-				MY_PID=`cat "$PID_FILE" | grep -E '^[1-9][0-9]{0,4}$'`
+			my_pid=$(head -3 "$pid_file" | grep "PID=" | sed -e "s/PID=//")
+			if test -z "$my_pid"; then
+				my_pid=$(grep -E '^[1-9][0-9]{0,4}$' "$pid_file")
 			fi
 			;;
 		pid:*)
-			MY_PID="${1#*:}"
-			;;
+			my_pid="${1#*:}";;
 		rx:*)
-			MY_PID=`ps aux | grep -E "${1#*:}" | awk '{print $2}'`
-			;;
+			my_pid=$(ps aux | grep -E "${1#*:}" | awk '{print $2}');;
 	esac
 
-	if test -z "$MY_PID"; then
+	if test -z "$my_pid"; then
 		_abort "no pid found ($1)"
 	fi
 
-	local FOUND_PID=`ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$MY_PID"`
-	if test -z "$FOUND_PID"; then
-		local MSG="no such pid $MY_PID"
+	if test -z "$(ps aux | awk '{print $2}' | grep -E '^[1-9][0-9]{0,4}$' | grep "$my_pid")"; then
+		msg="no such pid $my_pid"
 
-		if test "${1:0:5}" = "file:"; then
-			MSG="$MSG - update ${1:5}" 
-		fi
-
-		if ! test -z "$2"; then
-			_abort "$MSG"
-		fi
-
-		echo "$MSG"
+		test "${1:0:5}" = "file:" && msg="$msg - update ${1:5}" 
+		test -z "$2" || _abort "$msg"
+		echo "$msg"
 	else
-		echo "kill $MY_PID"
-		kill "$MY_PID" || _abort "kill '$MY_PID'"
+		echo "kill $my_pid"
+		kill "$my_pid" || _abort "kill '$my_pid'"
 	fi
 }
 
@@ -2583,24 +2578,24 @@ function _license {
 		LICENSE="gpl-3.0"
 	fi
 
-	local LFILE="./LICENSE"
+	local lfile is_gpl3
+	lfile="./LICENSE"
 
-	if test -s "$LFILE"; then
-		local IS_GPL3=`head -n 2 "$LFILE" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3'`
-
-		if ! test -z "$IS_GPL3"; then
-			echo "keep existing gpl-3.0 LICENSE ($LFILE)"
+	if test -s "$lfile"; then
+		is_gpl3=$(head -n 2 "$lfile" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3')
+		if ! test -z "$is_gpl3"; then
+			echo "keep existing gpl-3.0 LICENSE ($lfile)"
 			return
 		fi
 
-		_confirm "overwrite existing $LFILE file with $LICENSE"
+		_confirm "overwrite existing $lfile file with $LICENSE"
 		if test "$CONFIRM" != "y"; then
-			echo "keep existing $LFILE file"
+			echo "keep existing $lfile file"
 			return
 		fi
 	fi
 
-	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$LFILE"
+	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$lfile"
 }
 
 #--
@@ -2726,25 +2721,22 @@ function _lynx {
 
 #--
 # Show where php string function needs to change to mb_* version.
+# shellcheck disable=SC2034
 #--
 function _mb_check {
+	_require_dir src
+	local a mb_func
 
 	echo -e "\nSearch all *.php files in src/ - output filename if string function\nmight need to be replaced with mb_* version.\n"
 	echo -e "Type any key to continue or wait 5 sec.\n"
-
-	read -n1 -t 5 ignore_keypress
+	read -r -n1 -t 5 ignore_keypress
 
 	# do not use ereg*
-	MB_FUNCTIONS="parse_str split stripos stristr strlen strpos strrchr strrichr strripos strrpos strstr strtolower strtoupper strwidth substr_count substr"
+	mb_func="parse_str split stripos stristr strlen strpos strrchr strrichr 
+		strripos strrpos strstr strtolower strtoupper strwidth substr_count substr"
 
-	local a=; for a in $MB_FUNCTIONS
-	do
-		FOUND=`grep -d skip -r --include=*.php $a'(' src | grep -v 'mb_'$a'('`
-
-		if ! test -z "$FOUND"
-		then
-			echo "$FOUND"
-		fi
+	for a in $mb_func; do
+		grep -d skip -r --include=*.php "$a(" src | grep -v "mb_$a("
 	done
 }
 
@@ -2782,7 +2774,7 @@ function _md5 {
 # @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# shellcheck disable=SC2086,SC2034
+# shellcheck disable=SC2086,SC2034,SC2120
 #--
 function _merge_sh {
 	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck
@@ -2865,22 +2857,18 @@ function _merge_static {
 # @global SUDO
 #--
 function _mkdir {
-
-	if test -z "$1"; then	
-		_abort "Empty directory path"
-	fi
-
-	local FLAG=$(($2 + 0))
+	test -z "$1" && _abort "Empty directory path"
+	local flag=$(($2 + 0))
 
 	if ! test -d "$1"; then
 		echo "mkdir -p $1"
-		$SUDO mkdir -p $1 || _abort "mkdir -p '$1'"
+		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
 	else
-		test $((FLAG & 1)) = 1 && _abort "directory $1 already exists"
+		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
 		echo "directory $1 already exists"
 	fi
 
-	test $((FLAG & 2)) = 2 && _chmod 777 "$1"
+	test $((flag & 2)) = 2 && _chmod 777 "$1"
 }
 
 
@@ -2889,21 +2877,14 @@ function _mkdir {
 #
 # @param device
 # @param directory (mount point)
+# shellcheck disable=SC2086,SC2143
 #--
 function _mount {
-	local HAS_FS=`file -sL $1 | grep ' filesystem'`
-	if test -z "$HAS_FS"; then
-		# check if fat32 boot
-		HAS_FS=`file -sL $1 | grep 'MBR boot sector'`
+	[[ -z "$(file -sL $1 | grep ' filesystem')" && -z "$(file -sL $1 | grep 'MBR boot sector')" ]] && \
+		_abort "no filesystem on $1"
 
-		test -z "$HAS_FS" && _abort "no filesystem on $1"
-	fi
-
-	local HAS_MOUNT=`mount | grep -E "^$1 on $2"`
-
-	if test -z "$HAS_MOUNT"; then
-		HAS_MOUNT=`mount | grep -E "^$1 on "`
-		if ! test -z "$HAS_MOUNT"; then
+	if test -z "$(mount | grep -E "^$1 on $2")"; then
+		if ! test -z "$(mount | grep -E "^$1 on ")"; then
 			_confirm "umount $1 (and re-mount as $2)" 1
 			test "$CONFIRM" = "y" || _abort "user abort"
 			umount /dev/sdb2 || _abort "umount /dev/sdb2"
@@ -2914,8 +2895,7 @@ function _mount {
 			mount $1 "$2" || _abort "mount $1 '$2'"
 		fi
 
-		HAS_MOUNT=`mount | grep -E "^$1 on $2"`
-		test -z "$HAS_MOUNT" && _abort "failed to mount $1 as $2"
+		test -z "$(mount | grep -E "^$1 on $2")" && _abort "failed to mount $1 as $2"
 	else
 		echo "$1 is already mounted as $2"
 	fi
@@ -2929,7 +2909,7 @@ function _mount {
 # @param echo option (-n|-e|default='')
 #--
 function _msg {
-	echo $2 "$1"
+	echo "$2" "$1"
 }
 
 #--
@@ -2974,24 +2954,22 @@ function _mv {
 # @global SQL_PASS MYSQL
 # @export DB_NAME DB_PASS MYSQL(=mysql --defaults-file=.my.cnf)
 # @param path to .my.cnf (default = .my.cnf)
+# shellcheck disable=SC2120
 #--
 function _my_cnf {
-	local MY_CNF="$1"
+	local my_cnf mysql_sql
+	my_cnf="$1"
 
-	if ! test -z "$SQL_PASS" && ! test -z "$MYSQL"; then
-		local MYSQL_SQL="$MYSQL"
-	fi
+	[[ -z "$SQL_PASS" || -z "$MYSQL" ]] || mysql_sql="$MYSQL"
 
-	test -z "$MY_CNF" && MY_CNF=".my.cnf"
-	test -s "$MY_CNF" || return
+	test -z "$my_cnf" && my_cnf=".my.cnf"
+	test -s "$my_cnf" || return
+	test -z "$(cat ".my.cnf" 2>/dev/null)" && return
 
-	local MY_CNF_CONTENT=`cat ".my.cnf" 2> /dev/null`
-	test -z "$MY_CNF_CONTENT" && return
+	DB_PASS=$(grep password "$my_cnf" | sed -E 's/.*=\s*//g')
+	DB_NAME=$(grep user "$my_cnf" | sed -E 's/.*=\s*//g')
 
-	DB_PASS=`grep password "$MY_CNF" | sed -E 's/.*=\s*//g'`
-	DB_NAME=`grep user "$MY_CNF" | sed -E 's/.*=\s*//g'`
-
-	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$MYSQL_SQL"; then
+	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$mysql_sql"; then
 		MYSQL="mysql --defaults-file=.my.cnf"
 	fi
 }
@@ -3005,37 +2983,35 @@ function _my_cnf {
 #
 # @param backup directory
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
+# shellcheck disable=SC2086
 #--
 function _mysql_backup {
+	local a dump daily_dump files
+	dump="mysql_dump.$(date +"%H%M").tgz"
+	daily_dump="mysql_dump.$(date +"%Y%m%d").tgz"
+	files="tables.txt"
 
-	local DUMP="mysql_dump."`date +"%H%M"`".tgz"
-	local DAILY_DUMP="mysql_dump."`date +"%Y%m%d"`".tgz"
-	local FILES="tables.txt"
+	test -f "tables.txt" && _abort "last dump failed or is still running"
 
-	if test -f "tables.txt"; then
-		_abort "last dump failed or is still running"
-	fi
+	_cd "$1"
 
-	_cd $1
-
-	echo "update $DUMP and $DAILY_DUMP"
+	echo "update $dump and $daily_dump"
 
 	# dump structure
 	echo "create_tables" > tables.txt
 	_mysql_dump "create_tables.sql" "-d"
-	FILES="$FILES create_tables.sql"
+	files="$files create_tables.sql"
 
-	local T=; for T in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names)
-	do
+	for a in $(mysql $MYSQL_CONN -e 'show tables' -s --skip-column-names); do
 		# dump table
-		echo "$T" >> tables.txt
-		_mysql_dump "$T"".sql" "--extended-insert=FALSE --no-create-info=TRUE $T"
-		FILES="$FILES $T"".sql"
+		echo "$a" >> tables.txt
+		_mysql_dump "$a.sql" "--extended-insert=FALSE --no-create-info=TRUE $a"
+		files="$files $a.sql"
 	done
 
-	_create_tgz $DUMP "$FILES"
-	_cp "$DUMP" "$DAILY_DUMP"
-	_rm "$FILES"
+	_create_tgz "$dump" "$files"
+	_cp "$dump" "$daily_dump"
+	_rm "$files"
 
 	_cd
 }
@@ -5163,23 +5139,23 @@ function _ssh_auth {
 function _stop_http {
 	_os_type linux
 
-	if ! _is_running PORT 80; then
+	if ! _is_running port:80; then
 		echo "no service on port 80"
 		return
 	fi
 
-	if _is_running DOCKER_PORT_80; then
+	if _is_running docker:80; then
 		echo "ignore docker service on port 80"
 		return
 	fi
 
-	if _is_running NGINX; then
+	if _is_running nginx; then
 		echo "stop nginx"
 		sudo service nginx stop
 		return
 	fi
 
-	if _is_running APACHE2; then
+	if _is_running apache; then
 		echo "stop apache2"
 		sudo service apache2 stop
 		return
