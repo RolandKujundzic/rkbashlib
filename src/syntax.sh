@@ -31,6 +31,8 @@ function _syntax {
 		test "$old_msg" != "$msg" && msg="$msg\n"
 	done
 
+	test "${msg: -3:1}" = '|' && msg="${msg:0:-3}\n"
+
 	base=$(basename "$APP")
 	if ! test -z "$APP_PREFIX"; then
 		echo -e "\nSYNTAX: $APP_PREFIX $base $msg" 1>&2
