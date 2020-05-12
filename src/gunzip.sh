@@ -7,15 +7,8 @@
 # @param ignore_if_not_gzip (optional)
 #--
 function _gunzip {
-
-	if ! test -f "$1"; then
-		_abort "no such gzip file [$1]"
-	fi
-
-	local REAL_FILE=`realpath "$1"`
-	local IS_GZIP=`file "$REAL_FILE"  | grep 'gzip compressed data'`
-
-	if test -z "$IS_GZIP"; then
+	test -f "$1" || _abort "no such gzip file [$1]"
+	if test -z "$(file "$(realpath "$1")"  | grep 'gzip compressed data')"; then
 		if test -z "$2"; then
 			_abort "invalid gzip file [$1]"
 		else 
@@ -24,18 +17,19 @@ function _gunzip {
 		fi
 	fi
 
-	local TARGET=`echo "$1" | sed -e 's/\.gz$//'`
+	local target
+	target="${1%*.gz}"
 
 	if test -L "$1"; then
-		echo "gunzip -c '$1' > '$TARGET'"
-		gunzip -c "$1" > "$TARGET"
+		echo "gunzip -c '$1' > '$target'"
+		gunzip -c "$1" > "$target"
 	else
 		echo "gunzip $1"
 		gunzip "$1"
 	fi
 
-	if ! test -f "$TARGET"; then
-		_abort "gunzip failed - no such file $TARGET"
+	if ! test -f "$target"; then
+		_abort "gunzip failed - no such file $target"
 	fi
 }
 

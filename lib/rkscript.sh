@@ -2076,15 +2076,8 @@ function _git_update {
 # @param ignore_if_not_gzip (optional)
 #--
 function _gunzip {
-
-	if ! test -f "$1"; then
-		_abort "no such gzip file [$1]"
-	fi
-
-	local REAL_FILE=`realpath "$1"`
-	local IS_GZIP=`file "$REAL_FILE"  | grep 'gzip compressed data'`
-
-	if test -z "$IS_GZIP"; then
+	test -f "$1" || _abort "no such gzip file [$1]"
+	if test -z "$(file "$(realpath "$1")"  | grep 'gzip compressed data')"; then
 		if test -z "$2"; then
 			_abort "invalid gzip file [$1]"
 		else 
@@ -2093,18 +2086,19 @@ function _gunzip {
 		fi
 	fi
 
-	local TARGET=`echo "$1" | sed -e 's/\.gz$//'`
+	local target
+	target="${1%*.gz}"
 
 	if test -L "$1"; then
-		echo "gunzip -c '$1' > '$TARGET'"
-		gunzip -c "$1" > "$TARGET"
+		echo "gunzip -c '$1' > '$target'"
+		gunzip -c "$1" > "$target"
 	else
 		echo "gunzip $1"
 		gunzip "$1"
 	fi
 
-	if ! test -f "$TARGET"; then
-		_abort "gunzip failed - no such file $TARGET"
+	if ! test -f "$target"; then
+		_abort "gunzip failed - no such file $target"
 	fi
 }
 
@@ -2235,26 +2229,25 @@ require valid-user"
 #--
 function _install_app {
 	test -z "$1" && _abort "use _install_app . $2"
-	test -z "$2" || _dl_unpack $1 $2
+	test -z "$2" || _dl_unpack "$1" "$2"
 
 	_require_dir "$1"
 	_require_global APP_PREFIX
 
-	test -d $APP_PREFIX || _mkdir $APP_PREFIX
+	test -d "$APP_PREFIX" || _mkdir "$APP_PREFIX"
 
-	local dir
+	local dir file entry
+
 	for dir in $APP_DIR_LIST; do
-		_mkdir `dirname "$APP_PREFIX/$dir"`
+		_mkdir "$(dirname "$APP_PREFIX/$dir")"
 		_cp "$1/$dir" "$APP_PREFIX/$dir"
 	done
 
-	local file
 	for file in $APP_FILE_LIST; do
-		_mkdir `dirname "$APP_PREFIX/$file"`
+		_mkdir "$(dirname "$APP_PREFIX/$file")"
 		_cp "$1/$file" "$APP_PREFIX/$file" md5
 	done
 
-	local entry
 	for entry in $APP_SYNC; do
 		_msg "rsync -av '$1/$entry' '$APP_PREFIX'/"
 		$SUDO rsync -av "$1/$entry" "$APP_PREFIX"/ >/dev/null 2>/dev/null
