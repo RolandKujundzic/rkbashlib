@@ -1790,28 +1790,30 @@ function _encrypt {
 #
 # @param tgz_file
 # @param path (optional - if set check if path was created)
+# global SECONDS
 #--
 function _extract_tgz {
 	test -s "$1" || _abort "_extract_tgz: Invalid archive path [$1]"
-	local TARGET="$2"
+	local target 
+	target="$2"
 
-	if test -z "$TARGET" && test "${1: -4}" = ".tgz"; then
-		TARGET="${1:0:-4}"
+	if test -z "$target" && test "${1: -4}" = ".tgz"; then
+		target="${1:0:-4}"
 	fi
 
-	if ! test -z "$TARGET" && test -d $TARGET; then
-		_rm "$TARGET"
+	if ! test -z "$target" && test -d "$target"; then
+		_rm "$target"
 	fi
 
-	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "_extract_tgz: invalid archive '$1'" 
+	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "_extract_tgz: invalid archive '$1'"
 
   echo "extract archive $1"
   SECONDS=0
-  tar -xzf $1 >/dev/null || _abort "tar -xzf $1 failed"
-  echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+  tar -xzf "$1" >/dev/null || _abort "tar -xzf $1 failed"
+  echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
-	if ! test -z "$TARGET" && ! test -d "$TARGET" && ! test -f "$TARGET"; then
-		_abort "$TAREGET was not created"
+	if ! test -z "$target" && ! test -d "$target" && ! test -f "$target"; then
+		_abort "$target was not created"
 	fi
 }
 
@@ -1822,32 +1824,34 @@ function _extract_tgz {
 # @param directory
 # @param privileges (default 644)
 # @param options (default "! -path '.*/' ! -path 'bin/*' ! -name '.*' ! -name '*.sh'")
+# shellcheck disable=SC2086
 #--
 function _file_priv {
 	_require_program realpath
+	local dir priv msg find_opt
 
-	local DIR=`realpath "$1"`
-	test -d "$DIR" || _abort "no such directory [$DIR]"
+	dir=$(realpath "$1")
+	test -d "$dir" || _abort "no such directory [$dir]"
 
-	local PRIV="$2"
-	if test -z "$PRIV"; then
-		PRIV=644
+	priv="$2"
+	if test -z "$priv"; then
+		priv=644
 	else
-		_is_integer "$PRIV"
+		_is_integer "$priv"
 	fi
 
-	local MSG="chmod $PRIV files in $1/"
+	msg="chmod $priv files in $1/"
 
 	if test -z "$3"; then
-		FIND_OPT="! -path '/.*/' ! -path '/bin/*' ! -name '.*' ! -name '*.sh'"
-		MSG="$MSG ($FIND_OPT)"
+		find_opt="! -path '/.*/' ! -path '/bin/*' ! -name '.*' ! -name '*.sh'"
+		msg="$msg ($find_opt)"
 	else
-		FIND_OPT="$3"
-		MSG="$MSG ($FIND_OPT)"
+		find_opt="$3"
+		msg="$msg ($find_opt)"
 	fi
 
-	_msg "$MSG"
-	find "$1" $FIND_OPT -type f -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type f -exec chmod $PRIV {} \;"
+	_msg "$msg"
+	find "$1" $find_opt -type f -exec chmod $priv {} \; || _abort "find '$1' $find_opt -type f -exec chmod $priv {} \;"
 }
 
 
@@ -1861,41 +1865,40 @@ function _file_priv {
 # @return bool (if $2=1)
 #--
 function _find_docroot {
-	local DIR=
-	local LAST_DIR=
+	local dir base last_dir
 
 	if ! test -z "$DOCROOT"; then
-		DOCROOT=`realpath $DOCROOT`
+		DOCROOT=$(realpath "$DOCROOT")
 		_msg "use existing DOCROOT=$DOCROOT"
 		test -z "$DOCROOT" && { test -z "$2" && _abort "invalid DOCROOT" || return 1; }
 		return 0
 	fi
 
 	if test -z "$1"; then
-		DIR=$(realpath "$PWD")
+		dir=$(realpath "$PWD")
 	else
-		DIR=$(realpath "$1")
+		dir=$(realpath "$1")
 	fi
 
-	local BASE=`basename $DIR`
-	test "$BASE" = "cms" && DOCROOT=`dirname $DIR`
+	base=$(basename "$dir")
+	test "$base" = "cms" && DOCROOT=$(dirname "$dir")
 
 	if ! test -z "$DOCROOT" && test -f "$DOCROOT/index.php" && (test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data"); then
 		_msg "use DOCROOT=$DOCROOT"
 		return 0
 	fi
 
-	while test -d "$DIR" && ! (test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data")); do
-		LAST_DIR="$DIR"
-		DIR=$(dirname "$DIR")
+	while test -d "$dir" && ! (test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data")); do
+		last_dir="$dir"
+		dir=$(dirname "$dir")
 
-		if test "$DIR" = "$LAST_DIR" || ! test -d "$DIR"; then
+		if test "$dir" = "$last_dir" || ! test -d "$dir"; then
 			test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
 		fi
 	done
 
-	if test -f "$DIR/index.php" && (test -f "$DIR/settings.php" || test -d "$DIR/data"); then
-		DOCROOT="$DIR"
+	if test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data"); then
+		DOCROOT="$dir"
 	else
 		test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
 	fi
