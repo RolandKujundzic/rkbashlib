@@ -1568,32 +1568,35 @@ function _decrypt {
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
+# shellcheck disable=SC2086
 #--
 function _dir_priv {
 	_require_program realpath
 
-	local DIR=`realpath "$1"`
-	test -d "$DIR" || _abort "no such directory [$DIR]"
+	local dir priv msg find_opt
 
-	local PRIV="$2"
-	if test -z "$PRIV"; then
-		PRIV=755
+	dir=$(realpath "$1")
+	test -d "$dir" || _abort "no such directory [$dir]"
+
+	priv="$2"
+	if test -z "$priv"; then
+		priv=755
 	else
-		_is_integer "$PRIV"
+		_is_integer "$priv"
 	fi
 
-	local MSG="chmod $PRIV directories in $1/"
+	msg="chmod $priv directories in $1/"
 
 	if test -z "$3"; then
-    FIND_OPT="! -path '/.*/'"
-    MSG="$MSG ($FIND_OPT)"
+    find_opt="! -path '/.*/'"
+    msg="$msg ($find_opt)"
 	else
-    FIND_OPT="$3"
-    MSG="$MSG ($FIND_OPT)"	
+    find_opt="$3"
+    msg="$msg ($find_opt)"	
   fi
 
-	_msg "$MSG"
-	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
+	_msg "$msg"
+	find "$1" $find_opt -type d -exec chmod $priv {} \; || _abort "find '$1' $find_opt -type d -exec chmod $priv {} \;"
 }
 
 
@@ -1609,7 +1612,9 @@ function _dl_unpack {
 		return
 	fi
 
-	local archive=`basename $2`
+	local archive
+	archive=$(basename "$2")
+
 	if ! test -f "$archive"; then
 		_msg "Download $2"
 		_wget "$2"
@@ -1617,12 +1622,10 @@ function _dl_unpack {
 
 	test -f "$archive" || _abort "missing $archive - $2 download failed"
 
-	local extension="${archive##*.}"
-	if test "$extension" = "zip"; then
+	if test "${archive##*.}" = "zip"; then
 		_msg "Unpack zip: unzip '$archive'"
 
-		local has_dir=`unzip -l "$archive" | grep "$1\$"`
-		if test -z "$has_dir"; then
+		if test -z "$(unzip -l "$archive" | grep "$1\$")"; then
 			_mkdir "$1"
 			_cd "$1"
 			unzip "../$archive" || _abort "unzip '../$archive'"
@@ -1647,9 +1650,7 @@ function _dl_unpack {
 function _docker_rm {
 	_docker_stop "$1"
 
-	local HAS_CONTAINER=`docker ps -a | grep "$1"`
-
-	if ! test -z "$HAS_CONTAINER"; then
+	if ! test -z "$(docker ps -a | grep "$1")"; then
 		echo "docker rm $1"
 		docker rm "$1"
 	fi
@@ -1661,9 +1662,11 @@ function _docker_rm {
 #
 # @param name
 # @param config file
+# @global CURR WORKSPACE 
+# shellcheck disable=SC2086
 #--
 function _docker_run {
-	_docker_rm $1
+	_docker_rm "$1"
 
 	if ! test -z "$WORKSPACE" && ! test -z "$CURR" && test -d "$WORKSPACE/linux/rkdocker"; then
 		_cd "$WORKSPACE/linux/rkdocker"
@@ -1671,20 +1674,20 @@ function _docker_run {
 		_abort "Export WORKSPACE (where $WORKSPACE/linux/rkdocker exists) and CURR=path/current/directory"
 	fi
 
-	local CONFIG=
+	local config
 
 	if test -f "$CURR/$2"; then
-		CONFIG="$CURR/$2"
+		config="$CURR/$2"
 	elif test -f "$2"; then
-		CONFIG="$2"
+		config="$2"
 	else
 		_abort "No such configuration $CURR/$2 ($PWD/$2)"
 	fi
 	
-  echo "DOCKER_NAME=$1 ./run.sh $CONFIG start"
+  echo "DOCKER_NAME=$1 ./run.sh $config start"
   DOCKER_NAME=$1 ./run.sh $2 start
 
-	cd $CURR
+	_cd "$CURR"
 }
 
 
@@ -1694,9 +1697,7 @@ function _docker_run {
 # @param name
 #--
 function _docker_stop {
-	local HAS_CONTAINER=`docker ps | grep "$1"`
-
-	if ! test -z "$HAS_CONTAINER"; then
+	if ! test -z "$(docker ps | grep "$1")"; then
 		echo "docker stop $1"
 		docker stop "$1"
 	fi
@@ -1711,35 +1712,24 @@ function _docker_stop {
 # @param bool allow_fail
 #--
 function _download {
-	if test -z "$2"; then
-		_abort "Download target path is empty"
-	fi
+	test -z "$2" && _abort "Download target path is empty"
+	test -z "$1" && _abort "Download url is empty"
+	test -z "$3" && echo "Download $1 as $2"
 
-	if test -z "$1"; then
-		_abort "Download url is empty"
-	fi
 
-	local PDIR=`dirname "$2"`
-	_mkdir "$PDIR"
-	
-	if test -z "$3"; then
-		echo "Download $1 as $2"
-	fi
-
+	_mkdir "$(dirname "$2")"
 	_wget "$1" "$2"
-
-	if test -z "$3" && ! test -s "$2"; then
-		_abort "Download of $2 as $1 failed"
-	fi
+	[[ -z "$3" && ! -s "$2" ]] && _abort "Download of $2 as $1 failed"
 
 	if ! test -z "$3"; then
 		if test -s "$2"; then
 			echo "Download $1 as $2"
 		elif test -f "$2"; then
-			rm "$2"
+			_rm "$2"
 		fi
 	fi
 }
+
 
 #--
 # Encrypt file $1 (as $1.cpt) or directory (as $1.tgz.cpt). 

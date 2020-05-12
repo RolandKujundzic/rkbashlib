@@ -6,9 +6,7 @@
 # @param name
 #--
 function _docker_stop {
-	local HAS_CONTAINER=`docker ps | grep "$1"`
-
-	if ! test -z "$HAS_CONTAINER"; then
+	if ! test -z "$(docker ps | grep "$1")"; then
 		echo "docker stop $1"
 		docker stop "$1"
 	fi

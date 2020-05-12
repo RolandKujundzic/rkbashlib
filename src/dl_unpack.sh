@@ -12,7 +12,9 @@ function _dl_unpack {
 		return
 	fi
 
-	local archive=`basename $2`
+	local archive
+	archive=$(basename "$2")
+
 	if ! test -f "$archive"; then
 		_msg "Download $2"
 		_wget "$2"
@@ -20,12 +22,10 @@ function _dl_unpack {
 
 	test -f "$archive" || _abort "missing $archive - $2 download failed"
 
-	local extension="${archive##*.}"
-	if test "$extension" = "zip"; then
+	if test "${archive##*.}" = "zip"; then
 		_msg "Unpack zip: unzip '$archive'"
 
-		local has_dir=`unzip -l "$archive" | grep "$1\$"`
-		if test -z "$has_dir"; then
+		if test -z "$(unzip -l "$archive" | grep "$1\$")"; then
 			_mkdir "$1"
 			_cd "$1"
 			unzip "../$archive" || _abort "unzip '../$archive'"

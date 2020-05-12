@@ -6,31 +6,34 @@
 # @param directory
 # @param privileges (default 755)
 # @param options (default "! -path '/.*/'")
+# shellcheck disable=SC2086
 #--
 function _dir_priv {
 	_require_program realpath
 
-	local DIR=`realpath "$1"`
-	test -d "$DIR" || _abort "no such directory [$DIR]"
+	local dir priv msg find_opt
 
-	local PRIV="$2"
-	if test -z "$PRIV"; then
-		PRIV=755
+	dir=$(realpath "$1")
+	test -d "$dir" || _abort "no such directory [$dir]"
+
+	priv="$2"
+	if test -z "$priv"; then
+		priv=755
 	else
-		_is_integer "$PRIV"
+		_is_integer "$priv"
 	fi
 
-	local MSG="chmod $PRIV directories in $1/"
+	msg="chmod $priv directories in $1/"
 
 	if test -z "$3"; then
-    FIND_OPT="! -path '/.*/'"
-    MSG="$MSG ($FIND_OPT)"
+    find_opt="! -path '/.*/'"
+    msg="$msg ($find_opt)"
 	else
-    FIND_OPT="$3"
-    MSG="$MSG ($FIND_OPT)"	
+    find_opt="$3"
+    msg="$msg ($find_opt)"	
   fi
 
-	_msg "$MSG"
-	find "$1" $FIND_OPT -type d -exec chmod $PRIV {} \; || _abort "find '$1' $FIND_OPT -type d -exec chmod $PRIV {} \;"
+	_msg "$msg"
+	find "$1" $find_opt -type d -exec chmod $priv {} \; || _abort "find '$1' $find_opt -type d -exec chmod $priv {} \;"
 }
 
