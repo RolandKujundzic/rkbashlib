@@ -3356,25 +3356,23 @@ function _mysql_restore {
 
 
 #--
-# Split php database connect string SETTINGS_DSN. If DB_NAME and DB_PASS are set
+# Split php database connect string settings_dsn. If DB_NAME and DB_PASS are set
 # do nothing.
 #
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @param int don't abort (default = 0 = abort)
-# @export DB_NAME DB_PASS MYSQL
+# @global DOCROOT PATH_RKPHPLIB
+# @export DB_NAME DB_PASS MYSQL DOCROOT
 # @return bool
+# shellcheck disable=SC2016
 #--
 function _mysql_split_dsn {
-	local PATH_RKPHPLIB=$PATH_RKPHPLIB
-	local SETTINGS_DSN=
-	local PHP_CODE=
+	local rkphplib settings_dsn php_code split_dsn
+	rkphplib="$PATH_RKPHPLIB"
 
 	_my_cnf
 
-	if ! test -z "$DB_NAME" && ! test -z "$DB_PASS"; then
-		# use already defined DB_NAME and DB_PASS
-		return 0
-	fi
+	[[ -z "$DB_NAME" || -z "$DB_PASS" ]] || return 0
 
 	if ! test -f "$1"; then
 		test -z "$DOCROOT" && { _find_docroot "$PWD" "$2" || return 1; }
@@ -3388,48 +3386,48 @@ function _mysql_split_dsn {
 		test -z "$2" && _abort "no such file [$1]" || return 1
 	fi
 
-	PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
-	SETTINGS_DSN=`php -r "$PHP_CODE"`
+	php_code='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("settings_dsn")) print settings_dsn;'
+	settings_dsn=$(php -r "$php_code")
 
-	if test -z "$PATH_RKPHPLIB"; then
-		PHP_CODE='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("PATH_RKPHPLIB")) print PATH_RKPHPLIB;'
-		PATH_RKPHPLIB=`php -r "$PHP_CODE"`
+	if test -z "$rkphplib"; then
+		php_code='ob_start(); include("'$1'"); $html = ob_get_clean(); if (defined("rkphplib")) print rkphplib;'
+		rkphplib=$(php -r "$php_code")
 	fi
 	
-	if test -z "$PATH_RKPHPLIB" && test -d "/webhome/.php/rkphplib/src"; then
-		PATH_RKPHPLIB="/webhome/.php/rkphplib/src/"
+	if test -z "$rkphplib" && test -d "/webhome/.php/rkphplib/src"; then
+		rkphplib="/webhome/.php/rkphplib/src/"
 	fi
 
-	if test -z "$SETTINGS_DSN" && test -f "settings.php"; then
-		PHP_CODE='ob_start(); include("settings.php"); $html = ob_get_clean(); if (defined("SETTINGS_DSN")) print SETTINGS_DSN;'
-		SETTINGS_DSN=`php -r "$PHP_CODE"`
+	if test -z "$settings_dsn" && test -f "settings.php"; then
+		php_code='ob_start(); include("settings.php"); $html = ob_get_clean(); if (defined("settings_dsn")) print settings_dsn;'
+		settings_dsn=$(php -r "$php_code")
 		DOCROOT="$PWD"
 	fi
 
-	if ! test -z "$DOCROOT" && ! test -z "$PATH_RKPHPLIB" && ! test -f "$PATH_RKPHPLIB/Exception.class.php" && \
-			test -f "$DOCROOT/$PATH_RKPHPLIB/Exception.class.php"; then
-		PATH_RKPHPLIB="$DOCROOT/$PATH_RKPHPLIB"
+	if ! test -z "$DOCROOT" && ! test -z "$rkphplib" && ! test -f "$rkphplib/Exception.class.php" && \
+			test -f "$DOCROOT/$rkphplib/Exception.class.php"; then
+		rkphplib="$DOCROOT/$rkphplib"
 	fi
 
-	if test -z "$SETTINGS_DSN"; then
-		test -z "$2" && _abort "autodetect SETTINGS_DSN failed" || return 1
+	if test -z "$settings_dsn"; then
+		test -z "$2" && _abort "autodetect settings_dsn failed" || return 1
 	fi
  
-	if test -z "$PATH_RKPHPLIB"; then
-		if test -d "/home/rk/Desktop/workspace/rkphplib/src"; then
-			PATH_RKPHPLIB="/home/rk/Desktop/workspace/rkphplib/src/"
+	if test -z "$rkphplib"; then
+		if test -d "$HOME/workspace/rkphplib/src"; then
+			rkphplib="$HOME/workspace/rkphplib/src/"
 		else
-			test -z "$2" && _abort "autodetect PATH_RKPHPLIB failed - export PATH_RKPHPLIB=/path/to/rkphplib/src/" || return 1
+			test -z "$2" && _abort "autodetect rkphplib failed - export rkphplib=/path/to/rkphplib/src/" || return 1
 		fi
 	fi
 
-	local SPLIT_DSN='require("'$PATH_RKPHPLIB'ADatabase.class.php"); $dsn = \rkphplib\ADatabase::splitDSN("'$SETTINGS_DSN'");'
+	local split_dsn='require("'$rkphplib'ADatabase.class.php"); $dsn = \rkphplib\ADatabase::splitDSN("'$settings_dsn'");'
 
-	PHP_CODE=$SPLIT_DSN' print $dsn["login"];'
-	DB_NAME=`php -r "$PHP_CODE"`
+	php_code=$split_dsn' print $dsn["login"];'
+	DB_NAME=$(php -r "$php_code")
 
-	PHP_CODE=$SPLIT_DSN' print $dsn["password"];'
-	DB_PASS=`php -r "$PHP_CODE"`
+	php_code=$split_dsn' print $dsn["password"];'
+	DB_PASS=$(php -r "$php_code")
 
 	if test -z "$DB_NAME" || test -z "$DB_PASS"; then
 		test -z "$2" && _abort "database name [$DB_NAME] or password [$DB_PASS] is empty" || return 1
