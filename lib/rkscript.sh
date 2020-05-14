@@ -642,7 +642,7 @@ function _cert_file {
 
 	if test -z "$CERT_FULL"; then
 		test "$UID" = "0" || echo "missing $acme_dir/fullchain.cer - change into root to read /etc/letsencrypt/..."
-		_run_as_root
+		test -d "$HOME/.acme.sh" || _run_as_root
 		if test -d "/etc/letsencrypt/archive/$domain" && test -L "$le_live/fullchain.pem"; then
 			CERT_ENGINE="certbot"
 			CERT_FULL="$le_live/fullchain.pem"
