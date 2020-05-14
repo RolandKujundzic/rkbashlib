@@ -4369,7 +4369,9 @@ function _require_program {
 # Execute self_update or help action if $1 = self_update|help.
 #
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
+# @export APP CURR APP_PID
 # @param $0 $@
+# shellcheck disable=SC2034
 #--
 function _rks_app {
 	local me="$1"
@@ -4379,7 +4381,11 @@ function _rks_app {
 	if test -z "$APP"; then
 		APP="$me"
 		CURR="$PWD"
-		export APP_PID="$APP_PID $$"
+		if test -z "$APP_PID"; then
+			 export APP_PID="$$"
+		elif "$APP_PID" != "$$"; then
+			 export APP_PID="$APP_PID $$"
+		fi
 	fi
 
 	test -z "$APP_DESC" && _abort "APP_DESC is empty"
