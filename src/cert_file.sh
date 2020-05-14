@@ -42,7 +42,7 @@ function _cert_file {
 	if test -s "$acme_dir/fullchain.cer"; then
 		CERT_ENGINE="acme.sh"
 	else
-		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer)
+		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer 2>/dev/null)
 		if ! test -z "$subdomain" && test -s "$subdomain"; then
 			acme_dir=$(dirname $subdomain)
 			CERT_ENGINE="acme.sh"
