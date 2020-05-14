@@ -4,7 +4,7 @@ test -z "$RKSCRIPT_SH" || return
 RKSCRIPT_SH=1
 
 test -z "$APP" && APP="$0"
-test -z "$APP_PID" && export APP_PID="$APP_PID $$"
+test -z "$APP_PID" && export APP_PID="$$"
 test -z "$CURR" && CURR="$PWD"
 
 
