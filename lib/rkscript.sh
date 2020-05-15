@@ -5277,10 +5277,10 @@ function _syntax {
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
-			msg="$msg"$(_syntax_cmd_other "$a")
+			msg="$msg$(_syntax_cmd_other "$a")"
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
-			msg="$msg"$(_syntax_help "${a:5}")
+			msg="$msg$(_syntax_help "${a:5}")"
 		fi
 
 		test "$old_msg" != "$msg" && msg="$msg\n"
@@ -5375,11 +5375,11 @@ function _syntax_help {
 			msg="$msg\n${SYNTAX_HELP[$a]}"
 		elif ! test -z "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
 			prefix=$(sed -E 's/^[a-zA-Z0-9_]+\.//' <<< "$a")
-			msg="$msg\n"$(printf "%12s: ${SYNTAX_HELP[$a]}" "$prefix")
+			msg="$msg\n$prefix: ${SYNTAX_HELP[$a]}\n"
 		fi
 	done
 
-	[[ ! -z "$msg" && "$msg" != "\n$APP_DESC" ]] && echo "$msg"
+	[[ ! -z "$msg" && "$msg" != "\n$APP_DESC" ]] && echo -e "$msg"
 }
 
 
