@@ -692,7 +692,7 @@ function _cert_info {
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
 	CERT_UNTIL=$(echo "$certinfo" | grep "GMT" | grep -o -E 'Not After .+' | sed -E -e 's/.+\: (.+ GMT).*/\1/i') 
-	CERT_DOMAINS=( "$dns" )
+	CERT_DOMAINS="$dns"
 
 	[[ "$CERT_DNS" =~ DNS:*.$domain ]] && return
 	[[ "$CERT_DNS" =~ DNS:$domain ]] || _abort "missing domain $domain in $CERT_FULL"
