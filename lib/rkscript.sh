@@ -5346,12 +5346,10 @@ function _syntax_cmd_other {
 	rx="$1"
 
 	test "${rx:4}" = "*" && rx='^[a-zA-Z0-9_]+$' || rx="^${rx:4:-2}"'\.[a-zA-Z0-9_]+$'
-	echo "_sco: 1=$1 rx=$rx" 1>&2
 
 	base=$(basename "$APP")
 	for a in $keys; do
 		grep -E "$rx" >/dev/null <<< "$a" && msg="$msg\n$base ${SYNTAX_CMD[$a]}"
-		echo "_sco: a=$a msg=$msg" 1>&2
 	done
 
 	echo "$msg"
