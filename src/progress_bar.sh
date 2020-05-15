@@ -2,8 +2,8 @@
 
 #--
 # Show progress bar. Third parameter is Style;Label;Mesage (default = '1;Progress;').
-# Use $_PROGRESS_FILE to load progress value from file (use /dev/shm/...).
-# Use $_PROGRESS_MAX|STYLE|LABEL|MSG instead of $2 and $3. Styles:
+# Use $1 or $PROGRESS_FILE to load progress value from file (use /dev/shm/...).
+# Use $PROGRESS_MAX|STYLE|LABEL|MSG instead of $2 and $3. Styles:
 #
 # 1: |----
 # 2: [###---]
@@ -15,22 +15,22 @@
 #
 # @example for n in $(seq 1 100); do sleep 0.01; _progress_bar $n; done
 #
-# @global _PROGRESS_FILE _PROGRESS_MAX
+# @global PROGRESS_FILE PROGRESS_MAX
 # @param value (<= end)
 # @param end (default = 100)
 # @param label (default = Progress:1 = Lable:Style)
 #--
 function _progress_bar {
 	local label style msg max slm progress pg
-	label="${_PROGRESS_LABEL:-Progress}"
-	style="${_PROGRESS_STYLE:-1}"
-	msg="${_PROGRESS_MESSAGES}"
-	max=${2:$_PROGRESS_MAX}
+	label="${PROGRESS_LABEL:-Progress}"
+	style="${PROGRESS_STYLE:-1}"
+	msg="$PROGRESS_MSG"
+	max=${2:-$PROGRESS_MAX}
 	slm="$style;$label;$msg"
-	progress=0
+	progress="${1:-0}"
 
-	test -z "$_PROGRESS_FILE" || progress=$(cat "$_PROGRESS_FILE")
-	test -z "$1" || progress=$1
+	[[ -z "$progress" && ! -z "$PROGRESS_FILE" && -f "$PROGRESS_FILE" ]] && progress=$(cat "$PROGRESS_FILE")
+	[[ "$progress" =~ ^[0-9]+$ ]] || _abort "invalid progress [$progress]"
 	test -z "$max" && max=100
 	test -z "$3" || slm="$3"
 
