@@ -4,6 +4,7 @@ test -z "$RKSCRIPT_SH" || return
 RKSCRIPT_SH=1
 
 test -z "$APP" && APP="$0"
+test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 test -z "$APP_PID" && export APP_PID="$$"
 test -z "$CURR" && CURR="$PWD"
 
@@ -4369,7 +4370,7 @@ function _require_program {
 # Execute self_update or help action if $1 = self_update|help.
 #
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
-# @export APP CURR APP_DIR APP_PID
+# @export APP CURR APP_DIR APP_PID (if not set)
 # @param $0 $@
 # shellcheck disable=SC2034,SC2119
 #--
