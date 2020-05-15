@@ -5,7 +5,7 @@
 # Execute self_update or help action if $1 = self_update|help.
 #
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
-# @export APP CURR APP_DIR APP_PID
+# @export APP CURR APP_DIR APP_PID (if not set)
 # @param $0 $@
 # shellcheck disable=SC2034,SC2119
 #--
