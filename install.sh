@@ -23,7 +23,7 @@ function do_build {
 	echo '#!/bin/bash' 
 	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n"
 	echo 'test -z "$APP" && APP="$0"'
-	echo 'test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )'
+	echo 'test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )'
 	echo 'test -z "$APP_PID" && export APP_PID="$$"'
 	echo 'test -z "$CURR" && CURR="$PWD"'
 	echo

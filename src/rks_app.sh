@@ -16,7 +16,7 @@ function _rks_app {
 
 	if test -z "$APP"; then
 		APP="$me"
-		APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
+		APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )
 		CURR="$PWD"
 		if test -z "$APP_PID"; then
 			 export APP_PID="$$"

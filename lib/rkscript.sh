@@ -4,7 +4,7 @@ test -z "$RKSCRIPT_SH" || return
 RKSCRIPT_SH=1
 
 test -z "$APP" && APP="$0"
-test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
+test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )
 test -z "$APP_PID" && export APP_PID="$$"
 test -z "$CURR" && CURR="$PWD"
 
@@ -4381,7 +4381,7 @@ function _rks_app {
 
 	if test -z "$APP"; then
 		APP="$me"
-		APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
+		APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )
 		CURR="$PWD"
 		if test -z "$APP_PID"; then
 			 export APP_PID="$$"
