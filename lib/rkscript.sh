@@ -3025,6 +3025,7 @@ function _mysql_backup {
 # @global MYSQL_CONN DB_NAME DB_PASS
 # @export MYSQL_CONN (and MYSQL if $1=1)
 # @param require root access (default = false)
+# shellcheck disable=SC2086
 #--
 function _mysql_conn {
 
@@ -3037,8 +3038,8 @@ function _mysql_conn {
 			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
 
-		TRY_MYSQL=`{ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045'`
-		test -z "$TRY_MYSQL" || _abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
+		test -z "$({ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045')" || \
+			_abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
 
 		return
 	fi
@@ -3054,8 +3055,8 @@ function _mysql_conn {
 		fi
 	fi
 
-	TRY_MYSQL=`{ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045'`
-	test -z "$TRY_MYSQL" || _abort "admin access to mysql database failed: $MYSQL"
+	test -z "$({ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045')" || \
+		_abort "admin access to mysql database failed: $MYSQL"
 }
 
 
@@ -3115,25 +3116,26 @@ function _mysql_create_db {
 #
 # @param database name
 # @global MYSQL (use 'mysql -u root' if empty)
+# shellcheck disable=SC2153,SC2086
 #--
 function _mysql_drop_db {
-	local NAME=$1
+	local name mysql
+	mysql="$MYSQL"
+	name="$1"
 
-	if test -z "$MYSQL"; then
-		local MYSQL
-		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
+	if test -z "$mysql"; then
+		test "$UID" = "0" && mysql="mysql -u root" || mysql="sudo mysql -u root"
 	fi
 
-	if { echo "SHOW CREATE DATABASE $NAME" | $MYSQL >/dev/null 2>/dev/null; }; then
-		_confirm "Drop database $NAME?" 1
+	if { echo "SHOW CREATE DATABASE $name" | $mysql >/dev/null 2>/dev/null; }; then
+		_confirm "Drop database $name?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
 
+		{ echo "DROP DATABASE $name" | $mysql; } || _abort "drop database $name failed"
+
 		# drop user too if DB_NAME=DB_USER and DB_HOST=localhost
-		local DROP_USER=`echo "SELECT db FROM db WHERE user='$NAME' AND db='$NAME' AND host='localhost'" | $MYSQL mysql 2>/dev/null`
-
-		{ echo "DROP DATABASE $NAME" | $MYSQL; } || _abort "drop database $NAME failed"
-
-		test -z "$DROP_USER" || _mysql_drop_user $NAME
+		test -z "$(echo "SELECT db FROM db WHERE user='$name' AND db='$name' AND host='localhost'" | $mysql mysql 2>/dev/null)" || \
+			_mysql_drop_user $name
 	else
 		_msg "no such database $NAME"
 		return
@@ -3151,16 +3153,17 @@ function _mysql_drop_tables {
 	_confirm "Drop all tables in $DB_NAME" 1
   test "$CONFIRM" = "y" || return
 
-	local tmp_dir="$RKSCRIPT_DIR/load_dump"
-	local drop_sql="$tmp_dir/$DB_NAME.sql"
+	local tmp_dir drop_sql
+	tmp_dir="$RKSCRIPT_DIR/load_dump"
+	drop_sql="$tmp_dir/$DB_NAME.sql"
 
-	_mkdir "$tmpdir"
-	echo "SET FOREIGN_KEY_CHECKS = 0;" > $drop_sql
+	_mkdir "$tmp_dir"
+	echo "SET FOREIGN_KEY_CHECKS = 0;" > "$drop_sql"
 	echo "SELECT concat('DROP TABLE IF EXISTS ', table_name, ';') FROM information_schema.tables WHERE table_schema = '$DB_NAME';" | \
-		mysql -N -u $DB_NAME -p$DB_PASS $DB_NAME >> $drop_sql || _abort "create '$drop_sql' failed"
-	echo "SET FOREIGN_KEY_CHECKS = 1;" >> $drop_sql
-	mysql -u $DB_NAME -p$DB_PASS $DB_NAME < $drop_sql || _abort "drop all tables in $DB_NAME failed - see $drop_sql"
-	_rm $drop_sql	
+		mysql -N -u "$DB_NAME" -p"$DB_PASS" "$DB_NAME" >> "$drop_sql" || _abort "create '$drop_sql' failed"
+	echo "SET FOREIGN_KEY_CHECKS = 1;" >> "$drop_sql"
+	mysql -u "$DB_NAME" -p"$DB_PASS" "$DB_NAME" < "$drop_sql" || _abort "drop all tables in $DB_NAME failed - see $drop_sql"
+	_rm "$drop_sql"	
 }
 
 
@@ -3172,22 +3175,22 @@ function _mysql_drop_tables {
 # @global MYSQL (use 'mysql -u root' if empty)
 #--
 function _mysql_drop_user {
-	local NAME=$1
-	local HOST="${2:-localhost}"
+	local name host mysql
+	mysql="$MYSQL"
+	name="$1"
+	host="${2:-localhost}"
 
-	if test -z "$MYSQL"; then
-		local MYSQL
-		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
+	if test -z "$mysql"; then
+		test "$UID" = "0" && mysql="mysql -u root" || mysql="sudo mysql -u root"
 	fi
 
-	local HAS_USER=`echo "SELECT user FROM user WHERE user='$NAME' AND host='$HOST'" | $MYSQL mysql 2>/dev/null`
-	if test -z "$HAS_USER"; then
-		_msg "no such user $NAME@$HOST"
+	if test -z "$(echo "SELECT user FROM user WHERE user='$name' AND host='$host'" | $mysql mysql 2>/dev/null)"; then
+		_msg "no such user $name@$host"
 		return
 	else
-		_confirm "Drop user $NAME@$HOST?" 1
+		_confirm "Drop user $name@$host?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
-		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort "drop user '$NAME'@'$HOST' failed"
+		{ echo "DROP USER '$name'@'$host'" | $mysql mysql; } || _abort "drop user '$name'@'$host' failed"
 	fi
 }
 
@@ -3199,24 +3202,21 @@ function _mysql_drop_user {
 # @param options
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
+# shellcheck disable=SC2086
 #--
 function _mysql_dump {
-
-	if test -z "$MYSQL_CONN"; then
-		_abort "mysql connection string MYSQL_CONN is empty"
-	fi
+	test -z "$MYSQL_CONN" && _abort "mysql connection string MYSQL_CONN is empty"
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
 	nice -n 10 ionice -c2 -n 7 mysqldump --single-transaction --quick $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
-	echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+	echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
 	if ! test -f "$1"; then
 		_abort "no such dump [$1]"
 	fi
 
-	local DUMP_OK=`tail -1 "$1" | grep "Dump completed"`
-	if test -z "$DUMP_OK"; then
+	if test -z "$(tail -1 "$1" | grep "Dump completed")"; then
 		_abort "invalid mysql dump [$1]"
 	fi
 }
@@ -3229,51 +3229,50 @@ function _mysql_dump {
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
+# shellcheck disable=SC2086
 #--
 function _mysql_load {
+	local dump tmp_dump
+	dump="$1"
 
-	local DUMP=$1
-
-	if ! test -f "$DUMP"; then
+	if ! test -f "$dump"; then
 		if test -s "data/sql/mysqlfulldump.sql"; then
-			DUMP=data/sql/mysqlfulldump.sql
+			dump=data/sql/mysqlfulldump.sql
 		elif test -s "setup/mysqlfulldump.sql"; then
-			DUMP=setup/mysqlfulldump.sql
+			dump=setup/mysqlfulldump.sql
 		else
-			_abort "no such mysql dump [$DUMP]"
+			_abort "no such mysql dump [$dump]"
 		fi
 
-		_confirm "Load $DUMP?"
+		_confirm "Load $dump?"
 		if test "$CONFIRM" != "y"; then
-			echo "Do not load $DUMP"
+			echo "Do not load $dump"
 			return
 		fi
 	fi
 
-	local DUMP_OK=`tail -1 "$DUMP" | grep "Dump completed"`
-	if test -z "$DUMP_OK"; then
-		_abort "invalid mysql dump [$DUMP]"
+	if test -z "$(tail -1 "$dump" | grep "Dump completed")"; then
+		_abort "invalid mysql dump [$dump]"
 	fi
 
 	if ! test -z "$FIX_MYSQL_DUMP"; then
-		echo "fix $DUMP"
-		local TMP_DUMP=`dirname $DUMP`"/_fix.sql"
-		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > $TMP_DUMP
-		sed -e "s/^\/\*\!.*//" < $DUMP | sed -e "s/^INSERT INTO/INSERT IGNORE INTO/" >> $TMP_DUMP
-		echo -e "\nCOMMIT;\n" >> $TMP_DUMP
-		mv "$TMP_DUMP" "$DUMP"
+		echo "fix $dump"
+		tmp_dump="$(dirname $dump)/_fix.sql"
+		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > "$tmp_dump"
+		sed -e "s/^\/\*\!.*//" < "$dump" | sed -e "s/^INSERT INTO/INSERT IGNORE INTO/" >> "$tmp_dump"
+		echo -e "\nCOMMIT;\n" >> "$tmp_dump"
+		mv "$tmp_dump" "$dump"
 	fi
 
 	if test -f "restore.sh"; then
-		local LOG="$DUMP"".log"
-		echo "add $DUMP to restore.sh"
-		echo "_restore $DUMP &" >> restore.sh
+		echo "add $dump to restore.sh"
+		echo "_restore $dump &" >> restore.sh
 	else
 		_mysql_conn
-		echo "mysql ... < $DUMP"
+		echo "mysql ... < $dump"
 		SECONDS=0
-		mysql $MYSQL_CONN < "$DUMP" || _abort "mysql ... < $DUMP failed"
-		echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+		mysql $MYSQL_CONN < "$dump" || _abort "mysql ... < $dump failed"
+		echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 	fi
 }
 
@@ -3284,74 +3283,71 @@ function _mysql_load {
 # @param dump_archive
 # @param parallel_import (optional - use parallel import if set)
 # @global MYSQL_CONN (call _mysql_conn for mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME")
+# shellcheck disable=SC1091,SC2013,SC2016,SC2034
 #--
 function _mysql_restore {
+	local a tmp_dir file import
+	tmp_dir="/tmp/mysql_dump"
+	file=$(basename "$1")
 
-	local TMP_DIR="/tmp/mysql_dump"
-	local FILE=`basename $1`
+	_mkdir "$tmp_dir" 1
+	_cp "$1" "$tmp_dir/$file"
 
-	_mkdir $TMP_DIR 1
-	_cp "$1" "$TMP_DIR/$FILE"
+	_cd "$tmp_dir"
 
-	_cd $TMP_DIR
+	_extract_tgz "$file" "tables.txt"
 
-	_extract_tgz "$FILE" "tables.txt"
+	sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' create_tables.sql > create_tables.fix.sql
 
-	cat create_tables.sql | sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' > create_tables.fix.sql
-	local IS_DIFFERENT=`cmp -b create_tables.sql create_tables.fix.sql`
-
-	if ! test -z "$IS_DIFFERENT"; then
+	if ! test -z "$(cmp -b create_tables.sql create_tables.fix.sql)"; then
 		_mv create_tables.fix.sql create_tables.sql
 	else
 		_rm create_tables.fix.sql
 	fi
 
-	local a=; for a in `cat tables.txt`
-	do
+	for a in $(cat tables.txt); do
 		# load only create_tables.sql ... write other load commands to restore.sh
-		_mysql_load $a".sql"
+		_mysql_load "$a.sql"
 
 		if ! test -z "$2" && test "$a" = "create_tables"; then
 			_mysql_conn
 			echo "create restore.sh"
-			echo -e "#!/bin/bash\n" > restore.sh
-			echo -e "MYSQL_CONN=\"$MYSQL_CONN\"\n" >> restore.sh
-			echo 'function _restore {' >> restore.sh
-			echo '  mysql $MYSQL_CONN < $1 &> $1".log" && rm $1 || echo "import $1 failed"' >> restore.sh
-			echo '  echo "$1 import finished"' >> restore.sh
-			echo -e "}\n\n" >> restore.sh
+			{
+				echo -e "#!/bin/bash\n"
+				echo -e "MYSQL_CONN=\"$MYSQL_CONN\"\n"
+				echo 'function _restore {'
+				echo '  mysql $MYSQL_CONN < $1 &> $1".log" && rm $1 || echo "import $1 failed"'
+				echo '  echo "$1 import finished"'
+				echo -e "}\n\n"
+			} > restore.sh
 			_chmod 755 restore.sh
 		fi
 	done
 
   if ! test -z "$2"; then
     echo "start table imports in background"  
-    . restore.sh
+    source restore.sh
 
     _rm "create_tables.sql"
-    local IMPORT=1
+    import=1
     SECONDS=0
 
-    while test "$IMPORT" = "1"
-    do
-      IMPORT=0
-      for a in `cat tables.txt`
-      do
+    while test "$import" = '1'; do
+      import=0
+      for a in $(cat tables.txt); do
         # sql file is removed after successfull import
-        if test -f $a".sql"; then
-          IMPORT=1
-        fi
+        test -f "$a.sql" && import=1
       done
 
       sleep 10
     done
 
-    echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+    echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
   fi
 
 	_cd
 
-	_rm $TMP_DIR
+	_rm "$tmp_dir"
 }
 
 
@@ -3364,11 +3360,9 @@ function _mysql_restore {
 # @global DOCROOT PATH_RKPHPLIB
 # @export DB_NAME (DB_LOGIN) DB_PASS MYSQL DOCROOT
 # @return bool
+# shellcheck disable=SC2119,SC2120
 #--
 function _mysql_split_dsn {
-	local rkphplib settings_dsn php_code split_dsn
-	rkphplib="$PATH_RKPHPLIB"
-
 	_my_cnf
 
 	[[ -z "$DB_NAME" || -z "$DB_PASS" ]] || return 0
@@ -3427,22 +3421,25 @@ EOF
 # Update to NODE_VERSION and NPM_VERSION if necessary.
 # Use NODE_VERSION=v12.16.2 and NPM_VERSION=6.13.4 as default.
 #
-# @global NODE_VERSION NPM_VERSION APP_PREFIX APP_FILE_LIST APP_DIR_LIST APP_SYNC
+# @global NODE_VERSION NPM_VERSION
+# @export NODE_VERSION NPM_VERSION
 #--
 function _node_version {
 	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2
 	test -z "$NPM_VERSION" && NPM_VERSION=6.14.4
 
-	local has_node=`which node`
-	local has_npm=`which npm`
-	[[ -z "$has_node" || -z "$has_npm" ]] && _install_node 
+	if ! which node || ! which npm; then
+		_install_node 
+	fi
 
-	local curr_node_version=`node --version || _abort "node --version failed"`
-	[[ $(_ver3 $curr_node_version) -lt $(_ver3 $NODE_VERSION) ]] && _install_node
+	local node_ver npm_ver
 
-	local curr_npm_version=`npm --version || _abort "npm --version failed"`
-	if [[ $(_ver3 $curr_npm_version) -lt $(_ver3 $NPM_VERSION) ]]; then
-		_msg "Update npm from $CURR_NPM_VERSION to latest"
+	node_ver=$(node --version || _abort "node --version failed")
+	[[ $(_ver3 "$node_ver") -lt $(_ver3 $NODE_VERSION) ]] && _install_node
+
+	npm_ver=$(npm --version || _abort "npm --version failed")
+	if [[ $(_ver3 "$npm_ver") -lt $(_ver3 $NPM_VERSION) ]]; then
+		_msg "Update npm from $npm_ver to latest"
 		_sudo "npm i -g npm"
 	fi
 }
@@ -3454,6 +3451,7 @@ function _node_version {
 #
 # @param target path
 # @param source path (node_modules/$2)
+# shellcheck disable=SC2034
 #--
 function _npm2js {
 	test -z "$2" && _abort "empty module path"
@@ -3461,10 +3459,11 @@ function _npm2js {
 
 	_cp "node_modules/$2" "$1" md5
 
-	local base=`basename "$1"`
+	local base
+	base=$(basename "$1")
 	if test -f "patch/npm2js/$base.patch"; then
 		PATCH_LIST="$base"
-		PATCH_DIR=`dirname "$1"`
+		PATCH_DIR=$(dirname "$1")
 		_patch patch/npm2js
 	fi
 }
@@ -3476,43 +3475,39 @@ function _npm2js {
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
+# shellcheck disable=SC2086
 #--
 function _npm_module {
-
-  local HAS_NPM=`which npm`
-  if test -z "$HAS_NPM"; then
+	if ! which npm; then
 		_node_version
   fi
 
-	local EXTRA_PARAM=
-
+	local extra_param
 	if test "$1" = "ios-deploy"; then
-		EXTRA_PARAM="--unsafe-perm=true --allow-root"
+		extra_param="--unsafe-perm=true --allow-root"
 	fi
 
-	if test "$2" = "-g"
-	then
-		if test -d /usr/local/lib/node_modules/$1
-		then
+	if test "$2" = "-g"; then
+		if test -d "/usr/local/lib/node_modules/$1"; then
 			echo "node module $1 is already globally installed - updating"
-			sudo npm update $EXTRA_PARAM -g $1
+			sudo npm update $extra_param -g "$1"
 			return
 		else
 			echo "install node module $1 globally"
-			sudo npm install $EXTRA_PARAM -g $1
+			sudo npm install $extra_param -g "$1"
 			return
 		fi
 	fi
 
-	if test -d node_modules/$1
-	then
+	if test -d "node_modules/$1"; then
 		echo "node module $1 is already installed - updating"
-		npm update $EXTRA_PARAM $1
+		npm update $extra_param "$1"
 	return
 	fi
 
-	npm install $EXTRA_PARAM $1 $2
+	npm install $extra_param "$1" $2
 }
+
 
 #--
 # Backup $1 as $1.orig (if not already done).
@@ -3549,17 +3544,18 @@ function _orig {
 # @return bool
 #--
 function _os_type {
-	local os=
+	local os me
 
 	_require_program uname
+	me=$(uname -s)
 
 	if [ "$(uname)" = "Darwin" ]; then
 		os="macos"        
 	elif [ "$OSTYPE" = "linux-gnu" ]; then
 		os="linux"
-	elif [ $(expr substr $(uname -s) 1 5) = "Linux" ]; then
+	elif [ "${me:0:5}" = "Linux" ]; then
 		os="linux"
-	elif [ $(expr substr $(uname -s) 1 5) = "MINGW" ]; then
+	elif [ "${me:0:5}" = "MINGW" ]; then
 		os="cygwin"
 	fi
 
@@ -3571,6 +3567,7 @@ function _os_type {
 
 	return 0
 }
+
 
 if [ "$(uname)" = "Darwin" ]; then
 
@@ -3694,8 +3691,10 @@ function _overwrite_file {
 #
 # @param upgrade (default = empty = false)
 # @global NPM_PACKAGE NPM_PACKAGE_GLOBAL NPM_PACKAGE_DEV (e.g. "pkg1 ... pkgN")
+# shellcheck disable=SC2086
 #--
 function _package_json {
+	local a
 
 	if ! test -f package.json; then
 		echo "create: package.json"
@@ -3713,21 +3712,18 @@ function _package_json {
 		npm-check-updates -u
 	fi
 
-	local a=; for a in $NPM_PACKAGE_GLOBAL; do
-		_npm_module $a -g
+	for a in $NPM_PACKAGE_GLOBAL; do
+		_npm_module "$a" -g
 	done
 
-	local RUN_INSTALL=
-	local HAS_PKG=
-
+	local run_install
 	for a in $NPM_PACKAGE $NPM_PACKAGE_DEV; do
-		HAS_PKG=`grep $a package.json`
-		if ! test -z "$HAS_PKG"; then
-			RUN_INSTALL=1
+		if ! grep "$a" package.json >/dev/null; then
+			run_install=1
 		fi
 	done
 
-	if ! test -z "$RUN_INSTALL"; then
+	if ! test -z "$run_install"; then
 		echo "run: npm install"
 		npm install
 	fi
@@ -3742,9 +3738,9 @@ function _package_json {
 
 	if test -f patch/patch.sh; then
 		echo "Apply patches: patch/patch.sh"
-		cd patch
+		_cd patch
 		./patch.sh
-		cd ..
+		_cd ..
 	fi
 }
 
@@ -3807,20 +3803,21 @@ function _parse_arg {
 #
 # @global PATCH_SOURCE_DIR PATCH_LIST PATCH_DIR
 # @param patch file directory or patch source file (optional)
+# shellcheck disable=SC1090
 #--
 function _patch {
 	if ! test -z "$1" && test -d "$1"; then
 		PATCH_SOURCE_DIR="$1"
 	elif test -s "$1"; then
-		PATCH_LIST=`basename "$1" | sed -E 's/\.patch$//'`
-		PATCH_SOURCE_DIR=`dirname "$1"`
+		PATCH_LIST=$(basename "$1" | sed -E 's/\.patch$//')
+		PATCH_SOURCE_DIR=$(dirname "$1")
 		if test -z "$PATCH_DIR"; then
-			PATCH_DIR=`echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///'`
+			PATCH_DIR=$(echo "$PATCH_SOURCE_DIR" | grep 'conf/' | sed -E 's/^.*conf\///')
 			test -d "/$PATCH_DIR" && PATCH_DIR="/$PATCH_DIR"
 		fi
 	elif test -f "$1/patch.sh"; then
-		PATCH_SOURCE_DIR=`dirname "$1"`
-		. "$1/patch.sh" || _abort ". $1/patch.sh"
+		PATCH_SOURCE_DIR=$(dirname "$1")
+		source "$1/patch.sh" || _abort ". $1/patch.sh"
 	fi
 
 	_require_program patch
@@ -3830,7 +3827,7 @@ function _patch {
 
 	local a target
 	for a in $PATCH_LIST; do
-		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=`find $PATCH_DIR -name "$a"`
+		test -f "$PATCH_DIR/$a" && target="$PATCH_DIR/$a" || target=$(find "$PATCH_DIR" -name "$a")
 
 		if test -f "$PATCH_SOURCE_DIR/$a.patch" && test -f "$target"; then
 			CONFIRM="y"
@@ -3911,13 +3908,14 @@ function _phpdocumentor {
 #
 # @call_before _parse_arg "$@" 
 # @global RKSCRIPT_DIR ARG
+# shellcheck disable=SC2009
 #--
 function _php_server {
 	_require_program php
 	_mkdir "$RKSCRIPT_DIR" > /dev/null
 
-	local PHP_CODE=
-IFS='' read -r -d '' PHP_CODE <<'EOF'
+	local php_code=
+IFS='' read -r -d '' php_code <<'EOF'
 <?php
 
 function wsLog($msg) {
@@ -3970,43 +3968,47 @@ EOF
 	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
-		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
+		echo "$php_code" > "$RKSCRIPT_DIR/php_server.php"
 		ARG[script]="$RKSCRIPT_DIR/php_server.php"
 	fi
 
 	test -z "${ARG[port]}" && ARG[port]=15080
 	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"
 	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
-	local LOG="$RKSCRIPT_DIR/php_server.log"
-	local SERVER_PID=
 
-	if _is_running "PORT" "${ARG[port]}"; then
-		local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'`
-		test -z "$SERVER_PID" && _abort "Port ${ARG[port]} is already used" || \
-			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
+	local log server_pid
+	log="$RKSCRIPT_DIR/php_server.log"
+
+	if _is_running "port:${ARG[port]}"; then
+		server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
+		if test -z "$server_pid"; then
+			_abort "Port ${ARG[port]} is already used"
+		else
+			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $server_pid"
+		fi
 	fi
 
 	_confirm "Start buildin PHP standalone Webserver" 1
 	test "$CONFIRM" = "y" || _abort "user abort"
 
 	if test -z "${ARG[user]}"; then
-		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
-			_abort "PHP Server failed - see: $LOG"; } &
+		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$log" 2>&1 || \
+			_abort "PHP Server failed - see: $log"; } &
 	else
-		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
-			_abort "PHP Server failed - see: $LOG"; } &
+		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1" || \
+			_abort "PHP Server failed - see: $log"; } &
 		sleep 1
 	fi
 
-	local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'` 
-	test -z "$SERVER_PID" && _abort "Could not determine Server PID"
+	server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
+	test -z "$server_pid" && _abort "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
 	echo "URL: http://${ARG[host]}:${ARG[port]}"
-	echo "LOG: tail -f $LOG"
+	echo "LOG: tail -f $log"
 	echo "DOCROOT: ${ARG[docroot]}"
-	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1"
-	echo -e "STOP: kill $SERVER_PID\n"
+	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1"
+	echo -e "STOP: kill $server_pid\n"
 }
 
 
@@ -4014,9 +4016,10 @@ EOF
 # Export PHP_VERSION=MAJOR.MINOR
 # 
 # @export PHP_VERSION
+# shellcheck disable=SC2034
 #--
 function _php_version {
-	PHP_VERSION=`php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/'`
+	PHP_VERSION=$(php -v | grep -E '^PHP [0-9\.]+\-' | sed -E 's/PHP ([0-9]\.[0-9]).+$/\1/')
 }
 
 

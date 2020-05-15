@@ -9,11 +9,9 @@
 # @global DOCROOT PATH_RKPHPLIB
 # @export DB_NAME (DB_LOGIN) DB_PASS MYSQL DOCROOT
 # @return bool
+# shellcheck disable=SC2119,SC2120
 #--
 function _mysql_split_dsn {
-	local rkphplib settings_dsn php_code split_dsn
-	rkphplib="$PATH_RKPHPLIB"
-
 	_my_cnf
 
 	[[ -z "$DB_NAME" || -z "$DB_PASS" ]] || return 0

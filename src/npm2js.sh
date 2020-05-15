@@ -6,6 +6,7 @@
 #
 # @param target path
 # @param source path (node_modules/$2)
+# shellcheck disable=SC2034
 #--
 function _npm2js {
 	test -z "$2" && _abort "empty module path"
@@ -13,10 +14,11 @@ function _npm2js {
 
 	_cp "node_modules/$2" "$1" md5
 
-	local base=`basename "$1"`
+	local base
+	base=$(basename "$1")
 	if test -f "patch/npm2js/$base.patch"; then
 		PATCH_LIST="$base"
-		PATCH_DIR=`dirname "$1"`
+		PATCH_DIR=$(dirname "$1")
 		_patch patch/npm2js
 	fi
 }

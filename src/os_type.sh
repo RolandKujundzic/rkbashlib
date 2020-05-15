@@ -9,17 +9,18 @@
 # @return bool
 #--
 function _os_type {
-	local os=
+	local os me
 
 	_require_program uname
+	me=$(uname -s)
 
 	if [ "$(uname)" = "Darwin" ]; then
 		os="macos"        
 	elif [ "$OSTYPE" = "linux-gnu" ]; then
 		os="linux"
-	elif [ $(expr substr $(uname -s) 1 5) = "Linux" ]; then
+	elif [ "${me:0:5}" = "Linux" ]; then
 		os="linux"
-	elif [ $(expr substr $(uname -s) 1 5) = "MINGW" ]; then
+	elif [ "${me:0:5}" = "MINGW" ]; then
 		os="cygwin"
 	fi
 
@@ -31,3 +32,4 @@ function _os_type {
 
 	return 0
 }
+

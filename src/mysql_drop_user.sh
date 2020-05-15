@@ -8,22 +8,22 @@
 # @global MYSQL (use 'mysql -u root' if empty)
 #--
 function _mysql_drop_user {
-	local NAME=$1
-	local HOST="${2:-localhost}"
+	local name host mysql
+	mysql="$MYSQL"
+	name="$1"
+	host="${2:-localhost}"
 
-	if test -z "$MYSQL"; then
-		local MYSQL
-		test "$UID" = "0" && MYSQL="mysql -u root" || MYSQL="sudo mysql -u root"
+	if test -z "$mysql"; then
+		test "$UID" = "0" && mysql="mysql -u root" || mysql="sudo mysql -u root"
 	fi
 
-	local HAS_USER=`echo "SELECT user FROM user WHERE user='$NAME' AND host='$HOST'" | $MYSQL mysql 2>/dev/null`
-	if test -z "$HAS_USER"; then
-		_msg "no such user $NAME@$HOST"
+	if test -z "$(echo "SELECT user FROM user WHERE user='$name' AND host='$host'" | $mysql mysql 2>/dev/null)"; then
+		_msg "no such user $name@$host"
 		return
 	else
-		_confirm "Drop user $NAME@$HOST?" 1
+		_confirm "Drop user $name@$host?" 1
 		test "$CONFIRM" = "y" || _abort "user abort"
-		{ echo "DROP USER '$NAME'@'$HOST'" | $MYSQL mysql; } || _abort "drop user '$NAME'@'$HOST' failed"
+		{ echo "DROP USER '$name'@'$host'" | $mysql mysql; } || _abort "drop user '$name'@'$host' failed"
 	fi
 }
 

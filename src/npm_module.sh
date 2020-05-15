@@ -6,40 +6,36 @@
 # @sudo
 # @param package_name
 # @param npm_param (e.g. -g, --save-dev)
+# shellcheck disable=SC2086
 #--
 function _npm_module {
-
-  local HAS_NPM=`which npm`
-  if test -z "$HAS_NPM"; then
+	if ! which npm; then
 		_node_version
   fi
 
-	local EXTRA_PARAM=
-
+	local extra_param
 	if test "$1" = "ios-deploy"; then
-		EXTRA_PARAM="--unsafe-perm=true --allow-root"
+		extra_param="--unsafe-perm=true --allow-root"
 	fi
 
-	if test "$2" = "-g"
-	then
-		if test -d /usr/local/lib/node_modules/$1
-		then
+	if test "$2" = "-g"; then
+		if test -d "/usr/local/lib/node_modules/$1"; then
 			echo "node module $1 is already globally installed - updating"
-			sudo npm update $EXTRA_PARAM -g $1
+			sudo npm update $extra_param -g "$1"
 			return
 		else
 			echo "install node module $1 globally"
-			sudo npm install $EXTRA_PARAM -g $1
+			sudo npm install $extra_param -g "$1"
 			return
 		fi
 	fi
 
-	if test -d node_modules/$1
-	then
+	if test -d "node_modules/$1"; then
 		echo "node module $1 is already installed - updating"
-		npm update $EXTRA_PARAM $1
+		npm update $extra_param "$1"
 	return
 	fi
 
-	npm install $EXTRA_PARAM $1 $2
+	npm install $extra_param "$1" $2
 }
+

@@ -8,6 +8,7 @@
 # @global MYSQL_CONN DB_NAME DB_PASS
 # @export MYSQL_CONN (and MYSQL if $1=1)
 # @param require root access (default = false)
+# shellcheck disable=SC2086
 #--
 function _mysql_conn {
 
@@ -20,8 +21,8 @@ function _mysql_conn {
 			MYSQL_CONN="-h localhost -u $DB_NAME -p$DB_PASS $DB_NAME"
 		fi
 
-		TRY_MYSQL=`{ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045'`
-		test -z "$TRY_MYSQL" || _abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
+		test -z "$({ echo "USE $DB_NAME" | mysql $MYSQL_CONN 2>&1; } | grep 'ERROR 1045')" || \
+			_abort "mysql connection for $DB_NAME string is invalid: $MYSQL_CONN"
 
 		return
 	fi
@@ -37,7 +38,7 @@ function _mysql_conn {
 		fi
 	fi
 
-	TRY_MYSQL=`{ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045'`
-	test -z "$TRY_MYSQL" || _abort "admin access to mysql database failed: $MYSQL"
+	test -z "$({ echo "USE mysql" | $MYSQL 2>&1; } | grep 'ERROR 1045')" || \
+		_abort "admin access to mysql database failed: $MYSQL"
 }
 

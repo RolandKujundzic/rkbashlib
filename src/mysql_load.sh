@@ -7,51 +7,50 @@
 # @param dump_file (if empty try data/sql/mysqlfulldump.sql, setup/mysqlfulldump.sql)
 # @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
 # @abort
+# shellcheck disable=SC2086
 #--
 function _mysql_load {
+	local dump tmp_dump
+	dump="$1"
 
-	local DUMP=$1
-
-	if ! test -f "$DUMP"; then
+	if ! test -f "$dump"; then
 		if test -s "data/sql/mysqlfulldump.sql"; then
-			DUMP=data/sql/mysqlfulldump.sql
+			dump=data/sql/mysqlfulldump.sql
 		elif test -s "setup/mysqlfulldump.sql"; then
-			DUMP=setup/mysqlfulldump.sql
+			dump=setup/mysqlfulldump.sql
 		else
-			_abort "no such mysql dump [$DUMP]"
+			_abort "no such mysql dump [$dump]"
 		fi
 
-		_confirm "Load $DUMP?"
+		_confirm "Load $dump?"
 		if test "$CONFIRM" != "y"; then
-			echo "Do not load $DUMP"
+			echo "Do not load $dump"
 			return
 		fi
 	fi
 
-	local DUMP_OK=`tail -1 "$DUMP" | grep "Dump completed"`
-	if test -z "$DUMP_OK"; then
-		_abort "invalid mysql dump [$DUMP]"
+	if test -z "$(tail -1 "$dump" | grep "Dump completed")"; then
+		_abort "invalid mysql dump [$dump]"
 	fi
 
 	if ! test -z "$FIX_MYSQL_DUMP"; then
-		echo "fix $DUMP"
-		local TMP_DUMP=`dirname $DUMP`"/_fix.sql"
-		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > $TMP_DUMP
-		sed -e "s/^\/\*\!.*//" < $DUMP | sed -e "s/^INSERT INTO/INSERT IGNORE INTO/" >> $TMP_DUMP
-		echo -e "\nCOMMIT;\n" >> $TMP_DUMP
-		mv "$TMP_DUMP" "$DUMP"
+		echo "fix $dump"
+		tmp_dump="$(dirname $dump)/_fix.sql"
+		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > "$tmp_dump"
+		sed -e "s/^\/\*\!.*//" < "$dump" | sed -e "s/^INSERT INTO/INSERT IGNORE INTO/" >> "$tmp_dump"
+		echo -e "\nCOMMIT;\n" >> "$tmp_dump"
+		mv "$tmp_dump" "$dump"
 	fi
 
 	if test -f "restore.sh"; then
-		local LOG="$DUMP"".log"
-		echo "add $DUMP to restore.sh"
-		echo "_restore $DUMP &" >> restore.sh
+		echo "add $dump to restore.sh"
+		echo "_restore $dump &" >> restore.sh
 	else
 		_mysql_conn
-		echo "mysql ... < $DUMP"
+		echo "mysql ... < $dump"
 		SECONDS=0
-		mysql $MYSQL_CONN < "$DUMP" || _abort "mysql ... < $DUMP failed"
-		echo "$(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds elapsed."
+		mysql $MYSQL_CONN < "$dump" || _abort "mysql ... < $dump failed"
+		echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 	fi
 }
 

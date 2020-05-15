@@ -10,13 +10,14 @@
 #
 # @call_before _parse_arg "$@" 
 # @global RKSCRIPT_DIR ARG
+# shellcheck disable=SC2009
 #--
 function _php_server {
 	_require_program php
 	_mkdir "$RKSCRIPT_DIR" > /dev/null
 
-	local PHP_CODE=
-IFS='' read -r -d '' PHP_CODE <<'EOF'
+	local php_code=
+IFS='' read -r -d '' php_code <<'EOF'
 <?php
 
 function wsLog($msg) {
@@ -69,42 +70,46 @@ EOF
 	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
-		echo "$PHP_CODE" > "$RKSCRIPT_DIR/php_server.php"
+		echo "$php_code" > "$RKSCRIPT_DIR/php_server.php"
 		ARG[script]="$RKSCRIPT_DIR/php_server.php"
 	fi
 
 	test -z "${ARG[port]}" && ARG[port]=15080
 	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"
 	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
-	local LOG="$RKSCRIPT_DIR/php_server.log"
-	local SERVER_PID=
 
-	if _is_running "PORT" "${ARG[port]}"; then
-		local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'`
-		test -z "$SERVER_PID" && _abort "Port ${ARG[port]} is already used" || \
-			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $SERVER_PID"
+	local log server_pid
+	log="$RKSCRIPT_DIR/php_server.log"
+
+	if _is_running "port:${ARG[port]}"; then
+		server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
+		if test -z "$server_pid"; then
+			_abort "Port ${ARG[port]} is already used"
+		else
+			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $server_pid"
+		fi
 	fi
 
 	_confirm "Start buildin PHP standalone Webserver" 1
 	test "$CONFIRM" = "y" || _abort "user abort"
 
 	if test -z "${ARG[user]}"; then
-		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$LOG" 2>&1 || \
-			_abort "PHP Server failed - see: $LOG"; } &
+		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$log" 2>&1 || \
+			_abort "PHP Server failed - see: $log"; } &
 	else
-		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1" || \
-			_abort "PHP Server failed - see: $LOG"; } &
+		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1" || \
+			_abort "PHP Server failed - see: $log"; } &
 		sleep 1
 	fi
 
-	local SERVER_PID=`ps aux | grep -E "[p]hp .+S ${ARG[host]}:${ARG[port]}" | awk '{print $2}'` 
-	test -z "$SERVER_PID" && _abort "Could not determine Server PID"
+	server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
+	test -z "$server_pid" && _abort "Could not determine Server PID"
 
 	echo -e "\nPHP buildin standalone server started"
 	echo "URL: http://${ARG[host]}:${ARG[port]}"
-	echo "LOG: tail -f $LOG"
+	echo "LOG: tail -f $log"
 	echo "DOCROOT: ${ARG[docroot]}"
-	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$LOG' 2>&1"
-	echo -e "STOP: kill $SERVER_PID\n"
+	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1"
+	echo -e "STOP: kill $server_pid\n"
 }
 
