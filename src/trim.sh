@@ -4,6 +4,7 @@
 # Print trimmed string. 
 #
 # @param string name (use /dev/stdin if not set)
+# shellcheck disable=SC2120
 #--
 function _trim {
 	local input

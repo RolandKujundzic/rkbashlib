@@ -7,7 +7,7 @@
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_PID
 # @param $0 $@
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {
 	local me="$1"

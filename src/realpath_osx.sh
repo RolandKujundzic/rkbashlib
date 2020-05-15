@@ -6,21 +6,19 @@
 # @param path
 #--
 function _realpath_osx {
-	local REALPATH=
-	local LINK=
-	local CURR=$PWD
+	local realpath link
 
-	cd "$(dirname "$1")"
-	LINK=$(readlink "$(basename "$1")")
+	_cd "$(dirname "$1")"
+	link=$(readlink "$(basename "$1")")
 
-	while [ "$LINK" ]; do
-		cd "$(dirname "$LINK")"
-		LINK=$(readlink "$(basename "$1")")
+	while [ "$link" ]; do
+		_cd "$(dirname "$link")"
+		link=$(readlink "$(basename "$1")")
 	done
 
-	REALPATH="$PWD/$(basename "$1")"
+	realpath="$PWD/$(basename "$1")"
 
-	cd "$CURR"
-	echo "$REALPATH"
+	_cd "$CURR"
+	echo "$realpath"
 }
 

@@ -10,29 +10,26 @@
 #
 #--
 function _src2www_index {
+	_cp www_src/header.html www/index.html
 
-	cp www_src/header.html www/index.html
+	test -f www_src/app_header.html && cat www_src/app_header.html >>www/index.html
+	cat www_src/main.html >>www/index.html
+	test -f www_src/app_footer.html && cat www_src/app_footer.html >>www/index.html
 
-	if test -f www_src/app_header.html; then
-		cat www_src/app_header.html >> www/index.html
-	fi
+	local a
 
-	cat www_src/main.html >> www/index.html
-
-	if test -f www_src/app_footer.html; then
-		cat www_src/app_footer.html >> www/index.html
-	fi
-
-	local a=; for a in www_src/*.inc.html; do
-		cat $a >> www/index.html
+	for a in www_src/*.inc.html; do
+		cat "$a" >> www/index.html
 	done
 
 	if test -f www_src/main.js; then
-		echo '<div id="app_main" style="display:none">' >> www/index.html
-		cat www_src/main.html >> www/index.html
-		echo '</div><script>' >> www/index.html
-		cat www_src/main.js >> www/index.html
-		echo '</script>' >> www/index.html
+		{
+			echo '<div id="app_main" style="display:none">'
+			cat www_src/main.html
+			echo '</div><script>'
+			cat www_src/main.js
+			echo '</script>'
+		} >>www/index.html
 	fi
 
 	cat www_src/footer.html >> www/index.html

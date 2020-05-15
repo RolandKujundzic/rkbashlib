@@ -28,25 +28,25 @@ function _sql {
 		fi
 	fi
 
-	local ACTION="$1"
-	local QUERY="$2"
+	local action query
+	action="$1"
+	query="$2"
 
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
-		ACTION="${BASH_REMATCH[1]}"
-		QUERY="$1"
-		test -z "${_SQL_QUERY[$QUERY]}" && _abort "invalid action $ACTION - no such query key $QUERY"
+		action="${BASH_REMATCH[1]}"
+		query="$1"
+		test -z "${_SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
 	fi
 
-	test -z "${_SQL_QUERY[$QUERY]}" || QUERY="${_SQL_QUERY[$QUERY]}"
+	test -z "${_SQL_QUERY[$query]}" || query="${_SQL_QUERY[$query]}"
+	query=$(_sql_querystring "$query")
 
-	QUERY=`_sql_querystring "$QUERY"`
-
-	if test "$ACTION" = "select"; then
-		_sql_select "$QUERY"
-	elif test "$ACTION" = "execute"; then
-		_sql_execute "$QUERY" $3
-	elif test "$ACTION" = "list"; then
-		_sql_list "$QUERY"
+	if test "$action" = "select"; then
+		_sql_select "$query"
+	elif test "$action" = "execute"; then
+		_sql_execute "$query" "$3"
+	elif test "$action" = "list"; then
+		_sql_list "$query"
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
 	fi

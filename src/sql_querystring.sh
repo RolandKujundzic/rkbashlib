@@ -11,6 +11,7 @@ declare -A _SQL_SEARCH
 # @global _SQL_SEARCH (hash) _SQL_PARAM (hash)
 # @param string query
 # @return string
+# shellcheck disable=SC2068
 #--
 function _sql_querystring {
 	if test "${#_SQL_SEARCH[@]}" -gt 0; then

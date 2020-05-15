@@ -2774,7 +2774,7 @@ function _md5 {
 # @global APP RKS_HEADER
 # @param split dir (optional if $APP is used)
 # @param output file (optional if $APP is used)
-# shellcheck disable=SC2086,SC2034,SC2120
+# shellcheck disable=SC2119,SC2086,SC2034,SC2120
 #--
 function _merge_sh {
 	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck
@@ -4031,7 +4031,7 @@ function _php_version {
 # @return bool
 #--
 function _port_reachable {
-	if nc -zv -w2 $1 $2 2>/dev/null; then
+	if nc -zv -w2 "$1" "$2" 2>/dev/null; then
 		return 0
 	else
 		return 1
@@ -4166,16 +4166,16 @@ function _progress_bar_printf {
 # @param string char length [1-64]
 #--
 function _random_string {
-	local CHARS="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
-	local LEN=${1:-8}
-	local i
+	local i len chars
+	chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
+	len=${1:-8}
 
 	if ! test -z "$2" && ! test -z "$3"; then
-		CHARS="${CHARS:$2:$3}"
+		chars="${chars:$2:$3}"
 	fi
 
-	for (( i = 0; i < $1; i++ )); do
-		echo -n "${CHARS:RANDOM%${#CHARS}:1}"
+	for (( i = 0; i < len; i++ )); do
+		echo -n "${chars:RANDOM%${#chars}:1}"
 	done
 	echo
 }
@@ -4187,22 +4187,20 @@ function _random_string {
 # @param path
 #--
 function _realpath_osx {
-	local REALPATH=
-	local LINK=
-	local CURR=$PWD
+	local realpath link
 
-	cd "$(dirname "$1")"
-	LINK=$(readlink "$(basename "$1")")
+	_cd "$(dirname "$1")"
+	link=$(readlink "$(basename "$1")")
 
-	while [ "$LINK" ]; do
-		cd "$(dirname "$LINK")"
-		LINK=$(readlink "$(basename "$1")")
+	while [ "$link" ]; do
+		_cd "$(dirname "$link")"
+		link=$(readlink "$(basename "$1")")
 	done
 
-	REALPATH="$PWD/$(basename "$1")"
+	realpath="$PWD/$(basename "$1")"
 
-	cd "$CURR"
-	echo "$REALPATH"
+	_cd "$CURR"
+	echo "$realpath"
 }
 
 
@@ -4211,21 +4209,18 @@ function _realpath_osx {
 #
 # @param do_not_load_dump (optional, default = empty = load_dump)
 # @export DB_NAME DB_PASS MYSQL_CONN
+# shellcheck disable=SC2119
 #--
 function _recreate_docker_db {
-	local INSIDE_DOCKER=`cat /etc/hosts | grep 172.17`
-
-	if test -z "$INSIDE_DOCKER"; then
+	if grep 172.17 /etc/hosts >/dev/null; then
 		echo "not inside docker - abort database recreate"
 		return
 	fi
 
 	_mysql_split_dsn
-	_mysql_create_db $DB_NAME $DB_PASS
+	_mysql_create_db "$DB_NAME" "$DB_PASS"
 
-	if test -z "$1"; then
-		_mysql_load
-	fi
+	test -z "$1" && _mysql_load
 }
 
 
@@ -4233,14 +4228,16 @@ function _recreate_docker_db {
 # Export remote ip adress REMOTE_IP and REMOTE_IP6.
 #
 # @export REMOTE_IP REMOTE_IP6
+# shellcheck disable=SC2034
 #--
 function _remote_ip {
 	_require_program curl
 
-	local IP4_IP6=`curl -sSL https://dyn4.de/ip.php`
+	local ip4_ip6
+	ip4_ip6=$(curl -sSL --insecure 'https://dyn4.de/ip.php')
 
-	REMOTE_IP=`echo "$IP4_IP6" | awk '{print $1}'`
-	REMOTE_IP6=`echo "$IP4_IP6" | awk '{print $2}'`
+	REMOTE_IP=$(echo "$ip4_ip6" | awk '{print $1}')
+	REMOTE_IP6=$(echo "$ip4_ip6" | awk '{print $2}')
 }
 
 
@@ -4374,7 +4371,7 @@ function _require_program {
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_PID
 # @param $0 $@
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {
 	local me="$1"
@@ -4472,32 +4469,23 @@ function __abort {
 # @example _rkscript "_rm _mv _cp _mkdir"
 # @global RKSCRIPT = /path/to/rkscript/src
 # @param function list
+# shellcheck disable=SC1090,SC2086
 #--
 function _rkscript {
+	test -z "$RKSCRIPT" && RKSCRIPT=../../rkscript/src
+	test -d "$RKSCRIPT" || RKSCRIPT=../../../rkscript/src
+	local a abort 
 
-	if test -z "$RKSCRIPT"; then
-		RKSCRIPT=../../rkscript/src
-	fi
+	abort=_abort
+	test "$(type -t $abort)" = 'function' || abort=__abort
 
-	if ! test -d "$RKSCRIPT"; then
-		RKSCRIPT=../../../rkscript/src
-	fi
-
-	local ABORT=_abort
-	local HAS_ABORT=`type -t $ABORT`
-	if ! test "$HAS_ABORT" = "function"; then
-		ABORT=__abort
-	fi
-
-	if ! test -d "$RKSCRIPT" || ! test -f "$RKSCRIPT/abort.sh"; then
-		$ABORT "invalid RKSCRIPT path [$RKSCRIPT] - $APP_PREFIX $APP"
-	fi
+	[[ -d "$RKSCRIPT" && -f "$RKSCRIPT/abort.sh" ]] || \
+		$abort "invalid RKSCRIPT path [$RKSCRIPT] - $APP_PREFIX $APP"
 
 	for a in $1; do
-		local TYPE=`type -t $a`
-		if ! test "$TYPE" = "function"; then
+		if ! test "$(type -t $a)" = "function"; then
 			echo "load $a"
-			. "$RKSCRIPT/${a:1}.sh" || $ABORT "no such function $a"
+			source "$RKSCRIPT/${a:1}.sh" || $abort "no such function $a"
 		else 
 			echo "found $a"
 		fi
@@ -4603,14 +4591,16 @@ function _run_as_root {
 # @param string value
 #--
 function _set {
-	local DIR="$RKSCRIPT_DIR"
-	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
-	DIR="$DIR/"`basename "$APP"`
+	local dir
 
-	test -d "$DIR" || _mkdir "$DIR" >/dev/null
+	dir="$RKSCRIPT_DIR"
+	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$dir/$(basename "$APP")"
+
+	test -d "$dir" || _mkdir "$dir" >/dev/null
 	test -z "$1" && _abort "empty name"
 
-	echo -e "$2" > "$DIR/$1.nfo"
+	echo -e "$2" > "$dir/$1.nfo"
 }
 
 
@@ -4622,27 +4612,25 @@ function _set {
 # @param label (optional)
 #--
 function _show_list {
-	local i=0
-	local a=
+	local i a
+	i=0
 
 	if ! test -z "$3"; then
 		echo ""
 		_label "$3"
 	fi
 
-	for a in $1
-	do
-		i=$(($i+1))
+	for a in $1; do
+		i=$((i+1))
 		echo -n "$a "
 
-		n=$(($i%$2))
-		if test "$n" = "0"; then
-			echo ""
-		fi
+		n=$((i%$2))
+		test "$n" = "0" && echo ""
 	done
 
 	echo ""
 }
+
 
 #--
 # Sort (unique) whitespace list. No whitespace in list elements allowed.
@@ -4677,7 +4665,8 @@ function _split {
 #--
 function _split_sh {
 	_require_file "$1"
-	local output_dir=`basename $1`"_"
+	local output_dir
+	output_dir="$(basename "$1")_"
 	test -d "$output_dir" && _rm "$output_dir" >/dev/null
 	_mkdir "$output_dir" >/dev/null
 
@@ -4708,7 +4697,7 @@ EOF
 
 	local a func
 	for a in "$output_dir"/*.inc.sh; do
-		func=`grep -E '^function [a-zA-Z0-9_]+ \{' $a | sed -E 's/function ([a-zA-Z0-9_]+) \{/\1/'`
+		func=$(grep -E '^function [a-zA-Z0-9_]+ \{' "$a" | sed -E 's/function ([a-zA-Z0-9_]+) \{/\1/')
 
 		if test -z "$func"; then
 			if test "$a" = "$output_dir/split_1.inc.sh"; then
@@ -4735,9 +4724,10 @@ EOF
 # @echo 
 #--
 function _sql_echo {
-	local QUERY="$1"
-	test ${#QUERY} -gt 60 && QUERY="${QUERY:0:60} ..."
-	echo -n $QUERY
+	local query
+	query="$1"
+	test ${#query} -gt 60 && query="${query:0:60} ..."
+	echo -n "$query"
 }
 
 
@@ -4804,6 +4794,7 @@ declare -A _SQL_SEARCH
 # @global _SQL_SEARCH (hash) _SQL_PARAM (hash)
 # @param string query
 # @return string
+# shellcheck disable=SC2068
 #--
 function _sql_querystring {
 	if test "${#_SQL_SEARCH[@]}" -gt 0; then
@@ -4860,23 +4851,24 @@ declare -A _SQL_COL
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
 # @return boolean (if type=select - false = no result)
+# shellcheck disable=SC2034
 #--
 function _sql_select {
-	local query="$1"
+	local dbout lnum line1 line2 query i ckey cval
+	query="$1"
 	test -z "$query" && _abort "empty query in _sql_select"
 	_require_global "_SQL"
 
-	local dbout=`$_SQL "$query" || _abort "$query"`
-	local lnum=`echo "$dbout" | wc -l`
+	dbout=$($_SQL "$query" || _abort "$query")
+	lnum=$(echo "$dbout" | wc -l)
 
 	_SQL_COL=()
 	_SQL_COL[_all]="$dbout"
 	_SQL_COL[_rows]=$((lnum - 1))
 
-	if test $lnum -eq 2; then
-		local line1=`echo "$dbout" | head -1`
-		local line2=`echo "$dbout" | tail -1`
-		local i ckey cval
+	if test "$lnum" -eq 2; then
+		line1=$(echo "$dbout" | head -1)
+		line2=$(echo "$dbout" | tail -1)
 
 		IFS=$'\t' read -ra ckey <<< "$line1"
 		IFS=$'\t' read -ra cval <<< "$line2"
@@ -4886,7 +4878,7 @@ function _sql_select {
 		done
 
 		return 0  # true single line result
-	elif test $lnum -lt 2; then
+	elif test "$lnum" -lt 2; then
 		return 1  # false = no result
 	else
 		_abort "_sql select: multi line result ($lnum lines)\nUse _sql list ..."
@@ -4922,25 +4914,25 @@ function _sql {
 		fi
 	fi
 
-	local ACTION="$1"
-	local QUERY="$2"
+	local action query
+	action="$1"
+	query="$2"
 
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
-		ACTION="${BASH_REMATCH[1]}"
-		QUERY="$1"
-		test -z "${_SQL_QUERY[$QUERY]}" && _abort "invalid action $ACTION - no such query key $QUERY"
+		action="${BASH_REMATCH[1]}"
+		query="$1"
+		test -z "${_SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
 	fi
 
-	test -z "${_SQL_QUERY[$QUERY]}" || QUERY="${_SQL_QUERY[$QUERY]}"
+	test -z "${_SQL_QUERY[$query]}" || query="${_SQL_QUERY[$query]}"
+	query=$(_sql_querystring "$query")
 
-	QUERY=`_sql_querystring "$QUERY"`
-
-	if test "$ACTION" = "select"; then
-		_sql_select "$QUERY"
-	elif test "$ACTION" = "execute"; then
-		_sql_execute "$QUERY" $3
-	elif test "$ACTION" = "list"; then
-		_sql_list "$QUERY"
+	if test "$action" = "select"; then
+		_sql_select "$query"
+	elif test "$action" = "execute"; then
+		_sql_execute "$query" "$3"
+	elif test "$action" = "list"; then
+		_sql_list "$query"
 	else
 		_abort "_sql(...) invalid first parameter [$1] - use select|execute|list or ACTION_QKEY"
 	fi
@@ -4954,62 +4946,61 @@ function _sql {
 # Action dump files are either $1/alter|insert|update.sql or $1/alter|insert|update/table.sql.
 # If not autoexec ask before every action.
 #
-# @param string directory name 
+# @param string directory name
 # @param int flag 
+# @global RKSCRIPT_DIR 
+# shellcheck disable=SC2012
 #--
 function _sql_transaction {
-	local FLAG=$(($2 + 0))
-	local SQL_DIR="$1"
-	local ST="START TRANSACTION;"
-	local ET="COMMIT;"
-	local SQL_DUMP
-	local TABLES
-	local ACF
-	local i
+	local flag sql_dir st et sql_dump tables acf i
+	flag=$(($2 + 0))
+	sql_dir="$1"
+	st="START TRANSACTION;"
+	et="COMMIT;"
 
-	_require_dir "$SQL_DIR"
+	_require_dir "$sql_dir"
 	_mkdir "$RKSCRIPT_DIR/sql_transaction" >/dev/null
 
-	if test -s "$SQL_DIR/tables.txt"; then
-		TABLES=( `cat "$SQL_DIR/tables.txt"` )
+	if test -s "$sql_dir/tables.txt"; then
+		tables=( "$(cat "$sql_dir/tables.txt")" )
 	else
-		TABLES=( `ls "$SQL_DIR/"*_*.sql | sed -E 's/^.+?\/([a-z0-9_]+)\.sql$/\1/i'` )
-		ST="$ST\nSET FOREIGN_KEY_CHECKS=0;"
-		ET="SET FOREIGN_KEY_CHECKS=1;\n$ET"
+		tables=( "$(ls "$sql_dir/"*_*.sql | sed -E 's/^.+?\/([a-z0-9_]+)\.sql$/\1/i')" )
+		st="$st\nSET FOREIGN_KEY_CHECKS=0;"
+		et="SET FOREIGN_KEY_CHECKS=1;\n$et"
 	fi
 
-	test ${#TABLES[@]} -lt 1 && _abort "table list is empty"
-	test $((FLAG & 32)) -eq 32 && ACF=y
+	test ${#tables[@]} -lt 1 && _abort "table list is empty"
+	test $((flag & 32)) -eq 32 && acf=y
 
-	if test $((FLAG & 1)) -eq 1; then	
-		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/drop.sql"
-		echo -e "$ST\n" >$SQL_DUMP
-		for ((i = ${#TABLES[@]} - 1; i > -1; i--)); do
-			echo "DROP TABLE IF EXISTS ${TABLES[$i]};" >>$SQL_DUMP
+	if test $((flag & 1)) -eq 1; then	
+		sql_dump="$RKSCRIPT_DIR/sql_transaction/drop.sql"
+		echo -e "$st\n" >"$sql_dump"
+		for ((i = ${#tables[@]} - 1; i > -1; i--)); do
+			echo "DROP TABLE IF EXISTS ${tables[$i]};" >>"$sql_dump"
 		done 
-		echo -e "\n$ET" >>$SQL_DUMP
+		echo -e "\n$et" >>"$sql_dump"
 
-		AUTOCONFIRM=$ACF
-		_confirm "Drop ${#TABLES[@]} tables (load $SQL_DUMP)?"
-		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
+		AUTOCONFIRM=$acf
+		_confirm "Drop ${#tables[@]} tables (load $sql_dump)?"
+		test "$CONFIRM" = "y" && _sql_load "$sql_dump" 1
 	fi
 
-	if test $((FLAG & 2)) -eq 2; then	
-		SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/create.sql"
-		echo -e "$ST\n" >$SQL_DUMP
-		for ((i = 0; i < ${#TABLES[@]}; i++)); do
-			cat "$SQL_DIR/${TABLES[$i]}.sql" >>$SQL_DUMP
+	if test $((flag & 2)) -eq 2; then	
+		sql_dump="$RKSCRIPT_DIR/sql_transaction/create.sql"
+		echo -e "$st\n" >"$sql_dump"
+		for ((i = 0; i < ${#tables[@]}; i++)); do
+			cat "$sql_dir/${tables[$i]}.sql" >>"$sql_dump"
 		done
-		echo -e "\n$ET" >>$SQL_DUMP
+		echo -e "\n$et" >>"$sql_dump"
 
-		AUTOCONFIRM=$ACF
-		_confirm "Create tables (load $SQL_DUMP)?"
-		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
+		AUTOCONFIRM=$acf
+		_confirm "Create tables (load $sql_dump)?"
+		test "$CONFIRM" = "y" && _sql_load "$sql_dump" 1
 	fi
 
-	test $((FLAG & 4)) -eq 4 && _sql_transaction_load "$SQL_DIR" alter $ACF
-	test $((FLAG & 8)) -eq 8 && _sql_transaction_load "$SQL_DIR" update $ACF
-	test $((FLAG & 16)) -eq 16 && _sql_transaction_load "$SQL_DIR" insert $ACF
+	test $((flag & 4)) -eq 4 && _sql_transaction_load "$sql_dir" alter $acf
+	test $((flag & 8)) -eq 8 && _sql_transaction_load "$sql_dir" update $acf
+	test $((flag & 16)) -eq 16 && _sql_transaction_load "$sql_dir" insert $acf
 }
 
 
@@ -5019,21 +5010,24 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
+# @global RKSCRIPT_DIR
+# shellcheck disable=SC2034
 #--
 function _sql_transaction_load {
-	local SQL_DUMP="$RKSCRIPT_DIR/sql_transaction/$2.sql"
-	_rm "$SQL_DUMP" >/dev/null
+	local sql_dump
+	sql_dump="$RKSCRIPT_DIR/sql_transaction/$2.sql"
+	_rm "$sql_dump" >/dev/null
 
 	if test -s "$1/$2.sql"; then
-		_cp "$1/$2.sql" "$SQL_DUMP"
+		_cp "$1/$2.sql" "$sql_dump"
 	elif test -d "$1/$2"; then
-		cat "$1/$2/*.sql" > "$SQL_DUMP"
+		cat "$1/$2/*.sql" > "$sql_dump"
 	fi
 
-	if test -s "$SQL_DUMP"; then
-		AUTOCONFIRM=$3
-		_confirm "Execute $2 queries (load $SQL_DUMP)?"
-		test "$CONFIRM" = "y" && _sql_load "$SQL_DUMP" 1
+	if test -s "$sql_dump"; then
+		AUTOCONFIRM="$3"
+		_confirm "Execute $2 queries (load $sql_dump)?"
+		test "$CONFIRM" = "y" && _sql_load "$sql_dump" 1
 	fi
 }
 
@@ -5044,15 +5038,16 @@ function _sql_transaction_load {
 # @global SRC2WWW_FILES SRC2WWW_DIR SRC2WWW_RKJS_DIR SRC2WWW_RKJS_FILES
 #--
 function _src2www_copy {
+	local a
 
-	local a=; for a in $SRC2WWW_FILES $SRC2WWW_DIR; do
-		cp -r www_src/$a www/
+	for a in $SRC2WWW_FILES $SRC2WWW_DIR; do
+		cp -r "www_src/$a" www/
 	done
 
 	if ! test -z "$SRC2WWW_RKJS_FILES"; then
 		_require_global "SRC2WWW_RKJS_DIR"
 		for a in $SRC2WWW_RKJS_FILES; do
-			cp $SRC2WWW_RKJS_DIR/$a www/js/
+			cp "$SRC2WWW_RKJS_DIR/$a" www/js/
 		done
 	fi
 }
@@ -5068,29 +5063,26 @@ function _src2www_copy {
 #
 #--
 function _src2www_index {
+	_cp www_src/header.html www/index.html
 
-	cp www_src/header.html www/index.html
+	test -f www_src/app_header.html && cat www_src/app_header.html >>www/index.html
+	cat www_src/main.html >>www/index.html
+	test -f www_src/app_footer.html && cat www_src/app_footer.html >>www/index.html
 
-	if test -f www_src/app_header.html; then
-		cat www_src/app_header.html >> www/index.html
-	fi
+	local a
 
-	cat www_src/main.html >> www/index.html
-
-	if test -f www_src/app_footer.html; then
-		cat www_src/app_footer.html >> www/index.html
-	fi
-
-	local a=; for a in www_src/*.inc.html; do
-		cat $a >> www/index.html
+	for a in www_src/*.inc.html; do
+		cat "$a" >> www/index.html
 	done
 
 	if test -f www_src/main.js; then
-		echo '<div id="app_main" style="display:none">' >> www/index.html
-		cat www_src/main.html >> www/index.html
-		echo '</div><script>' >> www/index.html
-		cat www_src/main.js >> www/index.html
-		echo '</script>' >> www/index.html
+		{
+			echo '<div id="app_main" style="display:none">'
+			cat www_src/main.html
+			echo '</div><script>'
+			cat www_src/main.js
+			echo '</script>'
+		} >>www/index.html
 	fi
 
 	cat www_src/footer.html >> www/index.html
@@ -5099,6 +5091,8 @@ function _src2www_index {
 
 #--
 # Create ssh key authentication for server $1 (rk@server.tld).
+# @param user@domain.tld
+# shellcheck disable=SC2086
 #--
 function _ssh_auth {
 	echo "create ssh keys for password less authentication"
@@ -5232,23 +5226,25 @@ function _sync_db {
 # @param source directory
 # @param output file
 # @global PATH_RKPHPLIB
+# shellcheck disable=SC2028
 #--
 function _syntax_check_php {
-	local PHP_FILES=`find "$1" -type f -name '*.php'`
-	local PHP_BIN=`grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//'`
+	local a php_files php_bin
+	php_files=$(find "$1" -type f -name '*.php')
+	php_bin=$(grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//')
 
 	_require_global PATH_RKPHPLIB
 
-	echo -e "<?php\n\ndefine('APP_HELP', 'quiet');\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');\n" > "$2"
-	echo -e "function _syntax_test(\$php_file) {\n  print \"\$php_file ... \";\n  include_once \$php_file;" >> "$2"
-	echo -n '  print "ok\n";' >> "$2"
-	echo -e "\n}\n" >> "$2"
+	{
+		echo -e "<?php\n\ndefine('APP_HELP', 'quiet');\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');\n"
+		echo -e "function _syntax_test(\$php_file) {\n  print \"\$php_file ... \";\n  include_once \$php_file;"
+		echo -n '  print "ok\n";'
+		echo -e "\n}\n"
+	} >"$2"
 
-	for a in $PHP_FILES $PHP_BIN
+	for a in $php_files $php_bin
 	do
-		local SKIP=`head -1 "$a" | grep 'php -c skip_syntax_check'`
-	
-		if test -z "$SKIP"; then
+		if test -z "$(head -1 "$a" | grep 'php -c skip_syntax_check')"; then
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
@@ -5415,6 +5411,7 @@ function _toupper {
 # Print trimmed string. 
 #
 # @param string name (use /dev/stdin if not set)
+# shellcheck disable=SC2120
 #--
 function _trim {
 	local input
@@ -5432,10 +5429,7 @@ function _use_shell {
 	test -L "/bin/sh" || _abort "no /bin/sh link"
 	test -f "/bin/$1" || _abort "no such shell /bin/$1"
 
-	local USE_SHELL=`diff -u /bin/sh /bin/$1`
-	local CURR="$PWD"
-
-	if ! test -z "$USE_SHELL"; then
+	if ! test -z "$(diff -u /bin/sh "/bin/$1")"; then
 		_rm /bin/sh
 		_cd /bin
 		_ln "$1" sh
@@ -5450,6 +5444,7 @@ function _use_shell {
 # 
 # @param version number (nn.mm.kk)
 # @print int
+# shellcheck disable=SC2183,SC2046
 #--
 function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
@@ -5461,10 +5456,11 @@ function _ver3 {
 # Link php/phplib to /webhome/.php/phplib if $1 & 2=2.
 #
 # @param int flag
+# shellcheck disable=SC2128
 #--
 function _webhome_php {
-	local flag=$1
-	local git_dir
+	local i dir flag git_dir
+	flag=$1
 
 	test -z "$flag" && flag=$(($1 & 0))
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
@@ -5473,7 +5469,6 @@ function _webhome_php {
 	_mkdir php >/dev/null
 	_cd php 
 
-	local i dir
 	for ((i = 0; i < ${#git_dir[@]}; i++)); do
  		dir="${git_dir[$i]}"
 		_require_dir "/webhome/.php/$dir"
@@ -5498,25 +5493,23 @@ function _webhome_php {
 #--
 function _webserver_rw_dir {
 	test -d "$1" || _abort "no such directory $1"
-
-	local DIR_OWNER=`stat -c '%U' "$1"`
-	local SERVER_USER=
+	local me server_user
 
 	if test -s "/etc/apache2/envvars"; then
-		SERVER_USER=`cat /etc/apache2/envvars | grep -E '^export APACHE_RUN_USER=' | sed -E 's/.*APACHE_RUN_USER=//'`
+		server_user=$(grep -E '^export APACHE_RUN_USER=' /etc/apache2/envvars | sed -E 's/.*APACHE_RUN_USER=//')
 	fi
 
-	if ! test -z "$SERVER_USER" && test "$SERVER_USER" = "$DIR_OWNER"; then
-		echo "directory $1 is already owned by webserver $SERVER_USER"
+	if ! test -z "$server_user" && test "$server_user" = "$(stat -c '%U' "$1")"; then
+		echo "directory $1 is already owned by webserver $server_user"
 		return
 	fi
 
 	_chmod 770 "$1"
 
-	local ME="$USER"
-	test -z "$SUDO_USER" || ME="$SUDO_USER"
+	me="$USER"
+	test -z "$SUDO_USER" || me="$SUDO_USER"
 
-	_chown "$1" "$ME" "$SERVER_USER"
+	_chown "$1" "$me" "$server_user"
 }
 
 

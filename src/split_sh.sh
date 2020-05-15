@@ -8,7 +8,8 @@
 #--
 function _split_sh {
 	_require_file "$1"
-	local output_dir=`basename $1`"_"
+	local output_dir
+	output_dir="$(basename "$1")_"
 	test -d "$output_dir" && _rm "$output_dir" >/dev/null
 	_mkdir "$output_dir" >/dev/null
 
@@ -39,7 +40,7 @@ EOF
 
 	local a func
 	for a in "$output_dir"/*.inc.sh; do
-		func=`grep -E '^function [a-zA-Z0-9_]+ \{' $a | sed -E 's/function ([a-zA-Z0-9_]+) \{/\1/'`
+		func=$(grep -E '^function [a-zA-Z0-9_]+ \{' "$a" | sed -E 's/function ([a-zA-Z0-9_]+) \{/\1/')
 
 		if test -z "$func"; then
 			if test "$a" = "$output_dir/split_1.inc.sh"; then

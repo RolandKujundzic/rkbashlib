@@ -7,13 +7,15 @@
 # @param string value
 #--
 function _set {
-	local DIR="$RKSCRIPT_DIR"
-	test "$DIR" = "$HOME/.rkscript/$$" && DIR="$HOME/.rkscript"
-	DIR="$DIR/"`basename "$APP"`
+	local dir
 
-	test -d "$DIR" || _mkdir "$DIR" >/dev/null
+	dir="$RKSCRIPT_DIR"
+	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$dir/$(basename "$APP")"
+
+	test -d "$dir" || _mkdir "$dir" >/dev/null
 	test -z "$1" && _abort "empty name"
 
-	echo -e "$2" > "$DIR/$1.nfo"
+	echo -e "$2" > "$dir/$1.nfo"
 }
 

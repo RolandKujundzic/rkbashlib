@@ -2,6 +2,8 @@
 
 #--
 # Create ssh key authentication for server $1 (rk@server.tld).
+# @param user@domain.tld
+# shellcheck disable=SC2086
 #--
 function _ssh_auth {
 	echo "create ssh keys for password less authentication"

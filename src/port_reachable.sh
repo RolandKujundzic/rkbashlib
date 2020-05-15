@@ -8,7 +8,7 @@
 # @return bool
 #--
 function _port_reachable {
-	if nc -zv -w2 $1 $2 2>/dev/null; then
+	if nc -zv -w2 "$1" "$2" 2>/dev/null; then
 		return 0
 	else
 		return 1

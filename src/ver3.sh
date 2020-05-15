@@ -6,6 +6,7 @@
 # 
 # @param version number (nn.mm.kk)
 # @print int
+# shellcheck disable=SC2183,SC2046
 #--
 function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')

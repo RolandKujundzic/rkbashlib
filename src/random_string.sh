@@ -12,16 +12,16 @@
 # @param string char length [1-64]
 #--
 function _random_string {
-	local CHARS="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
-	local LEN=${1:-8}
-	local i
+	local i len chars
+	chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
+	len=${1:-8}
 
 	if ! test -z "$2" && ! test -z "$3"; then
-		CHARS="${CHARS:$2:$3}"
+		chars="${chars:$2:$3}"
 	fi
 
-	for (( i = 0; i < $1; i++ )); do
-		echo -n "${CHARS:RANDOM%${#CHARS}:1}"
+	for (( i = 0; i < len; i++ )); do
+		echo -n "${chars:RANDOM%${#chars}:1}"
 	done
 	echo
 }

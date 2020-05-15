@@ -8,24 +8,22 @@
 # @param label (optional)
 #--
 function _show_list {
-	local i=0
-	local a=
+	local i a
+	i=0
 
 	if ! test -z "$3"; then
 		echo ""
 		_label "$3"
 	fi
 
-	for a in $1
-	do
-		i=$(($i+1))
+	for a in $1; do
+		i=$((i+1))
 		echo -n "$a "
 
-		n=$(($i%$2))
-		if test "$n" = "0"; then
-			echo ""
-		fi
+		n=$((i%$2))
+		test "$n" = "0" && echo ""
 	done
 
 	echo ""
 }
+

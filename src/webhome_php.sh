@@ -5,10 +5,11 @@
 # Link php/phplib to /webhome/.php/phplib if $1 & 2=2.
 #
 # @param int flag
+# shellcheck disable=SC2128
 #--
 function _webhome_php {
-	local flag=$1
-	local git_dir
+	local i dir flag git_dir
+	flag=$1
 
 	test -z "$flag" && flag=$(($1 & 0))
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
@@ -17,7 +18,6 @@ function _webhome_php {
 	_mkdir php >/dev/null
 	_cd php 
 
-	local i dir
 	for ((i = 0; i < ${#git_dir[@]}; i++)); do
  		dir="${git_dir[$i]}"
 		_require_dir "/webhome/.php/$dir"
