@@ -6,6 +6,7 @@
 # @param name
 # @param host (default = localhost)
 # @global MYSQL (use 'mysql -u root' if empty)
+# shellcheck disable=SC2153
 #--
 function _mysql_drop_user {
 	local name host mysql

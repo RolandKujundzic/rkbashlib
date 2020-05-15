@@ -6,6 +6,7 @@
 #
 # @param sql dump
 # @param flag
+# shellcheck disable=SC2034
 #--
 function _sql_load {
 	_require_program "rks-db"
@@ -15,3 +16,4 @@ function _sql_load {
 	_confirm "load sql dump '$1'?" 1
 	test "$CONFIRM" = "y" && rks-db load >/dev/null "$1" --q1=n --q2=y
 }
+
