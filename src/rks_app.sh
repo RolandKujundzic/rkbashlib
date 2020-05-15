@@ -5,7 +5,7 @@
 # Execute self_update or help action if $1 = self_update|help.
 #
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
-# @export APP CURR APP_PID
+# @export APP CURR APP_DIR APP_PID
 # @param $0 $@
 # shellcheck disable=SC2034,SC2119
 #--
@@ -16,6 +16,7 @@ function _rks_app {
 
 	if test -z "$APP"; then
 		APP="$me"
+		APP_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 		CURR="$PWD"
 		if test -z "$APP_PID"; then
 			 export APP_PID="$$"
