@@ -20,9 +20,9 @@ function _rsync {
 	eval "$rsync ${LOG_CMD[rsync]}" || error=1
 
 	if test "$error" = "1"; then
-		local sync_finished
-		sync_finished=$(tail -4 "${LOG_FILE[rsync]}" | grep 'speedup is ')
-		test -z "$sync_finished" && _abort "$rsync"
+		test -z "$(tail -4 "${LOG_FILE[rsync]}" | grep 'speedup is ')" && _abort "$rsync"
+		test -z "$(tail -1 "${LOG_FILE[rsync]}" | grep "rsync error:")" || \
+			_msg "[WARNING]: FIX rsync errors in ${LOG_FILE[rsync]}"
 	fi
 }
 
