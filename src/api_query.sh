@@ -8,7 +8,7 @@ declare -A API_QUERY
 # @param string query type curl|func|wget
 # @param string query string
 # @param hash query parameter
-# @global API_QUERY
+# @global API_QUERY RKBASH_DIR
 # shellcheck disable=SC2154
 #--
 function _api_query {
@@ -16,9 +16,9 @@ function _api_query {
 	test -z "$2" && _abort "missing query string"
 
 	local out_f log_f err_f
-	out_f="$RKSCRIPT_DIR/api_query.res"	
-	log_f="$RKSCRIPT_DIR/api_query.log"	
-	err_f="$RKSCRIPT_DIR/api_query.err"
+	out_f="$RKBASH_DIR/api_query.res"	
+	log_f="$RKBASH_DIR/api_query.log"	
+	err_f="$RKBASH_DIR/api_query.err"
 
 	echo '' > "$out_f"
 

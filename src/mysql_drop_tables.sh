@@ -3,15 +3,15 @@
 #--
 # Drop all tables in database.
 #
-# @global 
+# @global RKBASH_DIR DB_NAME DB_PASS  
 #--
 function _mysql_drop_tables {
-	_require_global DB_NAME DB_PASS
+	_require_global RKBASH_DIR DB_NAME DB_PASS
 	_confirm "Drop all tables in $DB_NAME" 1
   test "$CONFIRM" = "y" || return
 
 	local tmp_dir drop_sql
-	tmp_dir="$RKSCRIPT_DIR/load_dump"
+	tmp_dir="$RKBASH_DIR/load_dump"
 	drop_sql="$tmp_dir/$DB_NAME.sql"
 
 	_mkdir "$tmp_dir"

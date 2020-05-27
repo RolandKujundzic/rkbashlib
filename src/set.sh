@@ -1,16 +1,17 @@
 #!/bin/bash
 
 #--
-# Save value as $name.nfo (in $RKSCRIPT_DIR/$APP).
+# Save value as $name.nfo (in $RKBASH_DIR/$APP).
 #
 # @param string name (required)
 # @param string value
+# @global RKBASH_DIR
 #--
 function _set {
 	local dir
 
-	dir="$RKSCRIPT_DIR"
-	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$RKBASH_DIR"
+	test "$dir" = "$HOME/.rkbash/$$" && dir="$HOME/.rkbash"
 	dir="$dir/$(basename "$APP")"
 
 	test -d "$dir" || _mkdir "$dir" >/dev/null

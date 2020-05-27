@@ -9,7 +9,7 @@ test -z "$APP_PID" && export APP_PID="$$"
 test -z "$CURR" && CURR="$PWD"
 
 
-test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
+test -z "$RKBASH_DIR" && RKBASH_DIR="$HOME/.rkbash/$$"
 
 if declare -A __hash=([key]=value) 2>/dev/null; then
 	test "${__hash[key]}" = 'value' || { echo -e "\nERROR: declare -A\n"; exit 1; }
@@ -83,13 +83,14 @@ function _abort {
 # Add linenumber to $1 after _abort if caller function does not exist.
 #
 # @param string file 
+# @global RKBASH_DIR
 #--
 function _add_abort_linenum {
 	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	_mkdir "$RKSCRIPT_DIR/add_abort_linenum" >/dev/null
-	tmp_file="$RKSCRIPT_DIR/add_abort_linenum/"$(basename "$1")
+	_mkdir "$RKBASH_DIR/add_abort_linenum" >/dev/null
+	tmp_file="$RKBASH_DIR/add_abort_linenum/"$(basename "$1")
 	test -f "$tmp_file" && _abort "$tmp_file already exists"
 
 	echo -n "add line number to _abort in $1"
@@ -211,7 +212,7 @@ declare -A API_QUERY
 # @param string query type curl|func|wget
 # @param string query string
 # @param hash query parameter
-# @global API_QUERY
+# @global API_QUERY RKBASH_DIR
 # shellcheck disable=SC2154
 #--
 function _api_query {
@@ -219,9 +220,9 @@ function _api_query {
 	test -z "$2" && _abort "missing query string"
 
 	local out_f log_f err_f
-	out_f="$RKSCRIPT_DIR/api_query.res"	
-	log_f="$RKSCRIPT_DIR/api_query.log"	
-	err_f="$RKSCRIPT_DIR/api_query.err"
+	out_f="$RKBASH_DIR/api_query.res"	
+	log_f="$RKBASH_DIR/api_query.log"	
+	err_f="$RKBASH_DIR/api_query.err"
 
 	echo '' > "$out_f"
 
@@ -320,11 +321,11 @@ function _apt_install {
 
 	_run_as_root 1
 
-	test "$RKSCRIPT_DIR" = "$HOME/.rkscript/$$" && RKSCRIPT_DIR="$HOME/.rkscript"
+	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
 
 	for a in $1
 	do
-		if test -d "$RKSCRIPT_DIR/apt/$a"; then
+		if test -d "$RKBASH_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
 			sudo apt -y install "$a" || _abort "apt -y install $a"
@@ -332,7 +333,7 @@ function _apt_install {
 		fi
 	done
 
-	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
+	test "$RKBASH_DIR" = "$HOME/.rkbash" && RKBASH_DIR="$HOME/.rkbash/$$"
 
 	LOG_NO_ECHO=$curr_lne
 }
@@ -342,6 +343,7 @@ function _apt_install {
 # Remove (purge) apt packages.
 #
 # @param package list
+# @global RKBASH_DIR
 #--
 function _apt_remove {
 	_run_as_root
@@ -350,7 +352,7 @@ function _apt_remove {
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
 			apt -y remove --purge "$a" || _abort "apt -y remove --purge $a"
-			_rm "$RKSCRIPT_DIR/apt/$a"
+			_rm "$RKBASH_DIR/apt/$a"
 		fi
 	done
 
@@ -425,21 +427,21 @@ function _aws {
 }
 
 
-test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkscript/cache"
-test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkscript/src"
+test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkbash/cache"
+test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkbash/src"
 CACHE_OFF=
 CACHE=
 
 #--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
-# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkscript/src.
+# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkbash/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
 # Use CACHE_DIR/$1.sh as cache. Use last modification of entries in CACHE_REF
 # for cache invalidation.
 #
 # @param variable name
 # @param variable value
-# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
+# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkbash/cache) CACHE_REF (=sh/run ../rkbash/src)
 # @export CACHE CACHE_FILE
 # @return bool
 # shellcheck disable=SC2034
@@ -1927,14 +1929,15 @@ function _find {
 
 
 #--
-# Return saved value ($RKSCRIPT_DIR/$APP/name.nfo).
+# Return saved value ($RKBASH_DIR/$APP/name.nfo).
 #
 # @param string name
+# @global RKBASH_DIR
 #--
 function _get {
 	local dir
-	dir="$RKSCRIPT_DIR"
-	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$RKBASH_DIR"
+	test "$dir" = "$HOME/.rkbash/$$" && dir="$HOME/.rkbash"
 	dir="$dir/$(basename "$APP")"
 
 	test -f "$dir/$1.nfo" || _abort "no such file $dir/$1.nfo"
@@ -2659,8 +2662,9 @@ LOG_NO_ECHO=
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
-# @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
+# @param name (if set use $RKBASH_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# @global RKBASH_DIR
 # shellcheck disable=SC2086
 #--
 function _log {
@@ -2673,15 +2677,15 @@ function _log {
 
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
-	LOG_FILE[$2]="$RKSCRIPT_DIR/$2/${LOG_COUNT[$2]}.nfo"
+	LOG_FILE[$2]="$RKBASH_DIR/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
 
-	if ! test -d "$RKSCRIPT_DIR/$2"; then
-		mkdir -p "$RKSCRIPT_DIR/$2"
+	if ! test -d "$RKBASH_DIR/$2"; then
+		mkdir -p "$RKBASH_DIR/$2"
 		if ! test -z "$SUDO_USER"; then
-			chown -R $SUDO_USER.$SUDO_USER "$RKSCRIPT_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKSCRIPT_DIR'"
+			chown -R $SUDO_USER.$SUDO_USER "$RKBASH_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKBASH_DIR'"
 		elif test "$UID" = "0"; then
-			chmod -R 777 "$RKSCRIPT_DIR" || _abort "chmod -R 777 '$RKSCRIPT_DIR'"
+			chmod -R 777 "$RKBASH_DIR" || _abort "chmod -R 777 '$RKBASH_DIR'"
 		fi
 	fi
 
@@ -3147,15 +3151,15 @@ function _mysql_drop_db {
 #--
 # Drop all tables in database.
 #
-# @global 
+# @global RKBASH_DIR DB_NAME DB_PASS  
 #--
 function _mysql_drop_tables {
-	_require_global DB_NAME DB_PASS
+	_require_global RKBASH_DIR DB_NAME DB_PASS
 	_confirm "Drop all tables in $DB_NAME" 1
   test "$CONFIRM" = "y" || return
 
 	local tmp_dir drop_sql
-	tmp_dir="$RKSCRIPT_DIR/load_dump"
+	tmp_dir="$RKBASH_DIR/load_dump"
 	drop_sql="$tmp_dir/$DB_NAME.sql"
 
 	_mkdir "$tmp_dir"
@@ -3905,16 +3909,16 @@ function _phpdocumentor {
 #   - user ($USER) 
 #   - port (15080)
 #   - docroot ($PWD)
-#   - script (buildin = RKSCRIPT_DIR/php_server.php)
+#   - script (buildin = RKBASH_DIR/php_server.php)
 #	  - host (0.0.0.0)
 #
 # @call_before _parse_arg "$@" 
-# @global RKSCRIPT_DIR ARG
+# @global RKBASH_DIR ARG
 # shellcheck disable=SC2009
 #--
 function _php_server {
 	_require_program php
-	_mkdir "$RKSCRIPT_DIR" > /dev/null
+	_mkdir "$RKBASH_DIR" > /dev/null
 
 	local php_code=
 IFS='' read -r -d '' php_code <<'EOF'
@@ -3970,8 +3974,8 @@ EOF
 	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
-		echo "$php_code" > "$RKSCRIPT_DIR/php_server.php"
-		ARG[script]="$RKSCRIPT_DIR/php_server.php"
+		echo "$php_code" > "$RKBASH_DIR/php_server.php"
+		ARG[script]="$RKBASH_DIR/php_server.php"
 	fi
 
 	test -z "${ARG[port]}" && ARG[port]=15080
@@ -3979,7 +3983,7 @@ EOF
 	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
 
 	local log server_pid
-	log="$RKSCRIPT_DIR/php_server.log"
+	log="$RKBASH_DIR/php_server.log"
 
 	if _is_running "port:${ARG[port]}"; then
 		server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
@@ -4398,7 +4402,7 @@ function _rkbash_inc {
 
 
 #--
-# Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
+# Export required rkbash/src/* functions as ${!_HAS_SCRIPT[@]}.
 #
 # @global RKBASH_SRC
 # @global_local _HAS_SCRIPT
@@ -4413,6 +4417,42 @@ function _rrs_scan {
 		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKBASH_SRC/${a:1}.sh" ]]; then
 			_HAS_SCRIPT[$a]=1
 			_rrs_scan "$RKBASH_SRC/${a:1}.sh"
+		fi
+	done
+}
+
+
+#--
+function __abort {
+	echo -e "\nABORT: $1\n\n"
+	exit 1
+}
+
+
+#--
+# Use for dynamic loading.
+# @example _rkbash "_rm _mv _cp _mkdir"
+# @global RKBASH_SRC = /path/to/rkbashlib/src
+# @param function list
+# shellcheck disable=SC1090,SC2086
+#--
+function _rkbash {
+	test -z "$RKBASH_SRC" && RKBASH_SRC=../../rkbashlib/src
+	test -d "$RKBASH_SRC" || RKBASH_SRC=../../../rkbashlib/src
+	local a abort 
+
+	abort=_abort
+	test "$(type -t $abort)" = 'function' || abort=__abort
+
+	[[ -d "$RKBASH_SRC" && -f "$RKBASH_SRC/abort.sh" ]] || \
+		$abort "invalid RKBASH_SRC path [$RKBASH_SRC] - $APP_PREFIX $APP"
+
+	for a in $1; do
+		if ! test "$(type -t $a)" = "function"; then
+			echo "load $a"
+			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
+		else 
+			echo "found $a"
 		fi
 	done
 }
@@ -4457,42 +4497,6 @@ function _rks_app {
 
 	[[ ! -z "${SYNTAX_CMD[$1]}" && "$2" = 'help' ]] && _syntax "$1" "help:"
 	[[ ! -z "${SYNTAX_CMD[$1.$2]}" && "$3" = 'help' ]] && _syntax "$1.$2" "help:"
-}
-
-
-#--
-function __abort {
-	echo -e "\nABORT: $1\n\n"
-	exit 1
-}
-
-
-#--
-# Use for dynamic loading.
-# @example _rkscript "_rm _mv _cp _mkdir"
-# @global RKBASH_SRC = /path/to/rkbashlib/src
-# @param function list
-# shellcheck disable=SC1090,SC2086
-#--
-function _rkscript {
-	test -z "$RKBASH_SRC" && RKBASH_SRC=../../rkbashlib/src
-	test -d "$RKBASH_SRC" || RKBASH_SRC=../../../rkbashlib/src
-	local a abort 
-
-	abort=_abort
-	test "$(type -t $abort)" = 'function' || abort=__abort
-
-	[[ -d "$RKBASH_SRC" && -f "$RKBASH_SRC/abort.sh" ]] || \
-		$abort "invalid RKBASH_SRC path [$RKBASH_SRC] - $APP_PREFIX $APP"
-
-	for a in $1; do
-		if ! test "$(type -t $a)" = "function"; then
-			echo "load $a"
-			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
-		else 
-			echo "found $a"
-		fi
-	done
 }
 
 
@@ -4588,16 +4592,17 @@ function _run_as_root {
 
 
 #--
-# Save value as $name.nfo (in $RKSCRIPT_DIR/$APP).
+# Save value as $name.nfo (in $RKBASH_DIR/$APP).
 #
 # @param string name (required)
 # @param string value
+# @global RKBASH_DIR
 #--
 function _set {
 	local dir
 
-	dir="$RKSCRIPT_DIR"
-	test "$dir" = "$HOME/.rkscript/$$" && dir="$HOME/.rkscript"
+	dir="$RKBASH_DIR"
+	test "$dir" = "$HOME/.rkbash/$$" && dir="$HOME/.rkbash"
 	dir="$dir/$(basename "$APP")"
 
 	test -d "$dir" || _mkdir "$dir" >/dev/null
@@ -4686,6 +4691,7 @@ function _split {
 # and footer is name Z_main.inc.sh. Inverse of _merge_sh.
 #
 # @param path to shell script
+# @global RKBASH_DIR
 #--
 function _split_sh {
 	_require_file "$1"
@@ -4714,10 +4720,11 @@ BEGIN{ fn = "_OUT_/split_1.inc.sh"; n = 1; open = 0; }
 }
 EOF
 
+	_require_global RKBASH_DIR
 	_msg "Split $1 into"
-	_mkdir "$RKSCRIPT_DIR" >/dev/null
-	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKSCRIPT_DIR/split_sh.awk"
-	awk -f "$RKSCRIPT_DIR/split_sh.awk" "$1"
+	_mkdir "$RKBASH_DIR" >/dev/null
+	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKBASH_DIR/split_sh.awk"
+	awk -f "$RKBASH_DIR/split_sh.awk" "$1"
 
 	local a func
 	for a in "$output_dir"/*.inc.sh; do
@@ -4974,7 +4981,7 @@ function _sql {
 #
 # @param string directory name
 # @param int flag 
-# @global RKSCRIPT_DIR 
+# @global RKBASH_DIR 
 # shellcheck disable=SC2012
 #--
 function _sql_transaction {
@@ -4984,8 +4991,9 @@ function _sql_transaction {
 	st="START TRANSACTION;"
 	et="COMMIT;"
 
+	_require_global RKBASH_DIR
 	_require_dir "$sql_dir"
-	_mkdir "$RKSCRIPT_DIR/sql_transaction" >/dev/null
+	_mkdir "$RKBASH_DIR/sql_transaction" >/dev/null
 
 	if test -s "$sql_dir/tables.txt"; then
 		tables=( "$(cat "$sql_dir/tables.txt")" )
@@ -4999,7 +5007,7 @@ function _sql_transaction {
 	test $((flag & 32)) -eq 32 && acf=y
 
 	if test $((flag & 1)) -eq 1; then	
-		sql_dump="$RKSCRIPT_DIR/sql_transaction/drop.sql"
+		sql_dump="$RKBASH_DIR/sql_transaction/drop.sql"
 		echo -e "$st\n" >"$sql_dump"
 		for ((i = ${#tables[@]} - 1; i > -1; i--)); do
 			echo "DROP TABLE IF EXISTS ${tables[$i]};" >>"$sql_dump"
@@ -5012,7 +5020,7 @@ function _sql_transaction {
 	fi
 
 	if test $((flag & 2)) -eq 2; then	
-		sql_dump="$RKSCRIPT_DIR/sql_transaction/create.sql"
+		sql_dump="$RKBASH_DIR/sql_transaction/create.sql"
 		echo -e "$st\n" >"$sql_dump"
 		for ((i = 0; i < ${#tables[@]}; i++)); do
 			cat "$sql_dir/${tables[$i]}.sql" >>"$sql_dump"
@@ -5036,12 +5044,12 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
-# @global RKSCRIPT_DIR
+# @global RKBASH_DIR
 # shellcheck disable=SC2034
 #--
 function _sql_transaction_load {
 	local sql_dump
-	sql_dump="$RKSCRIPT_DIR/sql_transaction/$2.sql"
+	sql_dump="$RKBASH_DIR/sql_transaction/$2.sql"
 	_rm "$sql_dump" >/dev/null
 
 	if test -s "$1/$2.sql"; then

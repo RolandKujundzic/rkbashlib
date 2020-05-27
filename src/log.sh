@@ -10,8 +10,9 @@ LOG_NO_ECHO=
 # Set LOG_NO_ECHO=1 to disable echo output.
 #
 # @param message
-# @param name (if set use $RKSCRIPT_DIR/$name/$NAME_COUNT.nfo)
+# @param name (if set use $RKBASH_DIR/$name/$NAME_COUNT.nfo)
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# @global RKBASH_DIR
 # shellcheck disable=SC2086
 #--
 function _log {
@@ -24,15 +25,15 @@ function _log {
 
 	# assume $1 is shell command
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
-	LOG_FILE[$2]="$RKSCRIPT_DIR/$2/${LOG_COUNT[$2]}.nfo"
+	LOG_FILE[$2]="$RKBASH_DIR/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
 
-	if ! test -d "$RKSCRIPT_DIR/$2"; then
-		mkdir -p "$RKSCRIPT_DIR/$2"
+	if ! test -d "$RKBASH_DIR/$2"; then
+		mkdir -p "$RKBASH_DIR/$2"
 		if ! test -z "$SUDO_USER"; then
-			chown -R $SUDO_USER.$SUDO_USER "$RKSCRIPT_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKSCRIPT_DIR'"
+			chown -R $SUDO_USER.$SUDO_USER "$RKBASH_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKBASH_DIR'"
 		elif test "$UID" = "0"; then
-			chmod -R 777 "$RKSCRIPT_DIR" || _abort "chmod -R 777 '$RKSCRIPT_DIR'"
+			chmod -R 777 "$RKBASH_DIR" || _abort "chmod -R 777 '$RKBASH_DIR'"
 		fi
 	fi
 

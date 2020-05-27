@@ -4,13 +4,14 @@
 # Add linenumber to $1 after _abort if caller function does not exist.
 #
 # @param string file 
+# @global RKBASH_DIR
 #--
 function _add_abort_linenum {
 	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	_mkdir "$RKSCRIPT_DIR/add_abort_linenum" >/dev/null
-	tmp_file="$RKSCRIPT_DIR/add_abort_linenum/"$(basename "$1")
+	_mkdir "$RKBASH_DIR/add_abort_linenum" >/dev/null
+	tmp_file="$RKBASH_DIR/add_abort_linenum/"$(basename "$1")
 	test -f "$tmp_file" && _abort "$tmp_file already exists"
 
 	echo -n "add line number to _abort in $1"

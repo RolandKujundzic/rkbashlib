@@ -32,7 +32,7 @@ function _rkbash_inc {
 
 
 #--
-# Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
+# Export required rkbash/src/* functions as ${!_HAS_SCRIPT[@]}.
 #
 # @global RKBASH_SRC
 # @global_local _HAS_SCRIPT

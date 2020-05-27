@@ -9,12 +9,12 @@ function __abort {
 
 #--
 # Use for dynamic loading.
-# @example _rkscript "_rm _mv _cp _mkdir"
+# @example _rkbash "_rm _mv _cp _mkdir"
 # @global RKBASH_SRC = /path/to/rkbashlib/src
 # @param function list
 # shellcheck disable=SC1090,SC2086
 #--
-function _rkscript {
+function _rkbash {
 	test -z "$RKBASH_SRC" && RKBASH_SRC=../../rkbashlib/src
 	test -d "$RKBASH_SRC" || RKBASH_SRC=../../../rkbashlib/src
 	local a abort 

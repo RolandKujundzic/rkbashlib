@@ -1,20 +1,20 @@
 #!/bin/bash
 
-test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkscript/cache"
-test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkscript/src"
+test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkbash/cache"
+test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkbash/src"
 CACHE_OFF=
 CACHE=
 
 #--
 # Load $1 from cache. If $2 is set update cache value first. Compare last 
-# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkscript/src.
+# modification of cache file $CACHE_DIR/$1 with sh/run and ../rkbash/src.
 # Export CACHE_OFF=1 to disable cache. Disable cache if bash version is 4.3.*.
 # Use CACHE_DIR/$1.sh as cache. Use last modification of entries in CACHE_REF
 # for cache invalidation.
 #
 # @param variable name
 # @param variable value
-# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkscript/cache) CACHE_REF (=sh/run ../rkscript/src)
+# @global CACHE_OFF (default=empty) CACHE_DIR (=$HOME/.rkbash/cache) CACHE_REF (=sh/run ../rkbash/src)
 # @export CACHE CACHE_FILE
 # @return bool
 # shellcheck disable=SC2034

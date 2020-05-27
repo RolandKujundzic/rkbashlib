@@ -5,6 +5,7 @@
 # and footer is name Z_main.inc.sh. Inverse of _merge_sh.
 #
 # @param path to shell script
+# @global RKBASH_DIR
 #--
 function _split_sh {
 	_require_file "$1"
@@ -33,10 +34,11 @@ BEGIN{ fn = "_OUT_/split_1.inc.sh"; n = 1; open = 0; }
 }
 EOF
 
+	_require_global RKBASH_DIR
 	_msg "Split $1 into"
-	_mkdir "$RKSCRIPT_DIR" >/dev/null
-	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKSCRIPT_DIR/split_sh.awk"
-	awk -f "$RKSCRIPT_DIR/split_sh.awk" "$1"
+	_mkdir "$RKBASH_DIR" >/dev/null
+	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKBASH_DIR/split_sh.awk"
+	awk -f "$RKBASH_DIR/split_sh.awk" "$1"
 
 	local a func
 	for a in "$output_dir"/*.inc.sh; do

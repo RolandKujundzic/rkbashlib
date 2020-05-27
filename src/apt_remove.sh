@@ -4,6 +4,7 @@
 # Remove (purge) apt packages.
 #
 # @param package list
+# @global RKBASH_DIR
 #--
 function _apt_remove {
 	_run_as_root
@@ -12,7 +13,7 @@ function _apt_remove {
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
 			apt -y remove --purge "$a" || _abort "apt -y remove --purge $a"
-			_rm "$RKSCRIPT_DIR/apt/$a"
+			_rm "$RKBASH_DIR/apt/$a"
 		fi
 	done
 

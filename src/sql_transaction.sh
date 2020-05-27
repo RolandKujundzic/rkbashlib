@@ -9,7 +9,7 @@
 #
 # @param string directory name
 # @param int flag 
-# @global RKSCRIPT_DIR 
+# @global RKBASH_DIR 
 # shellcheck disable=SC2012
 #--
 function _sql_transaction {
@@ -19,8 +19,9 @@ function _sql_transaction {
 	st="START TRANSACTION;"
 	et="COMMIT;"
 
+	_require_global RKBASH_DIR
 	_require_dir "$sql_dir"
-	_mkdir "$RKSCRIPT_DIR/sql_transaction" >/dev/null
+	_mkdir "$RKBASH_DIR/sql_transaction" >/dev/null
 
 	if test -s "$sql_dir/tables.txt"; then
 		tables=( "$(cat "$sql_dir/tables.txt")" )
@@ -34,7 +35,7 @@ function _sql_transaction {
 	test $((flag & 32)) -eq 32 && acf=y
 
 	if test $((flag & 1)) -eq 1; then	
-		sql_dump="$RKSCRIPT_DIR/sql_transaction/drop.sql"
+		sql_dump="$RKBASH_DIR/sql_transaction/drop.sql"
 		echo -e "$st\n" >"$sql_dump"
 		for ((i = ${#tables[@]} - 1; i > -1; i--)); do
 			echo "DROP TABLE IF EXISTS ${tables[$i]};" >>"$sql_dump"
@@ -47,7 +48,7 @@ function _sql_transaction {
 	fi
 
 	if test $((flag & 2)) -eq 2; then	
-		sql_dump="$RKSCRIPT_DIR/sql_transaction/create.sql"
+		sql_dump="$RKBASH_DIR/sql_transaction/create.sql"
 		echo -e "$st\n" >"$sql_dump"
 		for ((i = 0; i < ${#tables[@]}; i++)); do
 			cat "$sql_dir/${tables[$i]}.sql" >>"$sql_dump"
@@ -71,12 +72,12 @@ function _sql_transaction {
 # @parma sql directory path
 # @param name (alter|insert|update)
 # @param autoconfirm
-# @global RKSCRIPT_DIR
+# @global RKBASH_DIR
 # shellcheck disable=SC2034
 #--
 function _sql_transaction_load {
 	local sql_dump
-	sql_dump="$RKSCRIPT_DIR/sql_transaction/$2.sql"
+	sql_dump="$RKBASH_DIR/sql_transaction/$2.sql"
 	_rm "$sql_dump" >/dev/null
 
 	if test -s "$1/$2.sql"; then

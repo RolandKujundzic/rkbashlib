@@ -5,16 +5,16 @@
 #   - user ($USER) 
 #   - port (15080)
 #   - docroot ($PWD)
-#   - script (buildin = RKSCRIPT_DIR/php_server.php)
+#   - script (buildin = RKBASH_DIR/php_server.php)
 #	  - host (0.0.0.0)
 #
 # @call_before _parse_arg "$@" 
-# @global RKSCRIPT_DIR ARG
+# @global RKBASH_DIR ARG
 # shellcheck disable=SC2009
 #--
 function _php_server {
 	_require_program php
-	_mkdir "$RKSCRIPT_DIR" > /dev/null
+	_mkdir "$RKBASH_DIR" > /dev/null
 
 	local php_code=
 IFS='' read -r -d '' php_code <<'EOF'
@@ -70,8 +70,8 @@ EOF
 	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
-		echo "$php_code" > "$RKSCRIPT_DIR/php_server.php"
-		ARG[script]="$RKSCRIPT_DIR/php_server.php"
+		echo "$php_code" > "$RKBASH_DIR/php_server.php"
+		ARG[script]="$RKBASH_DIR/php_server.php"
 	fi
 
 	test -z "${ARG[port]}" && ARG[port]=15080
@@ -79,7 +79,7 @@ EOF
 	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
 
 	local log server_pid
-	log="$RKSCRIPT_DIR/php_server.log"
+	log="$RKBASH_DIR/php_server.log"
 
 	if _is_running "port:${ARG[port]}"; then
 		server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
