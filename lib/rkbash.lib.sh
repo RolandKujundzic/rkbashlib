@@ -5230,7 +5230,11 @@ function _sync_db {
 
 	_require_program rks-db
 
-	if test "${base: -4}" = ".sql"; then
+	test -s "$base.gz" && _confirm "Use existing dump $base?" 1
+
+	if test "$CONFIRM" = "y"; then
+		last_dump="$base"
+	elif test "${base: -4}" = ".sql"; then
 		_msg "Create database dump $1:$2"
 		ssh "$1" "cd '$dir' && rks-db dump '$base' --q1=y --q2=n --q3=n >/dev/null" || _abort "ssh '$1' && cd '$dir' && rks-db dump '$base'"
 
