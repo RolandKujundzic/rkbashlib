@@ -1,7 +1,7 @@
 #!/bin/bash
 
-test -z "$RKSCRIPT_SH" || return
-RKSCRIPT_SH=1
+test -z "$RKBASH_VERSION" || return
+RKBASH_VERSION=0.3
 
 test -z "$APP" && APP="$0"
 test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )
@@ -2767,7 +2767,7 @@ function _md5 {
 #--
 # Merge "$APP"_ (or ../`basename "$APP"`) directory into $APP (concat *.inc.sh).
 # Use 0_header.inc.sh, function.inc.sh, ... Z0_configuration.inc.sh, Z1_setup.inc.sh, Z_main.inc.sh.
-# Set RKS_HEADER=0 to avoid rkscript.sh loading. Use --static to include rkscript.sh functions.
+# Set RKS_HEADER=0 to avoid rkbash.lib.sh loading. Use --static to include rkbash.lib.sh functions.
 # 
 # @example test.sh, test.sh_/ and test.sh_/*.inc.sh
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
@@ -2778,7 +2778,7 @@ function _md5 {
 # shellcheck disable=SC2119,SC2086,SC2034,SC2120
 #--
 function _merge_sh {
-	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck
+	local a my_app mb_app sh_dir rkbash_inc tmp_app md5_new md5_old inc_sh scheck
 	my_app="${1:-$APP}"
 	sh_dir="${my_app}_"
 
@@ -2791,7 +2791,7 @@ function _merge_sh {
 		test -d "$sh_dir" || { test -d "$mb_app" && sh_dir="$mb_app"; }
 	fi
 
-	test "${ARG[static]}" = "1" && rkscript_inc=$(_merge_static "$sh_dir")
+	test "${ARG[static]}" = "1" && rkbash_inc=$(_merge_static "$sh_dir")
 
 	_require_dir "$sh_dir"
 
@@ -2803,11 +2803,11 @@ function _merge_sh {
 	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
 	test -z "$scheck" || RKS_HEADER_SCHECK="shellcheck disable=SC1091,$scheck"
 
-	if test -z "$rkscript_inc"; then
+	if test -z "$rkbash_inc"; then
 		_rks_header "$tmp_app" 1
 	else
 		_rks_header "$tmp_app"
-		echo "$rkscript_inc" >> "$tmp_app"
+		echo "$rkbash_inc" >> "$tmp_app"
 	fi
 
 	for a in $inc_sh; do
@@ -2840,12 +2840,12 @@ function _merge_static {
 	inc_sh=$(find "$1" -name '*.inc.sh' 2>/dev/null | sort)
 
 	for a in $inc_sh; do
-		_rkscript_inc "$a"
-		rks_inc="$rks_inc $RKSCRIPT_INC"
+		_rkbash_inc "$a"
+		rks_inc="$rks_inc $RKBASH_INC"
 	done
 
 	for a in $(_sort $rks_inc); do
-		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#'
+		tail -n +2 "$RKBASH_SRC/${a:1}.sh" | grep -E -v '^\s*#'
 	done
 }
 
@@ -4367,6 +4367,58 @@ function _require_program {
 
 
 #--
+# Export required $RKBASH_SRC/src/* functions as $RKBASH_INC
+#
+# @global RKBASH_SRC (default = .)
+# @export RKBASH_INC RKBASH_INC_NUM
+# @export_local _HAS_SCRIPT
+# @param file path
+# shellcheck disable=SC2034,SC2068
+#--
+function _rkbash_inc {
+	local _HAS_SCRIPT
+	declare -A _HAS_SCRIPT
+
+	if test -z "$RKBASH_SRC"; then
+		if test -s "src/abort.sh"; then
+			RKBASH_SRC='src'
+		else
+			_abort 'set RKBASH_SRC'
+		fi
+	elif ! test -s "$RKBASH_SRC/abort.sh"; then
+		_abort "invalid RKBASH_SRC='$RKBASH_SRC'"
+	fi
+
+	test -s "$1" || _abort "no such file '$1'"
+	_rrs_scan "$1"
+
+	RKBASH_INC=$(_sort ${!_HAS_SCRIPT[@]})
+	RKBASH_INC_NUM="${#_HAS_SCRIPT[@]}"
+}
+
+
+#--
+# Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
+#
+# @global RKBASH_SRC
+# @global_local _HAS_SCRIPT
+# @param file path
+#--
+function _rrs_scan {
+	local a func_list
+	test -f "$1" || _abort "no such file '$1'"
+	func_list=$(grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs)
+
+	for a in $func_list; do
+		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKBASH_SRC/${a:1}.sh" ]]; then
+			_HAS_SCRIPT[$a]=1
+			_rrs_scan "$RKBASH_SRC/${a:1}.sh"
+		fi
+	done
+}
+
+
+#--
 # Prepare rks-app. Adjust APP_DESC if SYNTAX_HELP[$1|$1.$2] is set.
 # Execute self_update or help action if $1 = self_update|help.
 #
@@ -4409,58 +4461,6 @@ function _rks_app {
 
 
 #--
-# Export required $RKSCRIPT_PATH/src/* functions as $REQUIRED_RKSCRIPT.
-#
-# @global RKSCRIPT_PATH (default = .)
-# @export RKSCRIPT_INC RKSCRIPT_INC_NUM
-# @export_local _HAS_SCRIPT
-# @param file path
-# shellcheck disable=SC2034,SC2068
-#--
-function _rkscript_inc {
-	local _HAS_SCRIPT
-	declare -A _HAS_SCRIPT
-
-	if test -z "$RKSCRIPT_PATH"; then
-		if test -s "src/abort.sh"; then
-			RKSCRIPT_PATH='.'
-		else
-			_abort 'set RKSCRIPT_PATH'
-		fi
-	elif ! test -s "$RKSCRIPT_PATH/src/abort.sh"; then
-		_abort "invalid RKSCRIPT_PATH='$RKSCRIPT_PATH'"
-	fi
-
-	test -s "$1" || _abort "no such file '$1'"
-	_rrs_scan "$1"
-
-	RKSCRIPT_INC=$(_sort ${!_HAS_SCRIPT[@]})
-	RKSCRIPT_INC_NUM="${#_HAS_SCRIPT[@]}"
-}
-
-
-#--
-# Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
-#
-# @global RKSCRIPT_PATH
-# @global_local _HAS_SCRIPT
-# @param file path
-#--
-function _rrs_scan {
-	local a func_list
-	test -f "$1" || _abort "no such file '$1'"
-	func_list=$(grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs)
-
-	for a in $func_list; do
-		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKSCRIPT_PATH/src/${a:1}.sh" ]]; then
-			_HAS_SCRIPT[$a]=1
-			_rrs_scan "$RKSCRIPT_PATH/src/${a:1}.sh"
-		fi
-	done
-}
-
-
-#--
 function __abort {
 	echo -e "\nABORT: $1\n\n"
 	exit 1
@@ -4470,25 +4470,25 @@ function __abort {
 #--
 # Use for dynamic loading.
 # @example _rkscript "_rm _mv _cp _mkdir"
-# @global RKSCRIPT = /path/to/rkscript/src
+# @global RKBASH_SRC = /path/to/rkbashlib/src
 # @param function list
 # shellcheck disable=SC1090,SC2086
 #--
 function _rkscript {
-	test -z "$RKSCRIPT" && RKSCRIPT=../../rkscript/src
-	test -d "$RKSCRIPT" || RKSCRIPT=../../../rkscript/src
+	test -z "$RKBASH_SRC" && RKBASH_SRC=../../rkbashlib/src
+	test -d "$RKBASH_SRC" || RKBASH_SRC=../../../rkbashlib/src
 	local a abort 
 
 	abort=_abort
 	test "$(type -t $abort)" = 'function' || abort=__abort
 
-	[[ -d "$RKSCRIPT" && -f "$RKSCRIPT/abort.sh" ]] || \
-		$abort "invalid RKSCRIPT path [$RKSCRIPT] - $APP_PREFIX $APP"
+	[[ -d "$RKBASH_SRC" && -f "$RKBASH_SRC/abort.sh" ]] || \
+		$abort "invalid RKBASH_SRC path [$RKBASH_SRC] - $APP_PREFIX $APP"
 
 	for a in $1; do
 		if ! test "$(type -t $a)" = "function"; then
 			echo "load $a"
-			source "$RKSCRIPT/${a:1}.sh" || $abort "no such function $a"
+			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
 		else 
 			echo "found $a"
 		fi
@@ -4499,7 +4499,7 @@ function _rkscript {
 #--
 # Print script header header to file. Flag:
 #
-# 1 = load /usr/local/lib/rkscript.sh
+# 1 = load /usr/local/lib/rkbash.lib.sh
 #
 # @global RKS_HEADER (optional instead of flag) RKS_HEADER_SCHECK (shellcheck ...)
 # @param filename
@@ -4517,7 +4517,7 @@ function _rks_header {
 	fi
 
 	test $((flag & 1)) = 1 && \
-		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
+		header='. /usr/local/lib/rkbash.lib.sh || { echo -e "\nERROR: . /usr/local/lib/rkbash.lib.sh\n"; exit 1; }'
 
 	printf '\x23!/usr/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
 		"$copyright" "$RKS_HEADER_SCHECK" > "$1"
