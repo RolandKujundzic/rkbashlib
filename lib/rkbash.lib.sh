@@ -3239,9 +3239,9 @@ function _mysql_dump {
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	nice -n 10 ionice -c2 -n 7 \
-		mysqldump --single-transaction --quick $mycon $myopt | grep -v -E -e '^/\*\!50013 DEFINER=' > "$1" || \
-		_abort "mysqldump ... $myopt > $1 failed"
+	{ nice -n 10 ionice -c2 -n 7 \
+		mysqldump --single-transaction --quick $mycon $myopt | grep -v -E -e '^/\*\!50013 DEFINER=' > "$1"; } || \
+			_abort "mysqldump ... $myopt > $1 failed"
 	echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
 	test -f "$1" || _abort "no such dump [$1]"
@@ -5262,7 +5262,8 @@ function _sync_db {
 		last_dump="$base"
 	elif test "${base: -4}" = ".sql"; then
 		_msg "Create database dump $1:$2"
-		ssh "$1" "cd '$dir' && rks-db dump '$base' --q1=y --q2=n --q3=n >/dev/null" || _abort "ssh '$1' && cd '$dir' && rks-db dump '$base'"
+		ssh "$1" "cd '$dir' && rks-db dump '$base' --gzip --q1=y --q2=n --q3=n >/dev/null" || \
+			_abort "ssh '$1' && cd '$dir' && rks-db dump '$base'"
 
 		_msg 'Download dump'
 		scp "$1:$2.gz" . || _abort "scp '$1:$2.gz' ."

@@ -25,9 +25,9 @@ function _mysql_dump {
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	nice -n 10 ionice -c2 -n 7 \
-		mysqldump --single-transaction --quick $mycon $myopt | grep -v -E -e '^/\*\!50013 DEFINER=' > "$1" || \
-		_abort "mysqldump ... $myopt > $1 failed"
+	{ nice -n 10 ionice -c2 -n 7 \
+		mysqldump --single-transaction --quick $mycon $myopt | grep -v -E -e '^/\*\!50013 DEFINER=' > "$1"; } || \
+			_abort "mysqldump ... $myopt > $1 failed"
 	echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
 	test -f "$1" || _abort "no such dump [$1]"

@@ -19,7 +19,8 @@ function _sync_db {
 		last_dump="$base"
 	elif test "${base: -4}" = ".sql"; then
 		_msg "Create database dump $1:$2"
-		ssh "$1" "cd '$dir' && rks-db dump '$base' --q1=y --q2=n --q3=n >/dev/null" || _abort "ssh '$1' && cd '$dir' && rks-db dump '$base'"
+		ssh "$1" "cd '$dir' && rks-db dump '$base' --gzip --q1=y --q2=n --q3=n >/dev/null" || \
+			_abort "ssh '$1' && cd '$dir' && rks-db dump '$base'"
 
 		_msg 'Download dump'
 		scp "$1:$2.gz" . || _abort "scp '$1:$2.gz' ."
