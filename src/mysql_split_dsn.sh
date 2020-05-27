@@ -7,7 +7,7 @@
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @param int don't abort (default = 0 = abort)
 # @global DOCROOT PATH_RKPHPLIB
-# @export DB_NAME (DB_LOGIN) DB_PASS MYSQL DOCROOT
+# @export DB_NAME (DB_USER) DB_PASS MYSQL DOCROOT
 # @return bool
 # shellcheck disable=SC2119,SC2120
 #--
@@ -38,7 +38,7 @@ function _mysql_split_dsn {
 #--
 # Load settings.php via php and export SETTINGS_(DB_NAME|DB_PASS|DSN), PATH_(RKPHPLIB|PHPLIB) and DOCROOT.
 # @param settings.php path
-#	@export DB_LOGIN DB_NAME DB_PASS
+#	@export DB_USER DB_NAME DB_PASS
 # shellcheck disable=SC2016,SC2034
 #--
 function _settings_php {
@@ -48,7 +48,7 @@ function _settings_php {
 include(getenv('SETTINGS_PHP'));
 
 if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS')) {
-	$login = defined('SETTINGS_DB_LOGIN') ? SETTINGS_DB_LOGIN : SETTINGS_DB_NAME;
+	$login = defined('SETTINGS_DB_USER') ? SETTINGS_DB_USER : SETTINGS_DB_NAME;
 	$name= SETTINGS_DB_NAME;
 	$pass= SETTINGS_DB_PASS;
 }
@@ -66,6 +66,6 @@ if (!empty($name) && !empty($login) && !empty($pass)) {
 EOF
 
 	_require_file "$1"
-	read -r -d "\n" DB_LOGIN DB_NAME DB_PASS <<<"$(SETTINGS_PHP="$1" php -r "$php_code")"
+	read -r -d "\n" DB_USER DB_NAME DB_PASS <<<"$(SETTINGS_PHP="$1" php -r "$php_code")"
 }
 

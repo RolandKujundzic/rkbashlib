@@ -3205,26 +3205,34 @@ function _mysql_drop_user {
 # Create mysql dump. Abort if error.
 #
 # @param save_path
-# @param options
-# @global MYSQL_CONN mysql connection string "-h DBHOST -u DBUSER -pDBPASS DBNAME"
-# @abort
+# @param options (or MYSQL_OPT)
+# @global MYSQL_CONN or DB_(USER|HOST|NAME|PASS) MYSQL_OPT
 # shellcheck disable=SC2086
 #--
 function _mysql_dump {
-	test -z "$MYSQL_CONN" && _abort "mysql connection string MYSQL_CONN is empty"
+	local user host mycon myopt
+	mycon="$MYSQL_CONN"
+	myopt="${2:-$MYSQL_OPT}"
+
+	if test -z "$mycon"; then
+		if [[ -z "$DB_NAME" || -z "$DB_PASS" ]]; then
+			_abort "mysql connection string MYSQL_CONN is empty"
+		else
+			user="${DB_USER:-$DB_NAME}"
+			host="${DB_HOST:-localhost}"
+			mycon="-h $host -u $user -p$DB_PASS $DB_NAME"
+		fi
+	fi
 
 	echo "mysqldump ... $2 > $1"
 	SECONDS=0
-	nice -n 10 ionice -c2 -n 7 mysqldump --single-transaction --quick $MYSQL_CONN $2 > "$1" || _abort "mysqldump ... $2 > $1 failed"
+	nice -n 10 ionice -c2 -n 7 \
+		mysqldump --single-transaction --quick $mycon $myopt | grep -v -E -e '^/\*\!50013 DEFINER=' > "$1" || \
+		_abort "mysqldump ... $myopt > $1 failed"
 	echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
-	if ! test -f "$1"; then
-		_abort "no such dump [$1]"
-	fi
-
-	if test -z "$(tail -1 "$1" | grep "Dump completed")"; then
-		_abort "invalid mysql dump [$1]"
-	fi
+	test -f "$1" || _abort "no such dump [$1]"
+	test -z "$(tail -1 "$1" | grep "Dump completed")" && _abort "invalid mysql dump [$1]"
 }
 
 
@@ -3364,7 +3372,7 @@ function _mysql_restore {
 # @param php_file (if empty search for docroot with settings.php and|or index.php)
 # @param int don't abort (default = 0 = abort)
 # @global DOCROOT PATH_RKPHPLIB
-# @export DB_NAME (DB_LOGIN) DB_PASS MYSQL DOCROOT
+# @export DB_NAME (DB_USER) DB_PASS MYSQL DOCROOT
 # @return bool
 # shellcheck disable=SC2119,SC2120
 #--
@@ -3395,7 +3403,7 @@ function _mysql_split_dsn {
 #--
 # Load settings.php via php and export SETTINGS_(DB_NAME|DB_PASS|DSN), PATH_(RKPHPLIB|PHPLIB) and DOCROOT.
 # @param settings.php path
-#	@export DB_LOGIN DB_NAME DB_PASS
+#	@export DB_USER DB_NAME DB_PASS
 # shellcheck disable=SC2016,SC2034
 #--
 function _settings_php {
@@ -3405,7 +3413,7 @@ function _settings_php {
 include(getenv('SETTINGS_PHP'));
 
 if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS')) {
-	$login = defined('SETTINGS_DB_LOGIN') ? SETTINGS_DB_LOGIN : SETTINGS_DB_NAME;
+	$login = defined('SETTINGS_DB_USER') ? SETTINGS_DB_USER : SETTINGS_DB_NAME;
 	$name= SETTINGS_DB_NAME;
 	$pass= SETTINGS_DB_PASS;
 }
@@ -3423,7 +3431,7 @@ if (!empty($name) && !empty($login) && !empty($pass)) {
 EOF
 
 	_require_file "$1"
-	read -r -d "\n" DB_LOGIN DB_NAME DB_PASS <<<"$(SETTINGS_PHP="$1" php -r "$php_code")"
+	read -r -d "\n" DB_USER DB_NAME DB_PASS <<<"$(SETTINGS_PHP="$1" php -r "$php_code")"
 }
 
 
