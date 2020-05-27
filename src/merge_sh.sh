@@ -14,7 +14,7 @@
 # shellcheck disable=SC2119,SC2086,SC2034,SC2120
 #--
 function _merge_sh {
-	local a my_app mb_app sh_dir rkscript_inc tmp_app md5_new md5_old inc_sh scheck
+	local a my_app mb_app sh_dir rkbash_inc tmp_app md5_new md5_old inc_sh scheck
 	my_app="${1:-$APP}"
 	sh_dir="${my_app}_"
 
@@ -27,7 +27,7 @@ function _merge_sh {
 		test -d "$sh_dir" || { test -d "$mb_app" && sh_dir="$mb_app"; }
 	fi
 
-	test "${ARG[static]}" = "1" && rkscript_inc=$(_merge_static "$sh_dir")
+	test "${ARG[static]}" = "1" && rkbash_inc=$(_merge_static "$sh_dir")
 
 	_require_dir "$sh_dir"
 
@@ -39,11 +39,11 @@ function _merge_sh {
 	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
 	test -z "$scheck" || RKS_HEADER_SCHECK="shellcheck disable=SC1091,$scheck"
 
-	if test -z "$rkscript_inc"; then
+	if test -z "$rkbash_inc"; then
 		_rks_header "$tmp_app" 1
 	else
 		_rks_header "$tmp_app"
-		echo "$rkscript_inc" >> "$tmp_app"
+		echo "$rkbash_inc" >> "$tmp_app"
 	fi
 
 	for a in $inc_sh; do
@@ -76,12 +76,12 @@ function _merge_static {
 	inc_sh=$(find "$1" -name '*.inc.sh' 2>/dev/null | sort)
 
 	for a in $inc_sh; do
-		_rkscript_inc "$a"
-		rks_inc="$rks_inc $RKSCRIPT_INC"
+		_rkbash_inc "$a"
+		rks_inc="$rks_inc $RKBASH_INC"
 	done
 
 	for a in $(_sort $rks_inc); do
-		tail -n +2 "$RKSCRIPT_PATH/src/${a:1}.sh" | grep -E -v '^\s*#'
+		tail -n +2 "$RKBASH_SRC/${a:1}.sh" | grep -E -v '^\s*#'
 	done
 }
 
