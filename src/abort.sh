@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test -z "$RKSCRIPT_DIR" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
+test -z "$RKBASH_DIR" && RKBASH_DIR="$HOME/.rkbash/$$"
 
 if declare -A __hash=([key]=value) 2>/dev/null; then
 	test "${__hash[key]}" = 'value' || { echo -e "\nERROR: declare -A\n"; exit 1; }

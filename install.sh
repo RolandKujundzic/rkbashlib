@@ -9,18 +9,18 @@
 #--
 # Build lib/rkbash.lib.sh.
 # shellcheck disable=SC2012,SC2086
-# @global RKBASH_SRC RKSCRIPT_DIR
+# @global RKBASH_SRC RKBASH_DIR
 #--
 function do_build {
 	local lib_tmp
 	echo "Build lib/rkbash.lib.sh"
 
-	_require_global RKBASH_SRC RKSCRIPT_DIR
+	_require_global RKBASH_SRC RKBASH_DIR
 	_require_dir "$RKBASH_SRC"
 	_mkdir "lib"
-	_mkdir "$RKSCRIPT_DIR" > /dev/null
+	_mkdir "$RKBASH_DIR" > /dev/null
 
-	lib_tmp="$RKSCRIPT_DIR/rkbash.lib.sh"
+	lib_tmp="$RKBASH_DIR/rkbash.lib.sh"
 
 	{ 
 	echo '#!/bin/bash' 

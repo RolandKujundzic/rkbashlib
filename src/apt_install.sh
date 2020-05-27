@@ -11,11 +11,11 @@ function _apt_install {
 
 	_run_as_root 1
 
-	test "$RKSCRIPT_DIR" = "$HOME/.rkscript/$$" && RKSCRIPT_DIR="$HOME/.rkscript"
+	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
 
 	for a in $1
 	do
-		if test -d "$RKSCRIPT_DIR/apt/$a"; then
+		if test -d "$RKBASH_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
 			sudo apt -y install "$a" || _abort "apt -y install $a"
@@ -23,7 +23,7 @@ function _apt_install {
 		fi
 	done
 
-	test "$RKSCRIPT_DIR" = "$HOME/.rkscript" && RKSCRIPT_DIR="$HOME/.rkscript/$$"
+	test "$RKBASH_DIR" = "$HOME/.rkbash" && RKBASH_DIR="$HOME/.rkbash/$$"
 
 	LOG_NO_ECHO=$curr_lne
 }
