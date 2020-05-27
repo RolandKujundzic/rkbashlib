@@ -44,14 +44,13 @@ function _settings_php {
 	local php_code php_out
 
 	IFS='' read -r -d '' php_code <<'EOF'
-ob_start();
 include(getenv('SETTINGS_PHP'));
 
 if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS') && !empty(SETTINGS_DB_NAME) && !empty(SETTINGS_DB_PASS)) {
 	print "DB_NAME='".SETTINGS_DB_NAME."'\nDB_PASS='".SETTINGS_DB_PASS."'";
 }
 else if (defined('SETTINGS_DSN') && defined('PATH_RKPHPLIB')) {
-	require(const('PATH_RKPHPLIB').'ADatabase.class.php');
+	require(constant('PATH_RKPHPLIB').'ADatabase.class.php');
 	$dsn = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
 	print "DB_NAME='".$dsn['login']."'\nDB_PASS='".$dsn['password']."'";
 	if ($dsn['login'] != $dsn['name']) {
@@ -60,7 +59,8 @@ else if (defined('SETTINGS_DSN') && defined('PATH_RKPHPLIB')) {
 }
 EOF
 
-	php_out=$(php -r "$php_code")
+	_require_file "$1"
+	php_out=$(SETTINGS_PHP="$1" php -r "$php_code")
 	test -z "$php_out" || echo "$php_out"
 }
 
