@@ -3395,30 +3395,35 @@ function _mysql_split_dsn {
 #--
 # Load settings.php via php and export SETTINGS_(DB_NAME|DB_PASS|DSN), PATH_(RKPHPLIB|PHPLIB) and DOCROOT.
 # @param settings.php path
-# shellcheck disable=SC2016
+#	@export DB_LOGIN DB_NAME DB_PASS
+# shellcheck disable=SC2016,SC2034
 #--
 function _settings_php {
-	local php_code php_out
+	local php_code
 
 	IFS='' read -r -d '' php_code <<'EOF'
 include(getenv('SETTINGS_PHP'));
 
-if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS') && !empty(SETTINGS_DB_NAME) && !empty(SETTINGS_DB_PASS)) {
-	print "DB_NAME='".SETTINGS_DB_NAME."'\nDB_PASS='".SETTINGS_DB_PASS."'";
+if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS')) {
+	$login = defined('SETTINGS_DB_LOGIN') ? SETTINGS_DB_LOGIN : SETTINGS_DB_NAME;
+	$name= SETTINGS_DB_NAME;
+	$pass= SETTINGS_DB_PASS;
 }
 else if (defined('SETTINGS_DSN') && defined('PATH_RKPHPLIB')) {
 	require(constant('PATH_RKPHPLIB').'ADatabase.class.php');
 	$dsn = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
-	print "DB_NAME='".$dsn['login']."'\nDB_PASS='".$dsn['password']."'";
-	if ($dsn['login'] != $dsn['name']) {
-		print "\nDB_LOGIN='".$dsn['login']."'";
-	}
+	$login = $dsn['login'];
+	$name = $dsn['name'];
+	$pass = $dsn['password'];
+}
+
+if (!empty($name) && !empty($login) && !empty($pass)) {
+	print "$login\n$name\n$pass";
 }
 EOF
 
 	_require_file "$1"
-	php_out=$(SETTINGS_PHP="$1" php -r "$php_code")
-	test -z "$php_out" || echo "$php_out"
+	read -r -d "\n" DB_LOGIN DB_NAME DB_PASS <<<"$(SETTINGS_PHP="$1" php -r "$php_code")"
 }
 
 
@@ -4478,7 +4483,7 @@ function _rks_app {
 		CURR="$PWD"
 		if test -z "$APP_PID"; then
 			 export APP_PID="$$"
-		elif "$APP_PID" != "$$"; then
+		elif test "$APP_PID" != "$$"; then
 			 export APP_PID="$APP_PID $$"
 		fi
 	fi

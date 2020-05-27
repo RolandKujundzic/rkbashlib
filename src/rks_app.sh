@@ -20,7 +20,7 @@ function _rks_app {
 		CURR="$PWD"
 		if test -z "$APP_PID"; then
 			 export APP_PID="$$"
-		elif "$APP_PID" != "$$"; then
+		elif test "$APP_PID" != "$$"; then
 			 export APP_PID="$APP_PID $$"
 		fi
 	fi
