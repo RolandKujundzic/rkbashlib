@@ -15,7 +15,7 @@ function do_build {
 	local lib_tmp
 	echo "Build lib/rkbash.lib.sh"
 
-	_require_global "RKBASH_SRC"
+	_require_global RKBASH_SRC RKSCRIPT_DIR
 	_require_dir "$RKBASH_SRC"
 	_mkdir "lib"
 	_mkdir "$RKSCRIPT_DIR" > /dev/null
@@ -88,7 +88,9 @@ APP_DESC="install to /usr/local/lib/rkbash.lib.sh"
 command -v realpath > /dev/null 2>&1 && APP=$(realpath "$0")
 
 RKBASH_SRC=$(dirname "$APP")"/src"
-INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh"
+INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh 
+	sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh
+	require_global.sh require_dir.sh"
 
 for a in $INCLUDE_FUNC; do
 	source "$RKBASH_SRC/$a"
