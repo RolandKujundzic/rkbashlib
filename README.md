@@ -1,14 +1,14 @@
-# rkscript
-Shell script library. More than 150 functions (04/2020).
+# rkbashlib
+Bash script library. More than 150 functions (04/2020).
 
 ## Examples
 
-Include lib/rkscript.sh to use the library.
+Include [/usr/local/]lib/rkbash.lib.sh to use the library.
 
 ```sh
 #!/bin/bash
 
-source lib/rkscript.sh
+source lib/rkbash.lib.sh
 
 _run_as_root
 
@@ -22,7 +22,7 @@ Here is another example.
 ```sh
 #!/bin/bash
 
-source lib/rkscript.sh
+source lib/rkbash.lib.sh
 
 _confirm "Do you want to continue?"
 test "$CONFIRM"="y" || _abort "i quit"

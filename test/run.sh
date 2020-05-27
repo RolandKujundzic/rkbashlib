@@ -8,7 +8,7 @@
 # M A I N
 #--
 
-source ../lib/rkscript.sh || { echo "failed to load ../lib/rkscript.sh"; exit 1; }
+source ../lib/rkbash.lib.sh || { echo "failed to load ../lib/rkbash.lib.sh"; exit 1; }
 
 _shell_check ../src
 

@@ -7,21 +7,24 @@
 
 
 #--
-# Build lib/rkscript.sh.
+# Build lib/rkbash.lib.sh.
 # shellcheck disable=SC2012,SC2086
+# @global RKBASH_SRC RKSCRIPT_DIR
 #--
 function do_build {
 	local lib_tmp
-	echo "Build lib/rkscript.sh"
+	echo "Build lib/rkbash.lib.sh"
 
+	_require_global "RKBASH_SRC"
+	_require_dir "$RKBASH_SRC"
 	_mkdir "lib"
 	_mkdir "$RKSCRIPT_DIR" > /dev/null
 
-	lib_tmp="$RKSCRIPT_DIR/rkscript.sh"
+	lib_tmp="$RKSCRIPT_DIR/rkbash.lib.sh"
 
 	{ 
 	echo '#!/bin/bash' 
-	echo -e "\ntest -z \"\$RKSCRIPT_SH\" || return\nRKSCRIPT_SH=1\n"
+	echo -e "\ntest -z \"\$RKBASH_VERSION\" || return\nRKBASH_VERSION=0.3\n"
 	echo 'test -z "$APP" && APP="$0"'
 	echo 'test -z "$APP_DIR" && APP_DIR=$( cd "$( dirname "$APP" )" >/dev/null 2>&1 && pwd )'
 	echo 'test -z "$APP_PID" && export APP_PID="$$"'
@@ -29,45 +32,45 @@ function do_build {
 	echo
 	} > "$lib_tmp"
 
-	echo "append $SCRIPT_SRC/*.sh to $lib_tmp"
-	for a in $(ls $SCRIPT_SRC/*.sh | sort); do
+	echo "append $RKBASH_SRC/*.sh to $lib_tmp"
+	for a in $(ls $RKBASH_SRC/*.sh | sort); do
 		tail -n+2 "$a" >> "$lib_tmp"
 	done
 
 	_add_abort_linenum "$lib_tmp"
 	_chmod 644 "$lib_tmp"
 
-	_cp "$lib_tmp" lib/rkscript.sh md5
+	_cp "$lib_tmp" lib/rkbash.lib.sh md5
 }
 
 
 #--
-# Install lib/rkscript.sh in $1 (= /usr/local/lib/rkscript.sh).
+# Install lib/rkbash.lib.sh in $1 (= /usr/local/lib/rkbash.lib.sh).
 #--
 function do_install {
 
 	if test -z "$1"; then
-		_confirm "Install lib/rkscript.sh to /usr/local/lib/rkscript.sh?"
+		_confirm "Install lib/rkbash.lib.sh to /usr/local/lib/rkbash.lib.sh?"
 
 		if test "$CONFIRM" = "y"; then
-			_cp "lib/rkscript.sh" "/usr/local/lib/rkscript.sh" md5
+			_cp "lib/rkbash.lib.sh" "/usr/local/lib/rkbash.lib.sh" md5
 		else
-			_syntax "install [localhost=ask=/usr/local/lib/rkscript.sh|install/path|dockername|user@domain.tld]"
+			_syntax "install [localhost=ask=/usr/local/lib/rkbash.lib.sh|install/path|dockername|user@domain.tld]"
 		fi
 
 		return
 	fi
 
 	if test "$1" = "localhost"; then
-		_cp lib/rkscript.sh /usr/local/lib/rkscript.sh md5
+		_cp lib/rkbash.lib.sh /usr/local/lib/rkbash.lib.sh md5
 	elif ! test -z "$(docker ps 2> /dev/null | grep "$1")"; then
-		echo "docker cp lib/rkscript.sh $1:/usr/local/lib/"
-		docker cp lib/rkscript.sh "$1:/usr/local/lib/"
+		echo "docker cp lib/rkbash.lib.sh $1:/usr/local/lib/"
+		docker cp lib/rkbash.lib.sh "$1:/usr/local/lib/"
 	elif test -d "$1"; then
-		_cp lib/rkscript.sh "$1/rkscript.sh" md5
+		_cp lib/rkbash.lib.sh "$1/rkbash.lib.sh" md5
 	else
-		echo "scp lib/rkscript.sh $1:/usr/local/lib/"
-		scp lib/rkscript.sh "$1:/usr/local/lib/"
+		echo "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
+		scp lib/rkbash.lib.sh "$1:/usr/local/lib/"
 	fi
 }
 
@@ -80,15 +83,15 @@ APP=$0
 CWD="$PWD"
 export APP_PID="$APP_PID $$"
 
-APP_DESC="install to /usr/local/lib/rkscript.sh"
+APP_DESC="install to /usr/local/lib/rkbash.lib.sh"
 
 command -v realpath > /dev/null 2>&1 && APP=$(realpath "$0")
 
-SCRIPT_SRC=$(dirname "$APP")"/src"
+RKBASH_SRC=$(dirname "$APP")"/src"
 INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh"
 
 for a in $INCLUDE_FUNC; do
-	source "$SCRIPT_SRC/$a"
+	source "$RKBASH_SRC/$a"
 done
 
 echo

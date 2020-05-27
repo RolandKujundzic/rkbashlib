@@ -10,25 +10,25 @@ function __abort {
 #--
 # Use for dynamic loading.
 # @example _rkscript "_rm _mv _cp _mkdir"
-# @global RKSCRIPT = /path/to/rkscript/src
+# @global RKBASH_SRC = /path/to/rkbashlib/src
 # @param function list
 # shellcheck disable=SC1090,SC2086
 #--
 function _rkscript {
-	test -z "$RKSCRIPT" && RKSCRIPT=../../rkscript/src
-	test -d "$RKSCRIPT" || RKSCRIPT=../../../rkscript/src
+	test -z "$RKBASH_SRC" && RKBASH_SRC=../../rkbashlib/src
+	test -d "$RKBASH_SRC" || RKBASH_SRC=../../../rkbashlib/src
 	local a abort 
 
 	abort=_abort
 	test "$(type -t $abort)" = 'function' || abort=__abort
 
-	[[ -d "$RKSCRIPT" && -f "$RKSCRIPT/abort.sh" ]] || \
-		$abort "invalid RKSCRIPT path [$RKSCRIPT] - $APP_PREFIX $APP"
+	[[ -d "$RKBASH_SRC" && -f "$RKBASH_SRC/abort.sh" ]] || \
+		$abort "invalid RKBASH_SRC path [$RKBASH_SRC] - $APP_PREFIX $APP"
 
 	for a in $1; do
 		if ! test "$(type -t $a)" = "function"; then
 			echo "load $a"
-			source "$RKSCRIPT/${a:1}.sh" || $abort "no such function $a"
+			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
 		else 
 			echo "found $a"
 		fi

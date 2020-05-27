@@ -38,18 +38,19 @@ function merge_list {
 # Compute include list.
 #
 # @export INCLUDE
-# shellcheck disable=SC2086
+# @global RKBASH_INC RKBASH_INC_NUM
+# shellcheck disable=SC2086,SC2153
 #--
 function include_list {
-	echo "Scan for rkscript functions"
+	echo "Scan for rkbashlib functions"
 	INCLUDE=
 
 	local a
 	for a in $MERGE_SH; do
 		echo -n "in $a ... "
-		_rkscript_inc "$a" #>/dev/null
-		echo "found $RKSCRIPT_INC_NUM"
-		INCLUDE="$RKSCRIPT_INC $INCLUDE"
+		_rkbash_inc "$a" #>/dev/null
+		echo "found $RKBASH_INC_NUM"
+		INCLUDE="$RKBASH_INC $INCLUDE"
 	done
 
 	INCLUDE=$(_sort $INCLUDE)
@@ -59,7 +60,7 @@ function include_list {
 #--
 # Join INCLUDE and MERGE_SH snipplets into OUT.
 #
-# @global RKSCRIPT_PATH INCLUDE MERGE_SH OUT
+# @global RKBASH_SRC INCLUDE MERGE_SH OUT
 # shellcheck disable=SC2034,SC2086
 #--
 function join_include {
@@ -67,7 +68,7 @@ function join_include {
 	echo -e "Include: $INCLUDE\nCreate $OUT"
 
 	for a in $INCLUDE; do
-		src_inc="$src_inc $RKSCRIPT_PATH/src/${a:1}.sh"
+		src_inc="$src_inc $RKBASH_SRC/${a:1}.sh"
 	done
 
 	scheck=$(grep -E '^# shellcheck disable=' $src_inc $MERGE_SH | \
@@ -103,24 +104,24 @@ export APP_PID="$APP_PID $$"
 echo -e "\n$APP_DESC"
 
 # Load necessary src/* functions - don't put in function (declare -A will be lost)
-if test -z "$RKSCRIPT_PATH"; then
-	RKSCRIPT_PATH=$(realpath "$APP" | xargs dirname)
+if test -z "$RKBASH_SRC"; then
+	RKBASH_SRC="$(realpath "$APP" | xargs dirname)/src"
 fi
 
 load_func="abort add_abort_linenum chmod confirm cp find log md5
 	merge_sh mkdir msg mv parse_arg require_dir require_file require_owner 
-	require_priv require_program rkscript_inc rks_header rm rsync sort sudo 
+	require_priv require_program rkbash_inc rks_header rm rsync sort sudo 
 	syntax"
 
 for a in $load_func; do
-	source "$RKSCRIPT_PATH/src/$a.sh"
+	source "$RKBASH_SRC/$a.sh"
 done
 
 _parse_arg "$@"
 
 if [[ ! -z "${ARG[scan]}" && -s "${ARG[scan]}" ]]; then
-	_rkscript_inc "${ARG[scan]}" #>/dev/null
-	echo "found $RKSCRIPT_INC_NUM: $RKSCRIPT_INC"
+	_rkbash_inc "${ARG[scan]}" #>/dev/null
+	echo "found $RKBASH_INC_NUM: $RKBASH_INC"
 elif [[ ! -z "${ARG[self_update]}" && -f "${ARG[self_update]}" && -d "${ARG[self_update]}_" ]]; then
 	echo "_merge_sh '${ARG[self_update]}_' '${ARG[self_update]}'"
 	_merge_sh "${ARG[self_update]}_" "${ARG[self_update]}" 

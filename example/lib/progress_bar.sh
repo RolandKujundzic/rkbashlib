@@ -1,13 +1,13 @@
 #!/bin/bash
 
-. lib/rkscript.sh || { echo "ERROR: . lib/rkscript.sh"; exit 1; }
+. lib/rkbash.lib.sh || { echo "ERROR: . lib/rkbash.lib.sh"; exit 1; }
 
 
 #--
 #
 #--
 function testProgressFile {
-	_PROGRESS_FILE="/dev/shm/rkscript.progress_bar"
+	_PROGRESS_FILE="/dev/shm/rkbash.progress_bar"
 	_PROGRESS_MAX=100
 
 	PROGRESS=0

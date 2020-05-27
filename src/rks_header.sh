@@ -3,7 +3,7 @@
 #--
 # Print script header header to file. Flag:
 #
-# 1 = load /usr/local/lib/rkscript.sh
+# 1 = load /usr/local/lib/rkbash.lib.sh
 #
 # @global RKS_HEADER (optional instead of flag) RKS_HEADER_SCHECK (shellcheck ...)
 # @param filename
@@ -21,7 +21,7 @@ function _rks_header {
 	fi
 
 	test $((flag & 1)) = 1 && \
-		header='. /usr/local/lib/rkscript.sh || { echo -e "\nERROR: . /usr/local/lib/rkscript.sh\n"; exit 1; }'
+		header='. /usr/local/lib/rkbash.lib.sh || { echo -e "\nERROR: . /usr/local/lib/rkbash.lib.sh\n"; exit 1; }'
 
 	printf '\x23!/usr/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
 		"$copyright" "$RKS_HEADER_SCHECK" > "$1"

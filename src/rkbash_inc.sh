@@ -1,40 +1,40 @@
 #!/bin/bash
 
 #--
-# Export required $RKSCRIPT_PATH/src/* functions as $REQUIRED_RKSCRIPT.
+# Export required $RKBASH_SRC/src/* functions as $RKBASH_INC
 #
-# @global RKSCRIPT_PATH (default = .)
-# @export RKSCRIPT_INC RKSCRIPT_INC_NUM
+# @global RKBASH_SRC (default = .)
+# @export RKBASH_INC RKBASH_INC_NUM
 # @export_local _HAS_SCRIPT
 # @param file path
 # shellcheck disable=SC2034,SC2068
 #--
-function _rkscript_inc {
+function _rkbash_inc {
 	local _HAS_SCRIPT
 	declare -A _HAS_SCRIPT
 
-	if test -z "$RKSCRIPT_PATH"; then
+	if test -z "$RKBASH_SRC"; then
 		if test -s "src/abort.sh"; then
-			RKSCRIPT_PATH='.'
+			RKBASH_SRC='src'
 		else
-			_abort 'set RKSCRIPT_PATH'
+			_abort 'set RKBASH_SRC'
 		fi
-	elif ! test -s "$RKSCRIPT_PATH/src/abort.sh"; then
-		_abort "invalid RKSCRIPT_PATH='$RKSCRIPT_PATH'"
+	elif ! test -s "$RKBASH_SRC/abort.sh"; then
+		_abort "invalid RKBASH_SRC='$RKBASH_SRC'"
 	fi
 
 	test -s "$1" || _abort "no such file '$1'"
 	_rrs_scan "$1"
 
-	RKSCRIPT_INC=$(_sort ${!_HAS_SCRIPT[@]})
-	RKSCRIPT_INC_NUM="${#_HAS_SCRIPT[@]}"
+	RKBASH_INC=$(_sort ${!_HAS_SCRIPT[@]})
+	RKBASH_INC_NUM="${#_HAS_SCRIPT[@]}"
 }
 
 
 #--
 # Export required rkscript/src/* functions as ${!_HAS_SCRIPT[@]}.
 #
-# @global RKSCRIPT_PATH
+# @global RKBASH_SRC
 # @global_local _HAS_SCRIPT
 # @param file path
 #--
@@ -44,9 +44,9 @@ function _rrs_scan {
 	func_list=$(grep -E -o -e '(_[a-z0-9\_]+)' "$1" | xargs -n1 | sort -u | xargs)
 
 	for a in $func_list; do
-		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKSCRIPT_PATH/src/${a:1}.sh" ]]; then
+		if [[ -z "${_HAS_SCRIPT[$a]}" && -s "$RKBASH_SRC/${a:1}.sh" ]]; then
 			_HAS_SCRIPT[$a]=1
-			_rrs_scan "$RKSCRIPT_PATH/src/${a:1}.sh"
+			_rrs_scan "$RKBASH_SRC/${a:1}.sh"
 		fi
 	done
 }

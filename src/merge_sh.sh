@@ -3,7 +3,7 @@
 #--
 # Merge "$APP"_ (or ../`basename "$APP"`) directory into $APP (concat *.inc.sh).
 # Use 0_header.inc.sh, function.inc.sh, ... Z0_configuration.inc.sh, Z1_setup.inc.sh, Z_main.inc.sh.
-# Set RKS_HEADER=0 to avoid rkscript.sh loading. Use --static to include rkscript.sh functions.
+# Set RKS_HEADER=0 to avoid rkbash.lib.sh loading. Use --static to include rkbash.lib.sh functions.
 # 
 # @example test.sh, test.sh_/ and test.sh_/*.inc.sh
 # @example test.sh/, test.sh/test.sh and test.sh/*.inc.sh
