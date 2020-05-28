@@ -45,15 +45,16 @@ function _cert_file {
 		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer 2>/dev/null)
 		if ! test -z "$subdomain" && test -s "$subdomain"; then
 			acme_dir=$(dirname $subdomain)
+			domain=$(basename $acme_dir)
 			CERT_ENGINE="acme.sh"
-			CERT_SUB=$(basename $acme_dir)
+			CERT_SUB=$domain
 		fi
 	fi
 
 	if test "$CERT_ENGINE" = "acme.sh"; then
 		CERT_FULL="$acme_dir/fullchain.cer"
-		CERT_KEY="$acme_dir/$subdomain.key"
-		CERT_PUB="$acme_dir/$subdomain.cer"
+		CERT_KEY="$acme_dir/$domain.key"
+		CERT_PUB="$acme_dir/$domain.cer"
 		CERT_CA="$acme_dir/ca.cer"
 		res=0
 	fi

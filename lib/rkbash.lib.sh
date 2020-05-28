@@ -616,15 +616,16 @@ function _cert_file {
 		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer 2>/dev/null)
 		if ! test -z "$subdomain" && test -s "$subdomain"; then
 			acme_dir=$(dirname $subdomain)
+			domain=$(basename $acme_dir)
 			CERT_ENGINE="acme.sh"
-			CERT_SUB=$(basename $acme_dir)
+			CERT_SUB=$domain
 		fi
 	fi
 
 	if test "$CERT_ENGINE" = "acme.sh"; then
 		CERT_FULL="$acme_dir/fullchain.cer"
-		CERT_KEY="$acme_dir/$subdomain.key"
-		CERT_PUB="$acme_dir/$subdomain.cer"
+		CERT_KEY="$acme_dir/$domain.key"
+		CERT_PUB="$acme_dir/$domain.cer"
 		CERT_CA="$acme_dir/ca.cer"
 		res=0
 	fi
@@ -4614,6 +4615,40 @@ function _run_as_root {
 		echo "sudo true - Please type in your password"
 		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
 	fi
+}
+
+
+#--
+# Wrapper to scp. Check md5sum first - don't copy if md5sum is same.
+# @param source
+# @param target
+#--
+function _scp {
+	local user host path md5 md5remote remote
+
+	if [[ "$1" =~ ^(.+)@(.+):(/.+) ]]; then
+		md5=$(_md5 "$2")
+		remote=source
+	elif [[ "$2" =~ ^(.+)@(.+):(/.+) ]]; then
+		md5=$(_md5 "$1")
+		remote=target
+	fi
+
+	user="${BASH_REMATCH[1]}"
+	host="${BASH_REMATCH[2]}"
+	path="${BASH_REMATCH[3]}"
+
+	md5remote=$(ssh "$user@$host:$path" "md5sum '$path' | awk '{print \$1}'" || \
+		_abort "ssh "$user@$host:$path" "md5sum '$path'"")
+
+	echo "$remote is remote: $user@$host:$path"
+	if test "$md5" = "$md5sum"; then
+		echo "$path at $host has not changed" 
+	else
+	fi
+
+#    echo "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
+#    scp lib/rkbash.lib.sh "$1:/usr/local/lib/" || _abort "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
 }
 
 
