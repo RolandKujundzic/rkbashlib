@@ -70,7 +70,7 @@ function do_install {
 		_cp lib/rkbash.lib.sh "$1/rkbash.lib.sh" md5
 	else
 		echo "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
-		scp lib/rkbash.lib.sh "$1:/usr/local/lib/"
+		scp lib/rkbash.lib.sh "$1:/usr/local/lib/" || _abort "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
 	fi
 }
 
