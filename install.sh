@@ -69,8 +69,7 @@ function do_install {
 	elif test -d "$1"; then
 		_cp lib/rkbash.lib.sh "$1/rkbash.lib.sh" md5
 	else
-		echo "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
-		scp lib/rkbash.lib.sh "$1:/usr/local/lib/" || _abort "scp lib/rkbash.lib.sh $1:/usr/local/lib/"
+		_scp lib/rkbash.lib.sh "$1:/usr/local/lib/rkbash.lib.sh"
 	fi
 }
 
@@ -90,7 +89,7 @@ command -v realpath > /dev/null 2>&1 && APP=$(realpath "$0")
 RKBASH_SRC=$(dirname "$APP")"/src"
 INCLUDE_FUNC="abort.sh osx.sh mkdir.sh cp.sh md5.sh log.sh chmod.sh 
 	sudo.sh confirm.sh syntax.sh require_program.sh msg.sh add_abort_linenum.sh
-	require_global.sh require_dir.sh"
+	require_global.sh require_dir.sh scp.sh"
 
 for a in $INCLUDE_FUNC; do
 	source "$RKBASH_SRC/$a"
