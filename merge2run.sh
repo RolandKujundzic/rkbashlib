@@ -15,7 +15,10 @@ function merge_list {
 	OUT="run.sh"
 	MERGE_SH=
 
-	test -s "sh/run/merge2$1" && OUT="$1"
+	if test -s "sh/run/merge2$1"; then
+		OUT="$1"
+		shift
+	fi
 
 	if [[ "$#" -gt 0 && -s "$1" ]]; then
 		MERGE_SH="$*"
