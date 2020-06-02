@@ -3,14 +3,14 @@
 #--
 # Print sql select result table.
 #
-# @global _SQL
+# @global SQL
 # @param type query
 #--
 function _sql_list {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_list"
-	_require_global "_SQL"
+	local query="$1"
+	test -z "$query" && _abort "empty query in _sql_list"
+	_require_global SQL
 
-	$_SQL "$QUERY" || _abort "$QUERY"
+	$SQL "$query" || _abort "$query"
 }
 

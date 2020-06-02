@@ -5,18 +5,19 @@
 #
 # @param sql query
 # @param flag (1=execute sql without confirmation)
-# @global _SQL
+# @global SQL
 #--
 function _sql_execute {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty sql execute query"
-	_require_global "_SQL"
+	local query="$1"
+	test -z "$query" && _abort "empty sql execute query"
+	_require_global SQL
+
 	if test "$2" = "1"; then
-		echo "execute sql query: $(_sql_echo "$QUERY")"
-		$_SQL "$QUERY" || _abort "$QUERY"
+		echo "execute sql query: $(_sql_echo "$query")"
+		$SQL "$query" || _abort "$query"
 	else
-		_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
+		_confirm "execute sql query: $(_sql_echo "$query")? " 1
+		test "$CONFIRM" = "y" && { $SQL "$query" || _abort "$query"; }
 	fi
 }
 

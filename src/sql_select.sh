@@ -1,15 +1,14 @@
 #!/bin/bash
 
-declare -A _SQL_COL
+declare -A SQL_COL
 
 #--
-# Run sql select query. Save result of select query to _SQL_COL. 
-# Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
+# Run sql select query. Save result of select query to SQL_COL. 
+# Add SQL_COL[_all] (=STDOUT) and SQL_COL[_rows].
 #
-# BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
+# BEWARE: don't use `_sql_select ...` or $(_sql_select) - SQL_COL will be empty (subshell execution)
 #
-# @global _SQL _SQL_COL (hash)
-# @export SQL (=rks-db query)
+# @global SQL SQL_COL (hash)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
@@ -20,14 +19,14 @@ function _sql_select {
 	local dbout lnum line1 line2 query i ckey cval
 	query="$1"
 	test -z "$query" && _abort "empty query in _sql_select"
-	_require_global "_SQL"
+	_require_global "SQL"
 
-	dbout=$($_SQL "$query" || _abort "$query")
+	dbout=$($SQL "$query" || _abort "$query")
 	lnum=$(echo "$dbout" | wc -l)
 
-	_SQL_COL=()
-	_SQL_COL[_all]="$dbout"
-	_SQL_COL[_rows]=$((lnum - 1))
+	SQL_COL=()
+	SQL_COL[_all]="$dbout"
+	SQL_COL[_rows]=$((lnum - 1))
 
 	if test "$lnum" -eq 2; then
 		line1=$(echo "$dbout" | head -1)
@@ -37,7 +36,7 @@ function _sql_select {
 		IFS=$'\t' read -ra cval <<< "$line2"
 
 		for (( i=0; i < ${#ckey[@]}; i++ )); do
-			_SQL_COL[${ckey[$i]}]="${cval[$i]}"
+			SQL_COL[${ckey[$i]}]="${cval[$i]}"
 		done
 
 		return 0  # true single line result

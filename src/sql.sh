@@ -1,18 +1,18 @@
 #!/bin/bash
 
-_SQL=
-declare -A _SQL_QUERY
+SQL=
+declare -A SQL_QUERY
 
 #--
-# Run _sql[list|execute|select]. Query is either $2 or _SQL_QUERY[$2] (if set). 
+# Run _sql[list|execute|select]. Query is either $2 or SQL_QUERY[$2] (if set). 
 # If $1=execute ask if query $2 should be execute (default=y) or skip. 
-# Set _SQL (default _SQL="rks-db query") and _SQL_QUERY (optional).
+# Set SQL (default SQL="rks-db query") and SQL_QUERY (optional).
 # See _sql_querystring for parameter and search parameter replace.
-# See _sql_select for _SQL_COL results.
+# See _sql_select for SQL_COL results.
 #
-# BEWARE: don't use `_sql select ...` or $(_sql select) - _SQL_COL will be empty (subshell execution)
+# BEWARE: don't use `_sql select ...` or $(_sql select) - SQL_COL will be empty (subshell execution)
 #
-# @global _SQL _SQL_QUERY (hash)
+# @global SQL SQL_QUERY (hash)
 # @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
@@ -20,11 +20,11 @@ declare -A _SQL_QUERY
 # @return boolean (if type=select - false = no result)
 #--
 function _sql {
-	if test -z "$_SQL"; then
+	if test -z "$SQL"; then
 		if test -s "/usr/local/bin/rks-db"; then
-			_SQL='rks-db query'
+			SQL='rks-db query'
 		else
-			_abort "set _SQL="
+			_abort "set SQL="
 		fi
 	fi
 
@@ -35,10 +35,10 @@ function _sql {
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
 		action="${BASH_REMATCH[1]}"
 		query="$1"
-		test -z "${_SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
+		test -z "${SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
 	fi
 
-	test -z "${_SQL_QUERY[$query]}" || query="${_SQL_QUERY[$query]}"
+	test -z "${SQL_QUERY[$query]}" || query="${SQL_QUERY[$query]}"
 	query=$(_sql_querystring "$query")
 
 	if test "$action" = "select"; then
