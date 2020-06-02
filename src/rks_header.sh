@@ -21,7 +21,7 @@ function _rks_header {
 	fi
 
 	test $((flag & 1)) = 1 && \
-		header='. /usr/local/lib/rkbash.lib.sh || { echo -e "\nERROR: . /usr/local/lib/rkbash.lib.sh\n"; exit 1; }'
+		header='source /usr/local/lib/rkbash.lib.sh || { echo -e "\nERROR: source /usr/local/lib/rkbash.lib.sh\n"; exit 1; }'
 
 	printf '\x23!/usr/bin/env bash\n\x23\n\x23 Copyright (c) %s Roland Kujundzic <roland@kujundzic.de>\n\x23\n\x23 %s\n\x23\n\n' \
 		"$copyright" "$RKS_HEADER_SCHECK" > "$1"
