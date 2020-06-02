@@ -4831,18 +4831,19 @@ function _sql_echo {
 #
 # @param sql query
 # @param flag (1=execute sql without confirmation)
-# @global _SQL
+# @global SQL
 #--
 function _sql_execute {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty sql execute query"
-	_require_global "_SQL"
+	local query="$1"
+	test -z "$query" && _abort "empty sql execute query"
+	_require_global SQL
+
 	if test "$2" = "1"; then
-		echo "execute sql query: $(_sql_echo "$QUERY")"
-		$_SQL "$QUERY" || _abort "$QUERY"
+		echo "execute sql query: $(_sql_echo "$query")"
+		$SQL "$query" || _abort "$query"
 	else
-		_confirm "execute sql query: $(_sql_echo "$QUERY")? " 1
-		test "$CONFIRM" = "y" && { $_SQL "$QUERY" || _abort "$QUERY"; }
+		_confirm "execute sql query: $(_sql_echo "$query")? " 1
+		test "$CONFIRM" = "y" && { $SQL "$query" || _abort "$query"; }
 	fi
 }
 
@@ -4850,15 +4851,15 @@ function _sql_execute {
 #--
 # Print sql select result table.
 #
-# @global _SQL
+# @global SQL
 # @param type query
 #--
 function _sql_list {
-	local QUERY="$1"
-	test -z "$QUERY" && _abort "empty query in _sql_list"
-	_require_global "_SQL"
+	local query="$1"
+	test -z "$query" && _abort "empty query in _sql_list"
+	_require_global SQL
 
-	$_SQL "$QUERY" || _abort "$QUERY"
+	$SQL "$query" || _abort "$query"
 }
 
 
@@ -4880,44 +4881,44 @@ function _sql_load {
 }
 
 
-declare -A _SQL_PARAM
-declare -A _SQL_SEARCH
+declare -A SQL_PARAM
+declare -A SQL_SEARCH
 
 #--
-# Return processed query string. Insert _SQL_PARAM hash.
-# Use _SQL_PARAM[SEARCH] string to replace WHERE_SEARCH|AND_SEARCH tag.
-# Use _SQL_SEARCH hash to create _SQL_PARAM[SEARCH].
+# Return processed query string. Insert SQL_PARAM hash.
+# Use SQL_PARAM[SEARCH] string to replace WHERE_SEARCH|AND_SEARCH tag.
+# Use SQL_SEARCH hash to create SQL_PARAM[SEARCH].
 #
-# @global _SQL_SEARCH (hash) _SQL_PARAM (hash)
+# @global SQL_SEARCH (hash) SQL_PARAM (hash)
 # @param string query
 # @return string
 # shellcheck disable=SC2068
 #--
 function _sql_querystring {
-	if test "${#_SQL_SEARCH[@]}" -gt 0; then
-		_SQL_PARAM[SEARCH]=
+	if test "${#SQL_SEARCH[@]}" -gt 0; then
+		SQL_PARAM[SEARCH]=
 
-		local val  key
-		for key in ${!_SQL_SEARCH[@]}; do
-			val="${_SQL_SEARCH[$key]}"
+		local val key
+		for key in ${!SQL_SEARCH[@]}; do
+			val="${SQL_SEARCH[$key]}"
 
 			if [[ -z "$val" || -z "${val//%/}" || -z "${val//\*/}" ]]; then
 				:
 			elif [[ "${val: -1}" = "%" || "${val:0:1}"  = "%" ]]; then
-				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $key LIKE '$val'"
+				SQL_PARAM[SEARCH]="${SQL_PARAM[SEARCH]} AND $key LIKE '$val'"
 			elif [[ "${val: -1}" = "*" || "${val:0:1}"  = "*" ]]; then
-				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND CONVERT($key USING utf8mb4) LIKE '${val//\*/%}'"
+				SQL_PARAM[SEARCH]="${SQL_PARAM[SEARCH]} AND CONVERT($key USING utf8mb4) LIKE '${val//\*/%}'"
 			else
-				_SQL_PARAM[SEARCH]="${_SQL_PARAM[SEARCH]} AND $key='$val'"
+				SQL_PARAM[SEARCH]="${SQL_PARAM[SEARCH]} AND $key='$val'"
 			fi
 		done
 	fi
 
 	local query="$1"
-	if ! test -z "${_SQL_PARAM[SEARCH]}"; then
-		query="${query//WHERE_SEARCH/WHERE 1=1 ${_SQL_PARAM[SEARCH]}}"
-		query="${query//AND_SEARCH/${_SQL_PARAM[SEARCH]}}"
-		_SQL_PARAM[SEARCH]=
+	if ! test -z "${SQL_PARAM[SEARCH]}"; then
+		query="${query//WHERE_SEARCH/WHERE 1=1 ${SQL_PARAM[SEARCH]}}"
+		query="${query//AND_SEARCH/${SQL_PARAM[SEARCH]}}"
+		SQL_PARAM[SEARCH]=
 	fi
 
 	local a
@@ -4925,8 +4926,8 @@ function _sql_querystring {
 		query="${query//$a/}"
 	done
 
-	for a in "${!_SQL_PARAM[@]}"; do
-		query="${query//\'$a\'/\'${_SQL_PARAM[$a]}\'}"
+	for a in "${!SQL_PARAM[@]}"; do
+		query="${query//\'$a\'/\'${SQL_PARAM[$a]}\'}"
 	done
 
 	test -z "$query" && _abort "empty query in _sql"
@@ -4934,16 +4935,15 @@ function _sql_querystring {
 }
 
 
-declare -A _SQL_COL
+declare -A SQL_COL
 
 #--
-# Run sql select query. Save result of select query to _SQL_COL. 
-# Add _SQL_COL[_all] (=STDOUT) and _SQL_COL[_rows].
+# Run sql select query. Save result of select query to SQL_COL. 
+# Add SQL_COL[_all] (=STDOUT) and SQL_COL[_rows].
 #
-# BEWARE: don't use `_sql_select ...` or $(_sql_select) - _SQL_COL will be empty (subshell execution)
+# BEWARE: don't use `_sql_select ...` or $(_sql_select) - SQL_COL will be empty (subshell execution)
 #
-# @global _SQL _SQL_COL (hash)
-# @export SQL (=rks-db query)
+# @global SQL SQL_COL (hash)
 # @param type select|execute
 # @param query or SQL_QUERY key
 # @param flag (1=execute sql without confirmation)
@@ -4954,14 +4954,14 @@ function _sql_select {
 	local dbout lnum line1 line2 query i ckey cval
 	query="$1"
 	test -z "$query" && _abort "empty query in _sql_select"
-	_require_global "_SQL"
+	_require_global "SQL"
 
-	dbout=$($_SQL "$query" || _abort "$query")
+	dbout=$($SQL "$query" || _abort "$query")
 	lnum=$(echo "$dbout" | wc -l)
 
-	_SQL_COL=()
-	_SQL_COL[_all]="$dbout"
-	_SQL_COL[_rows]=$((lnum - 1))
+	SQL_COL=()
+	SQL_COL[_all]="$dbout"
+	SQL_COL[_rows]=$((lnum - 1))
 
 	if test "$lnum" -eq 2; then
 		line1=$(echo "$dbout" | head -1)
@@ -4971,7 +4971,7 @@ function _sql_select {
 		IFS=$'\t' read -ra cval <<< "$line2"
 
 		for (( i=0; i < ${#ckey[@]}; i++ )); do
-			_SQL_COL[${ckey[$i]}]="${cval[$i]}"
+			SQL_COL[${ckey[$i]}]="${cval[$i]}"
 		done
 
 		return 0  # true single line result
@@ -4983,19 +4983,19 @@ function _sql_select {
 }
 
 
-_SQL=
-declare -A _SQL_QUERY
+SQL=
+declare -A SQL_QUERY
 
 #--
-# Run _sql[list|execute|select]. Query is either $2 or _SQL_QUERY[$2] (if set). 
+# Run _sql[list|execute|select]. Query is either $2 or SQL_QUERY[$2] (if set). 
 # If $1=execute ask if query $2 should be execute (default=y) or skip. 
-# Set _SQL (default _SQL="rks-db query") and _SQL_QUERY (optional).
+# Set SQL (default SQL="rks-db query") and SQL_QUERY (optional).
 # See _sql_querystring for parameter and search parameter replace.
-# See _sql_select for _SQL_COL results.
+# See _sql_select for SQL_COL results.
 #
-# BEWARE: don't use `_sql select ...` or $(_sql select) - _SQL_COL will be empty (subshell execution)
+# BEWARE: don't use `_sql select ...` or $(_sql select) - SQL_COL will be empty (subshell execution)
 #
-# @global _SQL _SQL_QUERY (hash)
+# @global SQL SQL_QUERY (hash)
 # @export SQL (=rks-db query)
 # @param type select|execute
 # @param query or SQL_QUERY key
@@ -5003,11 +5003,11 @@ declare -A _SQL_QUERY
 # @return boolean (if type=select - false = no result)
 #--
 function _sql {
-	if test -z "$_SQL"; then
+	if test -z "$SQL"; then
 		if test -s "/usr/local/bin/rks-db"; then
-			_SQL='rks-db query'
+			SQL='rks-db query'
 		else
-			_abort "set _SQL="
+			_abort "set SQL="
 		fi
 	fi
 
@@ -5018,10 +5018,10 @@ function _sql {
 	if [[ "$1" =~ ^(list|execute|select)_([a-z]+)$ ]]; then
 		action="${BASH_REMATCH[1]}"
 		query="$1"
-		test -z "${_SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
+		test -z "${SQL_QUERY[$query]}" && _abort "invalid action $action - no such query key $query"
 	fi
 
-	test -z "${_SQL_QUERY[$query]}" || query="${_SQL_QUERY[$query]}"
+	test -z "${SQL_QUERY[$query]}" || query="${SQL_QUERY[$query]}"
 	query=$(_sql_querystring "$query")
 
 	if test "$action" = "select"; then
