@@ -3,13 +3,14 @@
 #--
 # Remove (purge) apt packages.
 #
-# @param package list
+# @param $* package list
 # @global RKBASH_DIR
+# shellcheck disable=SC2048
 #--
 function _apt_remove {
 	_run_as_root
 
-	for a in $1; do
+	for a in $*; do
 		_confirm "Run apt -y remove --purge $a" 1
 		if test "$CONFIRM" = "y"; then
 			apt -y remove --purge "$a" || _abort "apt -y remove --purge $a"

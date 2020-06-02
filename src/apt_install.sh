@@ -2,7 +2,9 @@
 
 #--
 # Install apt packages.
+# @param $* (package list)
 # @global LOG_NO_ECHO
+# shellcheck disable=SC2048
 #--
 function _apt_install {
 	local curr_lne
@@ -13,8 +15,7 @@ function _apt_install {
 
 	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
 
-	for a in $1
-	do
+	for a in $*; do
 		if test -d "$RKBASH_DIR/apt/$a"; then
 			echo "already installed, skip: apt -y install $a"
 		else
