@@ -3091,6 +3091,7 @@ function _mysql_conn {
 # @param password
 # @global MYSQL DB_CHARSET
 # @export DB_NAME DB_PASS
+# @return bool (1 if already exists)
 #--
 function _mysql_create_db {
 	DB_NAME=$1
@@ -3110,7 +3111,7 @@ function _mysql_create_db {
 				_abort "create database user $DB_NAME@localhost failed"
 		fi
 
-		return
+		return 1
 	fi
 
 	if test "$DB_CHARSET" = "utf8mb4"; then
@@ -3129,6 +3130,8 @@ function _mysql_create_db {
 	_msg "create mysql database user $DB_NAME"
 	{ echo "GRANT ALL ON $DB_NAME.* TO '$DB_NAME'@'localhost' IDENTIFIED BY '$DB_PASS'; FLUSH PRIVILEGES;" | $MYSQL; } || \
 		_abort "create database user $DB_NAME@localhost failed"
+
+	return 0
 }
 
 
