@@ -11,7 +11,7 @@ declare ARGV
 #
 # @param "$@"
 # @export ARG (hash) ARGV (array)
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC1001
 #--
 function _parse_arg {
 	ARGV=()
@@ -30,7 +30,7 @@ function _parse_arg {
 		elif [[ $val == "--"* ]]; then
 			key="${val/--/}"
 			val=1
-		elif [[ $val == *"="* ]]; then
+		elif [[ $val =~ ^[a-zA-Z0-9_\.\-]+= ]]; then
 			key="${val/=*/}"
 			val="${val#*=}"
 		fi
