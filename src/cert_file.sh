@@ -21,7 +21,7 @@ function _cert_file {
 	domain="$1"
 
 	test -z "$domain" && _abort "empty domain parameter"
-	if [[ "${1: -13}" = 'fullchain.cer' ]]; then
+	if test -f "$1"; then
 		domain=$(dirname "$1")
 		domain=$(basename "$domain")
 		[[ "$domain" =~ ^.+\..+\..+$ ]] && domain="${domain#*.}"
