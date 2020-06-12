@@ -830,12 +830,13 @@ function _change_password {
 
 #--
 # Abort if ip_address of domain does not point to IP_ADDRESS.
-# Call _ip_address first.
+# Call _ip_address first. Skip if CHECK_IP_OFF=1.
 #
-# @global IP_ADDRESS
+# @global IP_ADDRESS CHECK_IP_OFF
 # @param domain
 #--
 function _check_ip {
+	test "$CHECK_IP_OFF" = '1' && return
 	local ip_ok ping4
 	_require_program ping
 
