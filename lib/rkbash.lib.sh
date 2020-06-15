@@ -5534,8 +5534,9 @@ function _toupper {
 function _trim {
 	local input
 	test -z "${1+x}" && input=$(cat /dev/stdin) || input="$1"
-	echo -e "$input" | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//'
+	echo -e "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
+
 
 #--
 # Link /bin/sh to /bin/shell.
