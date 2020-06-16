@@ -9,7 +9,7 @@
 # shellcheck disable=SC2034
 #--
 function _install_node {
-	_require_global "NODE_VERSION"
+	_require_global NODE_VERSION
 	local os_type curr_sudo
 
 	os_type=$(_os_type)

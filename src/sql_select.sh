@@ -19,7 +19,7 @@ function _sql_select {
 	local dbout lnum line1 line2 query i ckey cval
 	query="$1"
 	test -z "$query" && _abort "empty query in _sql_select"
-	_require_global "SQL"
+	_require_global SQL
 
 	dbout=$($SQL "$query" || _abort "$query")
 	lnum=$(echo "$dbout" | wc -l)

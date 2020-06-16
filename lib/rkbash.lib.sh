@@ -2319,7 +2319,7 @@ function _install_app {
 # shellcheck disable=SC2034
 #--
 function _install_node {
-	_require_global "NODE_VERSION"
+	_require_global NODE_VERSION
 	local os_type curr_sudo
 
 	os_type=$(_os_type)
@@ -3112,7 +3112,7 @@ function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
-	_require_global "DB_NAME DB_PASS"
+	_require_global DB_NAME DB_PASS
 	_mysql_conn 1
 
 	local has_user charset
@@ -4969,7 +4969,7 @@ function _sql_select {
 	local dbout lnum line1 line2 query i ckey cval
 	query="$1"
 	test -z "$query" && _abort "empty query in _sql_select"
-	_require_global "SQL"
+	_require_global SQL
 
 	dbout=$($SQL "$query" || _abort "$query")
 	lnum=$(echo "$dbout" | wc -l)
@@ -5158,7 +5158,7 @@ function _src2www_copy {
 	done
 
 	if ! test -z "$SRC2WWW_RKJS_FILES"; then
-		_require_global "SRC2WWW_RKJS_DIR"
+		_require_global SRC2WWW_RKJS_DIR
 		for a in $SRC2WWW_RKJS_FILES; do
 			cp "$SRC2WWW_RKJS_DIR/$a" www/js/
 		done

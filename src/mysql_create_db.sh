@@ -16,7 +16,7 @@ function _mysql_create_db {
 	DB_NAME=$1
 	DB_PASS=$2
 
-	_require_global "DB_NAME DB_PASS"
+	_require_global DB_NAME DB_PASS
 	_mysql_conn 1
 
 	local has_user charset
