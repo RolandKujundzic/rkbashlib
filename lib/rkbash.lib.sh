@@ -429,6 +429,45 @@ function _aws {
 }
 
 
+#--
+# Backup (realpath) $1 as RKBASH_DIR/backup/$1
+# Keep last n backups.
+#
+# @global RKBASH_DIR
+# @param path
+# @param keep (default = 5)
+#--
+function _backup_file {
+	local i n path dir base backup backup_dir
+	path="$(realpath "$1")"
+	test -z "$path" && _abort "no such file '$1'"
+
+	dir="$(dirname "$path")"
+	base="$(basename "$path")"
+	backup_dir="$(dirname "$RKBASH_DIR")/backup/$dir"
+	backup="$backup_dir/$base"
+	n="${2:-5}"
+
+	_msg "backup $path"
+	_mkdir "$backup_dir" >/dev/null
+
+	test -f "$backup" && _cp "$backup" "$backup.old" >/dev/null
+
+	_cp "$path" "$backup" md5
+
+	if [[ "$CP_FIRST" = '1' || "$CP_KEEP" = '1' ]]; then
+		test -f "$backup.old" && _rm "$backup.old" >/dev/null
+		return
+	fi
+
+	for ((i = n - 1; i > 0; i--)); do
+		test -f "$backup.$i" && _cp "$backup.$i" "$backup.$((i + 1))"
+	done
+
+	_mv "$backup.old" "$backup.1"
+}
+
+
 test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkbash/cache"
 test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkbash/src"
 CACHE_OFF=
@@ -1408,22 +1447,35 @@ function _cordova_create {
 # @param source path
 # @param target path
 # @param [md5] if set make md5 file comparison
+# @export CP_KEEP=1 if $3=md5 and target exists and is same as source
+# export CP_FIRST=1 if $3=md5 and target does not exist
 # @global SUDO
+# shellcheck disable=SC2034
 #--
 function _cp {
 	local curr_lno target_dir md1 md2 pdir
 	curr_lno="$LOG_NO_ECHO"
 	LOG_NO_ECHO=1
 
+	CP_FIRST=
+	CP_KEEP=
+
+	test -z "$2" && _abort "empty target"
+
 	target_dir=$(dirname "$2")
 	test -d "$target_dir" || _abort "no such directory [$target_dir]"
 
-	if test "$3" = "md5" && test -f "$1" && test -f "$2"; then
+	if test "$3" != 'md5'; then
+		:
+	elif ! test -f "$2"; then
+		CP_FIRST=1
+	elif test -f "$1"; then
 		md1=$(_md5 "$1")
 		md2=$(_md5 "$2")
 
 		if test "$md1" = "$md2"; then
 			_msg "_cp: keep $2 (same as $1)"
+			CP_KEEP=1
 		else
 			_msg "Copy file $1 to $2 (update)"
 			_sudo "cp '$1' '$2'" 1
