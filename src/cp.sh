@@ -13,6 +13,8 @@ function _cp {
 	curr_lno="$LOG_NO_ECHO"
 	LOG_NO_ECHO=1
 
+	test -z "$2" && _abort "empty target"
+
 	target_dir=$(dirname "$2")
 	test -d "$target_dir" || _abort "no such directory [$target_dir]"
 
