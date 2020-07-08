@@ -50,10 +50,13 @@ function _ask {
 		ANSWER="$REPLY"
 	fi
 
-	if test -z "$ANSWER" && test "$3" -gt 0; then
-		test "$3" -ge 3 && _abort "you failed to answer the question 3 times"
-		local recursion=$(($3 + 1))
-		_ask "$1" "$2" "$recursion"
+	recursion="${4:-0}"
+	if test -z "$ANSWER" && test "$recursion" -lt 3; then
+		test "$recursion" -ge 2 && _abort "you failed to answer the question 3 times"
+		recursion=$((recursion + 1))
+		_ask "$1" "$2" "$3" "$recursion"
 	fi
+
+	[[ -z "$ANSWER" && "$1" = '1' ]] && _abort "you failed to answer the question"
 }
 
