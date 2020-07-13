@@ -36,7 +36,7 @@ function _has_process {
 		rx="/[b]in/bash.+$1.sh"
 	fi
 
-	if test -z "${PROCESS[log]}" && (test $((flag & 2)) = 2 || test $((flag & 16)) = 16); then
+	if [[ -z "${PROCESS[log]}" && ($((flag & 2)) = 2 || $((flag & 16)) = 16) ]]; then
 		PROCESS[log]="$1.log"
 	fi
 

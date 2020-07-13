@@ -9,7 +9,7 @@
 # shellcheck disable=SC2086
 #--
 function _npm_module {
-	if ! which npm; then
+	if ! command -v npm >/dev/null; then
 		_node_version
   fi
 

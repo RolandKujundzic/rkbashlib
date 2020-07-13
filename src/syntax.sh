@@ -73,7 +73,7 @@ function _syntax_cmd {
 			grep -E "$rx" >/dev/null <<< "$a" && msg="$msg|${a/$prefix/}"
 		done
 		msg="${msg:1}\n"
-	elif [[ "$1" = *'.'* && ! -z "${SYNTAX_CMD[${1%%.*}]}" ]]; then
+	elif [[ "$1" = *'.'* && -n "${SYNTAX_CMD[${1%%.*}]}" ]]; then
 		msg="${SYNTAX_CMD[${1%%.*}]}\n"
 	fi
 
@@ -124,6 +124,6 @@ function _syntax_help {
 		fi
 	done
 
-	[[ ! -z "$msg" && "$msg" != "\n$APP_DESC" ]] && echo -e "$msg"
+	[[ -n "$msg" && "$msg" != "\n$APP_DESC" ]] && echo -e "$msg"
 }
 

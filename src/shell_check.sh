@@ -3,7 +3,7 @@
 #--
 # Run shellcheck for *.sh files in directory $1 and subdirectories
 # @param directory
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2207
 #--
 function _shell_check {
 	_require_dir "$1"

@@ -12,7 +12,7 @@ function _node_version {
 	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2
 	test -z "$NPM_VERSION" && NPM_VERSION=6.14.4
 
-	if ! which node || ! which npm; then
+	if ! command -v node >/dev/null || ! command -v npm >/dev/null; then
 		_install_node 
 	fi
 

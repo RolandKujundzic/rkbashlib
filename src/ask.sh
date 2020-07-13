@@ -42,7 +42,7 @@ function _ask {
 
 	if test "$REPLY" = " "; then
 		ANSWER=
-	elif [[ -z "$REPLY" && ! -z "$default" ]]; then
+	elif [[ -z "$REPLY" && -n "$default" ]]; then
 		ANSWER="$default"
 	elif ! test -z "$allow"; then
 		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=

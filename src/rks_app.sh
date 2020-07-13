@@ -46,7 +46,7 @@ function _rks_app {
 	test -z "${SYNTAX_HELP[$p1]}" || APP_DESC="${SYNTAX_HELP[$p1]}"
 	test -z "${SYNTAX_HELP[$p1.$p2]}" || APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
 
-	[[ ! -z "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
-	[[ ! -z "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
+	[[ -n "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
+	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
 }
 

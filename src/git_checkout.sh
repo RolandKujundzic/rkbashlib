@@ -80,7 +80,7 @@ function _git_checkout {
 		fi
 	fi
 
-	[[ ! -z "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
+	[[ -n "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
 
 	GIT_PARAMETER=
 }

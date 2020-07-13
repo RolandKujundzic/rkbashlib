@@ -9,7 +9,7 @@
 #--
 function _composer {
 	local action global_comp local_comp user_action cmd
-	global_comp=$(which composer)
+	global_comp=$(command -v composer)
 	action="$1"
 
 	test -f "composer.phar" && local_comp=composer.phar

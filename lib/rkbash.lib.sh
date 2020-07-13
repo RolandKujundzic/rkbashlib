@@ -404,7 +404,7 @@ function _ask {
 
 	if test "$REPLY" = " "; then
 		ANSWER=
-	elif [[ -z "$REPLY" && ! -z "$default" ]]; then
+	elif [[ -z "$REPLY" && -n "$default" ]]; then
 		ANSWER="$default"
 	elif ! test -z "$allow"; then
 		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=
@@ -579,7 +579,7 @@ function _cdn_dl {
 #--
 function _cd {
 	local has_realpath curr_dir goto_dir
-	has_realpath=$(which realpath)
+	has_realpath=$(command -v realpath)
 
 	if ! test -z "$has_realpath" && ! test -z "$1"; then
 		curr_dir=$(realpath "$PWD")
@@ -1208,7 +1208,7 @@ function _composer_pkg {
 #--
 function _composer {
 	local action global_comp local_comp user_action cmd
-	global_comp=$(which composer)
+	global_comp=$(command -v composer)
 	action="$1"
 
 	test -f "composer.phar" && local_comp=composer.phar
@@ -1945,12 +1945,12 @@ function _find_docroot {
 	base=$(basename "$dir")
 	test "$base" = "cms" && DOCROOT=$(dirname "$dir")
 
-	if ! test -z "$DOCROOT" && test -f "$DOCROOT/index.php" && (test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data"); then
+	if [[ -n "$DOCROOT" && -f "$DOCROOT/index.php" && (-f "$DOCROOT/settings.php" || -d "$DOCROOT/data") ]]; then
 		_msg "use DOCROOT=$DOCROOT"
 		return 0
 	fi
 
-	while test -d "$dir" && ! (test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data")); do
+	while [[ -d "$dir" && ! (-f "$dir/index.php" && (-f "$dir/settings.php" || -d "$dir/data")) ]]; do
 		last_dir="$dir"
 		dir=$(dirname "$dir")
 
@@ -1959,7 +1959,7 @@ function _find_docroot {
 		fi
 	done
 
-	if test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data"); then
+	if [[ -f "$dir/index.php" && (-f "$dir/settings.php" || -d "$dir/data") ]]; then
 		DOCROOT="$dir"
 	else
 		test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
@@ -2099,7 +2099,7 @@ function _git_checkout {
 		fi
 	fi
 
-	[[ ! -z "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
+	[[ -n "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
 
 	GIT_PARAMETER=
 }
@@ -2247,7 +2247,7 @@ function _has_process {
 		rx="/[b]in/bash.+$1.sh"
 	fi
 
-	if test -z "${PROCESS[log]}" && (test $((flag & 2)) = 2 || test $((flag & 16)) = 16); then
+	if [[ -z "${PROCESS[log]}" && ($((flag & 2)) = 2 || $((flag & 16)) = 16) ]]; then
 		PROCESS[log]="$1.log"
 	fi
 
@@ -3536,7 +3536,7 @@ function _node_version {
 	test -z "$NODE_VERSION" && NODE_VERSION=v12.16.2
 	test -z "$NPM_VERSION" && NPM_VERSION=6.14.4
 
-	if ! which node || ! which npm; then
+	if ! command -v node >/dev/null || ! command -v npm >/dev/null; then
 		_install_node 
 	fi
 
@@ -3586,7 +3586,7 @@ function _npm2js {
 # shellcheck disable=SC2086
 #--
 function _npm_module {
-	if ! which npm; then
+	if ! command -v npm >/dev/null; then
 		_node_version
   fi
 
@@ -3683,7 +3683,7 @@ if [ "$(uname)" = "Darwin" ]; then
 shopt -s expand_aliases 
 
 # osx has no md5sum
-test -z "$(which md5sum)" && _abort "install brew (https://brew.sh/)"
+test -z "$(command -v md5sum)" && _abort "install brew (https://brew.sh/)"
 
 # osx bash is outdated
 test -f "/usr/local/bin/bash" || _abort "brew install bash"
@@ -3692,7 +3692,7 @@ test -f "/usr/local/bin/bash" || _abort "brew install bash"
 [[ "$BASH_VERSION" =~ 5. ]] || _abort 'change shebang to: #!/usr/bin/env bash'  
 
 # osx has no realpath
-test -z "$(which realpath)" && _abort "brew install coreutils"
+test -z "$(command -v realpath)" && _abort "brew install coreutils"
 
 test "$(echo -e "a_c\naa_b" | sort | xargs)" != "aa_b a_c" && \
 	_abort "UTF-8 sort is broken - fix /usr/share/locale/${LC_ALL}/LC_COLLATE"
@@ -4191,7 +4191,7 @@ function _progress_bar {
 	slm="$style;$label;$msg"
 	progress="${1:-0}"
 
-	[[ -z "$progress" && ! -z "$PROGRESS_FILE" && -f "$PROGRESS_FILE" ]] && progress=$(cat "$PROGRESS_FILE")
+	[[ -z "$progress" && -n "$PROGRESS_FILE" && -f "$PROGRESS_FILE" ]] && progress=$(cat "$PROGRESS_FILE")
 	[[ "$progress" =~ ^[0-9]+$ ]] || _abort "invalid progress [$progress]"
 	test -z "$max" && max=100
 	test -z "$3" || slm="$3"
@@ -4237,7 +4237,7 @@ function _progress_bar_printf {
 	fi
 
 	local label="${pg[3]}"
-	let ccol=${#label}+1
+	(( ccol=${#label}+1 ))
 
 	printf "\n\e[A\e[K"
 
@@ -4408,6 +4408,7 @@ function _require_global {
 #
 # @param path
 # @param owner[:group]
+# shellcheck disable=SC2206
 #--
 function _require_owner {
 	if ! test -f "$1" && ! test -d "$1"; then
@@ -4622,8 +4623,8 @@ function _rks_app {
 	test -z "${SYNTAX_HELP[$p1]}" || APP_DESC="${SYNTAX_HELP[$p1]}"
 	test -z "${SYNTAX_HELP[$p1.$p2]}" || APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
 
-	[[ ! -z "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
-	[[ ! -z "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
+	[[ -n "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
+	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
 }
 
 
@@ -4778,7 +4779,7 @@ function _set {
 #--
 # Run shellcheck for *.sh files in directory $1 and subdirectories
 # @param directory
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2207
 #--
 function _shell_check {
 	_require_dir "$1"
@@ -5526,7 +5527,7 @@ function _syntax_cmd {
 			grep -E "$rx" >/dev/null <<< "$a" && msg="$msg|${a/$prefix/}"
 		done
 		msg="${msg:1}\n"
-	elif [[ "$1" = *'.'* && ! -z "${SYNTAX_CMD[${1%%.*}]}" ]]; then
+	elif [[ "$1" = *'.'* && -n "${SYNTAX_CMD[${1%%.*}]}" ]]; then
 		msg="${SYNTAX_CMD[${1%%.*}]}\n"
 	fi
 
@@ -5577,7 +5578,7 @@ function _syntax_help {
 		fi
 	done
 
-	[[ ! -z "$msg" && "$msg" != "\n$APP_DESC" ]] && echo -e "$msg"
+	[[ -n "$msg" && "$msg" != "\n$APP_DESC" ]] && echo -e "$msg"
 }
 
 
@@ -5667,7 +5668,7 @@ function _webhome_php {
 
 	test -z "$flag" && flag=$(($1 & 0))
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
-	test $((flag & 2)) -eq 2 && git_dir=( $git_dir "phplib" )
+	test $((flag & 2)) -eq 2 && git_dir=( "$git_dir" "phplib" )
 
 	_mkdir php >/dev/null
 	_cd php 

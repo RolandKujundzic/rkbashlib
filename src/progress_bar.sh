@@ -29,7 +29,7 @@ function _progress_bar {
 	slm="$style;$label;$msg"
 	progress="${1:-0}"
 
-	[[ -z "$progress" && ! -z "$PROGRESS_FILE" && -f "$PROGRESS_FILE" ]] && progress=$(cat "$PROGRESS_FILE")
+	[[ -z "$progress" && -n "$PROGRESS_FILE" && -f "$PROGRESS_FILE" ]] && progress=$(cat "$PROGRESS_FILE")
 	[[ "$progress" =~ ^[0-9]+$ ]] || _abort "invalid progress [$progress]"
 	test -z "$max" && max=100
 	test -z "$3" || slm="$3"
@@ -75,7 +75,7 @@ function _progress_bar_printf {
 	fi
 
 	local label="${pg[3]}"
-	let ccol=${#label}+1
+	(( ccol=${#label}+1 ))
 
 	printf "\n\e[A\e[K"
 

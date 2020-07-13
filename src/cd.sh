@@ -10,7 +10,7 @@
 #--
 function _cd {
 	local has_realpath curr_dir goto_dir
-	has_realpath=$(which realpath)
+	has_realpath=$(command -v realpath)
 
 	if ! test -z "$has_realpath" && ! test -z "$1"; then
 		curr_dir=$(realpath "$PWD")

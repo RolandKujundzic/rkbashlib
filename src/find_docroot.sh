@@ -28,12 +28,12 @@ function _find_docroot {
 	base=$(basename "$dir")
 	test "$base" = "cms" && DOCROOT=$(dirname "$dir")
 
-	if ! test -z "$DOCROOT" && test -f "$DOCROOT/index.php" && (test -f "$DOCROOT/settings.php" || test -d "$DOCROOT/data"); then
+	if [[ -n "$DOCROOT" && -f "$DOCROOT/index.php" && (-f "$DOCROOT/settings.php" || -d "$DOCROOT/data") ]]; then
 		_msg "use DOCROOT=$DOCROOT"
 		return 0
 	fi
 
-	while test -d "$dir" && ! (test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data")); do
+	while [[ -d "$dir" && ! (-f "$dir/index.php" && (-f "$dir/settings.php" || -d "$dir/data")) ]]; do
 		last_dir="$dir"
 		dir=$(dirname "$dir")
 
@@ -42,7 +42,7 @@ function _find_docroot {
 		fi
 	done
 
-	if test -f "$dir/index.php" && (test -f "$dir/settings.php" || test -d "$dir/data"); then
+	if [[ -f "$dir/index.php" && (-f "$dir/settings.php" || -d "$dir/data") ]]; then
 		DOCROOT="$dir"
 	else
 		test -z "$2" && _abort "failed to find DOCROOT of [$1]" || return 1
