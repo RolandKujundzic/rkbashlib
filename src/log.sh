@@ -30,7 +30,7 @@ function _log {
 
 	if ! test -d "$RKBASH_DIR/$2"; then
 		mkdir -p "$RKBASH_DIR/$2"
-		if ! test -z "$SUDO_USER"; then
+		if test -n "$SUDO_USER"; then
 			chown -R $SUDO_USER.$SUDO_USER "$RKBASH_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKBASH_DIR'"
 		elif test "$UID" = "0"; then
 			chmod -R 777 "$RKBASH_DIR" || _abort "chmod -R 777 '$RKBASH_DIR'"
@@ -41,7 +41,7 @@ function _log {
 	now=$(date +'%d.%m.%Y %H:%M:%S')
 	echo -e "# _$2: $now\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
-	if ! test -z "$SUDO_USER"; then
+	if test -n "$SUDO_USER"; then
 		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"
 	elif test "$UID" = "0"; then
 		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"

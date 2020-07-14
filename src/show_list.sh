@@ -11,7 +11,7 @@ function _show_list {
 	local i a
 	i=0
 
-	if ! test -z "$3"; then
+	if test -n "$3"; then
 		echo ""
 		_label "$3"
 	fi

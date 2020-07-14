@@ -8,7 +8,7 @@
 function _docker_rm {
 	_docker_stop "$1"
 
-	if ! test -z "$(docker ps -a | grep "$1")"; then
+	if test -n "$(docker ps -a | grep "$1")"; then
 		echo "docker rm $1"
 		docker rm "$1"
 	fi

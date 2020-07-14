@@ -34,7 +34,7 @@ function _syntax {
 	test "${msg: -3:1}" = '|' && msg="${msg:0:-3}\n"
 
 	base=$(basename "$APP")
-	if ! test -z "$APP_PREFIX"; then
+	if test -n "$APP_PREFIX"; then
 		echo -e "\nSYNTAX: $APP_PREFIX $base $msg" 1>&2
 	else
 		echo -e "\nSYNTAX: $base $msg" 1>&2
@@ -58,7 +58,7 @@ function _syntax_cmd {
 	keys=$(_sort "${!SYNTAX_CMD[@]}")
 	msg="$1\n" 
 
-	if ! test -z "${SYNTAX_CMD[$1]}"; then
+	if test -n "${SYNTAX_CMD[$1]}"; then
 		msg="${SYNTAX_CMD[$1]}\n"
 	elif test "${1: -1}" = "*" && test "${#SYNTAX_CMD[@]}" -gt 0; then
 		if test "$1" = "*"; then
@@ -118,7 +118,7 @@ function _syntax_help {
 	for a in $keys; do
 		if test "$a" = "$1"; then
 			msg="$msg\n${SYNTAX_HELP[$a]}"
-		elif ! test -z "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
+		elif test -n "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
 			prefix=$(sed -E 's/^[a-zA-Z0-9_]+\.//' <<< "$a")
 			msg="$msg\n$prefix: ${SYNTAX_HELP[$a]}\n"
 		fi

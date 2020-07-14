@@ -21,7 +21,7 @@ function _git_checkout {
 	curr="$PWD"
 	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
 
-	if ! test -z "${ARG[docroot]}"; then
+	if test -n "${ARG[docroot]}"; then
 		lnk_dir="$2"
 		git_dir="${ARG[docroot]}"
 
@@ -38,7 +38,7 @@ function _git_checkout {
 		fi
 	elif test -d "$git_dir"; then
 		_confirm "Update $git_dir (git pull)?" 1
-	elif ! test -z "$CONFIRM_CHECKOUT"; then
+	elif test -n "$CONFIRM_CHECKOUT"; then
 		_confirm "Checkout $1 to $git_dir (git clone)?" 1
 	fi
 
@@ -72,7 +72,7 @@ function _git_checkout {
 			_cd ..
 		fi
 
-		if ! test -z "$3"; then
+		if test -n "$3"; then
 			_cd "$git_dir"
 			echo "run [$3] in $git_dir"
 			$3

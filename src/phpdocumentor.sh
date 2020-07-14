@@ -31,13 +31,8 @@ function _phpdocumentor {
 		_cd "$CURR"
 	fi
 
-	if ! test -z "$1"; then
-		SRC_DIR="$1"
-	fi
-
-	if ! test -z "$2"; then
-		DOC_DIR="$2"
-	fi
+	test -n "$1" && SRC_DIR="$1"
+	test -n "$2" && DOC_DIR="$2"
 
 	_require_dir "$SRC_DIR"
 

@@ -12,7 +12,7 @@ function _cd {
 	local has_realpath curr_dir goto_dir
 	has_realpath=$(command -v realpath)
 
-	if ! test -z "$has_realpath" && ! test -z "$1"; then
+	if [[ -n "$has_realpath" && -n "$1" ]]; then
 		curr_dir=$(realpath "$PWD")
 		goto_dir=$(realpath "$1")
 
@@ -25,10 +25,8 @@ function _cd {
 		echo "cd '$1'"
 	fi
 
-	if test -z "$1"
-	then
-		if ! test -z "$LAST_DIR"
-		then
+	if test -z "$1"; then
+		if test -n "$LAST_DIR"; then
 			_cd "$LAST_DIR"
 			return
 		else

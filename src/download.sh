@@ -17,7 +17,7 @@ function _download {
 	_wget "$1" "$2"
 	[[ -z "$3" && ! -s "$2" ]] && _abort "Download of $2 as $1 failed"
 
-	if ! test -z "$3"; then
+	if test -n "$3"; then
 		if test -s "$2"; then
 			echo "Download $1 as $2"
 		elif test -f "$2"; then

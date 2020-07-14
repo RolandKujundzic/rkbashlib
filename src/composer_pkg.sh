@@ -11,7 +11,7 @@ function _composer_pkg {
 		_abort "Install composer first"
 	fi
 
-	if test -d "vendor/$1" && test -f composer.json && ! test -z $(grep "$1" 'composer.json'); then
+	if [[ -d "vendor/$1" && -f composer.json ]] && grep -q "$1" 'composer.json'; then
 		echo "Update composer package $1 in vendor/"
 		php composer.phar update "$1"
 	else

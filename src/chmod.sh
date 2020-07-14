@@ -18,7 +18,7 @@ function _chmod {
 	test -z "$tmp" || _abort "invalid octal privileges '$1'"
 
 	cmd="chmod -R"
-	if ! test -z "$CHMOD"; then
+	if test -n "$CHMOD"; then
 		cmd="$CHMOD"
 		CHMOD=
 	fi

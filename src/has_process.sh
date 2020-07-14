@@ -66,9 +66,9 @@ function _has_process {
 		process=$(ps -aux | grep -E "$rx" | grep " $logfile_pid ")
 	fi
 
-	if test $((flag & 4)) = 4 && test -z "$process"; then
+	if [[ $((flag & 4)) = 4 && -z "$process" ]]; then
 		_abort "no $1 process (rx=$rx, old_pid=$logfile_pid)"
-	elif test $((flag & 8)) = 8 && ! test -z "$process"; then
+	elif [[ $((flag & 8)) = 8 && -n "$process" ]]; then
 		_abort "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
 	fi
 	

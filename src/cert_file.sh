@@ -43,7 +43,7 @@ function _cert_file {
 		CERT_ENGINE="acme.sh"
 	else
 		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer 2>/dev/null)
-		if ! test -z "$subdomain" && test -s "$subdomain"; then
+		if [[ -n "$subdomain" && -s "$subdomain" ]]; then
 			acme_dir=$(dirname $subdomain)
 			domain=$(basename $acme_dir)
 			CERT_ENGINE="acme.sh"
@@ -59,7 +59,7 @@ function _cert_file {
 		res=0
 	fi
 
-	if test "$UID" = "0" && ! test -z "$CERT_FULL"; then
+	if [[ "$UID" = "0" && -n "$CERT_FULL" ]]; then
 		if test -L "$le_live" || test -L "$le_live/fullchain.pem"; then
 			CERT_FULL="$le_live/fullchain.pem"
 			CERT_KEY="$le_live/privkey.pem"

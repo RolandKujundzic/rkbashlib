@@ -17,7 +17,7 @@ function _ip_address {
 
 	IP6_ADDRESS=$(ip -6 addr | grep 'scope global' | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
 	ip6_dyn=$(ip -6 addr | grep 'scope global temporary dynamic' | awk '{print $2}' | sed -e 's/\/[0-9]*$//')
-	if ! test -z "$ip6_dyn"; then
+	if test -n "$ip6_dyn"; then
 		IP6_ADDRESS="$ip6_dyn"
 		DYNAMIC_IP=1
 	fi

@@ -12,14 +12,14 @@
 function _chown {
 	local cmd modify curr_owner curr_group has_group me
 
-	if test -z "$2" || test -z "$3"; then
+	if [[ -z "$2" || -z "$3" ]]; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
 	_require_program stat
 
 	local cmd="chown -R"
-	if ! test -z "$CHOWN"; then
+	if test -n "$CHOWN"; then
 		cmd="$CHOWN"
 		CHOWN=
 	fi
@@ -54,7 +54,7 @@ function _chown {
 	me=$(basename "$HOME")
 	if test "$me" = "$2"; then
 		has_group=$(groups "$me" | grep " $3 ")
-		if ! test -z "$has_group"; then
+		if test -n "$has_group"; then
 			_msg "$cmd $2.$3 '$1'"
 			$cmd "$2.$3" "$1" 2>/dev/null && return
 			_msg "$cmd '$2.$3' '$1' failed - try as root"

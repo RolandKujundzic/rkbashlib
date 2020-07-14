@@ -21,7 +21,7 @@ function _decrypt {
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		pfile="$2"
 		pbase=$(basename "$pfile")
 		if test "${pbase:0:1}" = "." && test -s "$pfile"; then

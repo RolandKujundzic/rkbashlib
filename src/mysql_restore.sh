@@ -22,7 +22,7 @@ function _mysql_restore {
 
 	sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' create_tables.sql > create_tables.fix.sql
 
-	if ! test -z "$(cmp -b create_tables.sql create_tables.fix.sql)"; then
+	if test -n "$(cmp -b create_tables.sql create_tables.fix.sql)"; then
 		_mv create_tables.fix.sql create_tables.sql
 	else
 		_rm create_tables.fix.sql
@@ -32,7 +32,7 @@ function _mysql_restore {
 		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load "$a.sql"
 
-		if ! test -z "$2" && test "$a" = "create_tables"; then
+		if [[ -n "$2" && "$a" = "create_tables" ]]; then
 			_mysql_conn
 			echo "create restore.sh"
 			{
@@ -47,7 +47,7 @@ function _mysql_restore {
 		fi
 	done
 
-  if ! test -z "$2"; then
+  if test -n "$2"; then
     echo "start table imports in background"  
     source restore.sh
 

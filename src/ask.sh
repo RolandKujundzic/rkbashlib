@@ -21,7 +21,7 @@ function _ask {
 		label="$1  $2  "
  		allow="|${2:1: -1}|"
 
-		if ! test -z "$ASK_DEFAULT"; then
+		if test -n "$ASK_DEFAULT"; then
 			default="$ASK_DEFAULT"
 			label="$label [$default]"
 			ASK_DEFAULT=
@@ -31,7 +31,7 @@ function _ask {
  		default="$2"
 	fi
 	
-	if test "$AUTOCONFIRM" = "default" && ! test -z "$default"; then
+	if [[ "$AUTOCONFIRM" = "default" && -n "$default" ]]; then
 		ANSWER="$default"
 		AUTOCONFIRM=
 		return
@@ -44,7 +44,7 @@ function _ask {
 		ANSWER=
 	elif [[ -z "$REPLY" && -n "$default" ]]; then
 		ANSWER="$default"
-	elif ! test -z "$allow"; then
+	elif test -n "$allow"; then
 		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=
 	else
 		ANSWER="$REPLY"

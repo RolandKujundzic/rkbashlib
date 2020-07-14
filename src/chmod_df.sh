@@ -9,24 +9,25 @@
 # @param main dir privileges (default = dir privleges)
 #--
 function _chmod_df {
-	local CHMOD_PATH="$1"
-	local FPRIV=$2
-	local DPRIV=$3
-	local MDPRIV=$4
+	local chmod_path fpriv dpriv mdpriv
+	chmod_path="$1"
+	fpriv="$2"
+	dpriv="$3"
+	mdpriv="$4"
 
-	if ! test -d "$CHMOD_PATH" && ! test -f "$CHMOD_PATH"; then
-		_abort "no such directory or file: [$CHMOD_PATH]"
+	if [[ ! -d "$chmod_path" && ! -f "$chmod_path" ]]; then
+		_abort "no such directory or file: [$chmod_path]"
 	fi
 
-	test -z "$FPRIV" && FPRIV=644
-	test -z "$DPRIV" && DPRIV=755
+	test -z "$fpriv" && fpriv=644
+	test -z "$dpriv" && dpriv=755
 
-	_file_priv "$CHMOD_PATH" $FPRIV
-	_dir_priv "$CHMOD_PATH" $DPRIV
+	_file_priv "$chmod_path" $fpriv
+	_dir_priv "$chmod_path" $dpriv
 
-	if ! test -z "$MDPRIV" && test "$MDPRIV" != $"$DPRIV"; then
-		echo "chmod $MDPRIV '$CHMOD_PATH'"
-		chmod "$MDPRIV" "$CHMOD_PATH" || _abort "chmod $MDPRIV '$CHMOD_PATH'"
+	if [[ -n "$mdpriv" && "$mdpriv" != "$dpriv" ]]; then
+		echo "chmod $mdpriv '$chmod_path'"
+		chmod "$mdpriv" "$chmod_path" || _abort "chmod $mdpriv '$chmod_path'"
 	fi
 }
 

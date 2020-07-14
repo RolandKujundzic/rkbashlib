@@ -13,7 +13,7 @@ function _lynx {
 		_abort "url parameter missing"
 	fi
 
-	if ! test -z "$2" && test -s "$2"; then
+	if [[ -n "$2" && -s "$2" ]]; then
 		lynx -cmd_script="$2" -dump "$1"
 	else
 		lynx -dump "$1"

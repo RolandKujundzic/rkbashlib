@@ -34,7 +34,7 @@ function _sql_querystring {
 	fi
 
 	local query="$1"
-	if ! test -z "${SQL_PARAM[SEARCH]}"; then
+	if test -n "${SQL_PARAM[SEARCH]}"; then
 		query="${query//WHERE_SEARCH/WHERE 1=1 ${SQL_PARAM[SEARCH]}}"
 		query="${query//AND_SEARCH/${SQL_PARAM[SEARCH]}}"
 		SQL_PARAM[SEARCH]=

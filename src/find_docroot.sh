@@ -12,7 +12,7 @@
 function _find_docroot {
 	local dir base last_dir
 
-	if ! test -z "$DOCROOT"; then
+	if test -n "$DOCROOT"; then
 		DOCROOT=$(realpath "$DOCROOT")
 		_msg "use existing DOCROOT=$DOCROOT"
 		test -z "$DOCROOT" && { test -z "$2" && _abort "invalid DOCROOT" || return 1; }

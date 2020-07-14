@@ -17,11 +17,11 @@ function _github_latest {
 	redir=$(curl -Ls -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest")
 	latest=$(basename "$redir" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/')
 
-	if ! test -z "$latest"; then
+	if test -n "$latest"; then
 		GITHUB_LATEST[$2]=$(basename "$redir")
 		GITHUB_IS_LATEST[$2]=''
 
-		if ! test -z "$vnum" && test "$(echo "$vnum >= $latest" | bc -l)" == 1; then
+		if [[ -n "$vnum" && "$(echo "$vnum >= $latest" | bc -l)" == 1 ]]; then
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi

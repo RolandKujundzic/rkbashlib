@@ -29,7 +29,7 @@ function _encrypt {
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if ! test -z "$pass"; then
+	if test -n "$pass"; then
 		if test "${base:0:1}" = "." && test -s "$2"; then
 			_msg "encrypt '$src' as *.cpt (use password from '$2')"
 			pass=$(cat "$2")

@@ -33,7 +33,7 @@ function _mysql_load {
 		_abort "invalid mysql dump [$dump]"
 	fi
 
-	if ! test -z "$FIX_MYSQL_DUMP"; then
+	if test -n "$FIX_MYSQL_DUMP"; then
 		echo "fix $dump"
 		tmp_dump="$(dirname $dump)/_fix.sql"
 		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > "$tmp_dump"

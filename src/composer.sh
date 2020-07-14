@@ -17,7 +17,7 @@ function _composer {
 	if test -z "$action"; then
 		echo -e "\nWhat do you want to do?\n"
 
-		if test -z "$global_comp" && test -z "$local_comp"; then
+		if [[ -z "$global_comp" && -z "$local_comp" ]]; then
 			action=l
 			echo "[g] = global composer installation: /usr/local/bin/composer"
 			echo "[l] = local composer installation: composer.phar"
@@ -31,7 +31,7 @@ function _composer {
 				echo "[a] = update vendor/composer/autoload*"
 			fi
 
-			if ! test -z "$local_comp"; then
+			if test -n "$local_comp"; then
 				echo "[r] = remove local composer.phar"
 			fi
 		fi
@@ -61,9 +61,9 @@ function _composer {
 		fi
 	fi
 
-	if ! test -z "$local_comp"; then
+	if test -n "$local_comp"; then
 		cmd="php composer.phar"
-	elif ! test -z "$global_comp"; then
+	elif test -n "$global_comp"; then
 		cmd="composer"
 	fi
 

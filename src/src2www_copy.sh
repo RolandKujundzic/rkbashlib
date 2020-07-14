@@ -12,7 +12,7 @@ function _src2www_copy {
 		cp -r "www_src/$a" www/
 	done
 
-	if ! test -z "$SRC2WWW_RKJS_FILES"; then
+	if test -n "$SRC2WWW_RKJS_FILES"; then
 		_require_global SRC2WWW_RKJS_DIR
 		for a in $SRC2WWW_RKJS_FILES; do
 			cp "$SRC2WWW_RKJS_DIR/$a" www/js/

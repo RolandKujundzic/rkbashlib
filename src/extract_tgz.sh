@@ -13,11 +13,11 @@ function _extract_tgz {
 	local target 
 	target="$2"
 
-	if test -z "$target" && test "${1: -4}" = ".tgz"; then
+	if [[ -z "$target" && "${1: -4}" = ".tgz" ]]; then
 		target="${1:0:-4}"
 	fi
 
-	if ! test -z "$target" && test -d "$target"; then
+	if [[ -n "$target" && -d "$target" ]]; then
 		_rm "$target"
 	fi
 
@@ -28,7 +28,7 @@ function _extract_tgz {
   tar -xzf "$1" >/dev/null || _abort "tar -xzf $1 failed"
   echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
-	if ! test -z "$target" && ! test -d "$target" && ! test -f "$target"; then
+	if [[ -n "$target" && ! -d "$target" && ! -f "$target" ]]; then
 		_abort "$target was not created"
 	fi
 }

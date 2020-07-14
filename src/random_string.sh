@@ -16,7 +16,7 @@ function _random_string {
 	chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 	len=${1:-8}
 
-	if ! test -z "$2" && ! test -z "$3"; then
+	if [[ -n "$2" && -n "$3" ]]; then
 		chars="${chars:$2:$3}"
 	fi
 

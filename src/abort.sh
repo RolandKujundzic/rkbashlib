@@ -30,7 +30,7 @@ function _abort {
 	local msg line
 	msg="$1"
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		msg="$2"
 		line="[$1]"
 	fi
@@ -52,7 +52,7 @@ function _abort {
 
 	local other_pid=
 
-	if ! test -z "$APP_PID"; then
+	if test -n "$APP_PID"; then
 		# make shure APP_PID dies
 		for a in $APP_PID; do
 			other_pid=$(ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}')
@@ -60,7 +60,7 @@ function _abort {
 		done
 	fi
 
-	if ! test -z "$APP"; then
+	if test -n "$APP"; then
 		# make shure APP dies
 		other_pid=$(ps aux | grep "$APP" | awk '{print $2}')
 		test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2

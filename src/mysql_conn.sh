@@ -29,7 +29,7 @@ function _mysql_conn {
 
 	# $1=1 - root access required
 	if test -z "$MYSQL"; then
-		if ! test -z "$MYSQL_CONN"; then
+		if test -n "$MYSQL_CONN"; then
 			MYSQL="mysql $MYSQL_CONN"
 		elif test "$UID" = "0"; then
 			MYSQL="mysql -u root"

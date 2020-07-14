@@ -21,7 +21,7 @@ function _package_json {
 		echo "ToDo" > README.md
 	fi
 
-	if ! test -z "$1"; then
+	if test -n "$1"; then
 		echo "upgrade package.json"
 		_npm_module npm-check-updates -g
 		npm-check-updates -u
@@ -38,7 +38,7 @@ function _package_json {
 		fi
 	done
 
-	if ! test -z "$run_install"; then
+	if test -n "$run_install"; then
 		echo "run: npm install"
 		npm install
 	fi

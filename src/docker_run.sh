@@ -11,7 +11,7 @@
 function _docker_run {
 	_docker_rm "$1"
 
-	if ! test -z "$WORKSPACE" && ! test -z "$CURR" && test -d "$WORKSPACE/linux/rkdocker"; then
+	if [[ -n "$WORKSPACE" && -n "$CURR" && -d "$WORKSPACE/linux/rkdocker" ]]; then
 		_cd "$WORKSPACE/linux/rkdocker"
 	else
 		_abort "Export WORKSPACE (where $WORKSPACE/linux/rkdocker exists) and CURR=path/current/directory"

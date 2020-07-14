@@ -16,7 +16,7 @@ function _ssh_auth {
 	local ssh_ok
 	ssh_ok=$(ssh -o 'PreferredAuthentications=publickey' $1 "echo" 2>&1)
 
-	if ! test -z "$ssh_ok"; then
+	if test -n "$ssh_ok"; then
 		echo "copy ~/.ssh/id_rsa.pub to $1"
 
 		if test -d /Applications/iTunes.app; then

@@ -6,7 +6,7 @@
 # @param name
 #--
 function _docker_stop {
-	if ! test -z "$(docker ps | grep "$1")"; then
+	if test -n "$(docker ps | grep "$1")"; then
 		echo "docker stop $1"
 		docker stop "$1"
 	fi

@@ -8,7 +8,7 @@
 # @export LICENSE
 #--
 function _license {
-	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
+	if [[ -n "$1" && "$1" != 'gpl-3.0' ]]; then
 		_abort "unknown license [$1] use [gpl-3.0]"
 	fi
 
@@ -22,7 +22,7 @@ function _license {
 
 	if test -s "$lfile"; then
 		is_gpl3=$(head -n 2 "$lfile" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3')
-		if ! test -z "$is_gpl3"; then
+		if test -n "$is_gpl3"; then
 			echo "keep existing gpl-3.0 LICENSE ($lfile)"
 			return
 		fi

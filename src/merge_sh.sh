@@ -18,7 +18,7 @@ function _merge_sh {
 	my_app="${1:-$APP}"
 	sh_dir="${my_app}_"
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		my_app="$2"
 		sh_dir="$1"
 	else

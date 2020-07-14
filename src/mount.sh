@@ -12,7 +12,7 @@ function _mount {
 		_abort "no filesystem on $1"
 
 	if test -z "$(mount | grep -E "^$1 on $2")"; then
-		if ! test -z "$(mount | grep -E "^$1 on ")"; then
+		if test -n "$(mount | grep -E "^$1 on ")"; then
 			_confirm "umount $1 (and re-mount as $2)" 1
 			test "$CONFIRM" = "y" || _abort "user abort"
 			umount /dev/sdb2 || _abort "umount /dev/sdb2"

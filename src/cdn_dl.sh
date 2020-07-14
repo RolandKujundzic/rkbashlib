@@ -25,7 +25,7 @@ function _cdn_dl {
 	_download "$1" "$target"
 	_download "$1.map" "$target.map" 1
 
-	if ! test -z "$DOCROOT"; then
+	if test -n "$DOCROOT"; then
 		_cp "$target" "$DOCROOT/$2"
 
 		if test -f "$target.map"; then
@@ -35,7 +35,7 @@ function _cdn_dl {
 		if test -f "$DOCROOT/head.inc.html"; then
 			has_file=$(grep "=\"$2\"" "$DOCROOT/head.inc.html")
 
-			if ! test -z "$has_file"; then
+			if test -n "$has_file"; then
 				echo "$2 is already in head.inc.html"
 			elif test "$suffix" = "css" && test -f "$DOCROOT/$2"; then
 				sed -e "s/<\/head>/<link rel=\"stylesheet\" href=\"$2\" \/>/g" > "$DOCROOT/head.inc.html"

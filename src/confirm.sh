@@ -17,7 +17,7 @@
 function _confirm {
 	CONFIRM=
 
-	if ! test -z "$AUTOCONFIRM"; then
+	if test -n "$AUTOCONFIRM"; then
 		CONFIRM="${AUTOCONFIRM:0:1}"
 		echo "$1 <$CONFIRM>"
 		AUTOCONFIRM="${AUTOCONFIRM:1}"
@@ -56,7 +56,7 @@ function _confirm {
 		fi
 	done < /proc/$$/cmdline
 
-	if ! test -z "$CONFIRM"; then
+	if test -n "$CONFIRM"; then
 		# found -y or -n parameter
 		CONFIRM_TEXT="$CONFIRM"
 		return

@@ -22,7 +22,7 @@ function _my_cnf {
 	DB_PASS=$(grep password "$my_cnf" | sed -E 's/.*=\s*//g')
 	DB_NAME=$(grep user "$my_cnf" | sed -E 's/.*=\s*//g')
 
-	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$mysql_sql"; then
+	if [[ -n "$DB_PASS" && -n "$DB_NAME" && -z "$mysql_sql" ]]; then
 		MYSQL="mysql --defaults-file=.my.cnf"
 	fi
 }

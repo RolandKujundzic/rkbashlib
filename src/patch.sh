@@ -12,7 +12,7 @@
 # shellcheck disable=SC1090
 #--
 function _patch {
-	if ! test -z "$1" && test -d "$1"; then
+	if [[ -n "$1" && -d "$1" ]]; then
 		PATCH_SOURCE_DIR="$1"
 	elif test -s "$1"; then
 		PATCH_LIST=$(basename "$1" | sed -E 's/\.patch$//')

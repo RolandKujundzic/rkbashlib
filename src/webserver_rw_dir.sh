@@ -13,7 +13,7 @@ function _webserver_rw_dir {
 		server_user=$(grep -E '^export APACHE_RUN_USER=' /etc/apache2/envvars | sed -E 's/.*APACHE_RUN_USER=//')
 	fi
 
-	if ! test -z "$server_user" && test "$server_user" = "$(stat -c '%U' "$1")"; then
+	if [[ -n "$server_user" && "$server_user" = "$(stat -c '%U' "$1")" ]]; then
 		echo "directory $1 is already owned by webserver $server_user"
 		return
 	fi
