@@ -7,5 +7,10 @@
 # @param echo option (-n|-e|default='')
 #--
 function _msg {
-	echo "$2" "$1"
+	if test -z "$2"; then
+		echo "$1"
+	else
+		echo "$2" "$1"
+	fi
 }
+
