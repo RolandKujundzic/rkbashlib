@@ -39,7 +39,7 @@ function _abort {
 	local msg line
 	msg="$1"
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		msg="$2"
 		line="[$1]"
 	fi
@@ -61,7 +61,7 @@ function _abort {
 
 	local other_pid=
 
-	if ! test -z "$APP_PID"; then
+	if test -n "$APP_PID"; then
 		# make shure APP_PID dies
 		for a in $APP_PID; do
 			other_pid=$(ps aux | grep -E "^.+\\s+$a\\s+" | awk '{print $2}')
@@ -69,7 +69,7 @@ function _abort {
 		done
 	fi
 
-	if ! test -z "$APP"; then
+	if test -n "$APP"; then
 		# make shure APP dies
 		other_pid=$(ps aux | grep "$APP" | awk '{print $2}')
 		test -z "$other_pid" || kill "$other_pid" 2>/dev/null 1>&2
@@ -127,7 +127,7 @@ function _apache2_vhost {
 
 	_split '.' "$1" >/dev/null
 
-	local a is_xx
+	local a
 
 	if test "${#SPLIT[@]}" -eq 2; then
 		a="/website/${SPLIT[0]}"'_'"${SPLIT[1]}"
@@ -141,8 +141,7 @@ function _apache2_vhost {
 		_ln "$2" "${SPLIT[0]}"
 	fi
 
-	is_xx=$(echo "$1" | grep -E '\.xx$')
-	if ! test -z "$is_xx"; then
+	if test -n "$(echo "$1" | grep -E '\.xx$')"; then
 		_msg "Add $1 domain to /etc/hosts"
 		_append_txt /etc/hosts "127.0.0.1 $1"
 	fi
@@ -154,53 +153,48 @@ function _apache2_vhost {
 #
 # @param source directory (optional, default = src)
 # @param doc directory (optional, default = docs/apigen)
+# @global CURR
 #--
 function _apigen_doc {
-  local DOC_DIR=./docs/apigen
-	local PRJ="docs/.apigen"
-	local BIN="$PRJ/vendor/apigen/apigen/bin/apigen"
-	local SRC_DIR=./src
+	local doc_dir prj bin src_dir
+  doc_dir=./docs/apigen
+	prj="docs/.apigen"
+	bin="$prj/vendor/apigen/apigen/bin/apigen"
+	src_dir=./src
 
-	_mkdir "$DOC_DIR"
-	_mkdir "$PRJ"
+	_mkdir "$doc_dir"
+	_mkdir "$prj"
 	_require_program composer
 
-	local CURR="$PWD"
-
-	if ! test -f "$PRJ/composer.json"; then
-		_cd "$PRJ"
+	if ! test -f "$prj/composer.json"; then
+		_cd "$prj"
 		_composer_json "rklib/rkphplib_doc_apigen"
 		composer require "apigen/apigen:dev-master"
 		composer require "roave/better-reflection:dev-master#c87d856"
 		_cd "$CURR"
 	fi
 
-	if ! test -s "$BIN"; then
-		_cd "$PRJ"
+	if ! test -s "$bin"; then
+		_cd "$prj"
 		composer update
 		_cd "$CURR"
 	fi
 
-	if ! test -z "$1"; then
-		SRC_DIR="$1"
-	fi
+	test -n "$1" && src_dir="$1"
+	test -n "$2" && doc_dir="$2"
 
-	if ! test -z "$2"; then
-		DOC_DIR="$2"
-	fi
+	_require_dir "$src_dir"
 
-	_require_dir "$SRC_DIR"
-
-	if test -d "$DOC_DIR"; then
-		_confirm "Remove existing documentation directory [$DOC_DIR] ?" 1
+	if test -d "$doc_dir"; then
+		_confirm "Remove existing documentation directory [$doc_dir] ?" 1
 		if test "$CONFIRM" = "y"; then
-			_rm "$DOC_DIR"
+			_rm "$doc_dir"
 		fi
 	fi
 
 	echo "Create apigen documentation"
-	echo "$BIN generate '$SRC_DIR' --destination '$DOC_DIR'"
-	$BIN generate "$SRC_DIR" --destination "$DOC_DIR"
+	echo "$bin generate '$src_dir' --destination '$doc_dir'"
+	$bin generate "$src_dir" --destination "$doc_dir"
 }
 
 
@@ -383,7 +377,7 @@ function _ask {
 		label="$1  $2  "
  		allow="|${2:1: -1}|"
 
-		if ! test -z "$ASK_DEFAULT"; then
+		if test -n "$ASK_DEFAULT"; then
 			default="$ASK_DEFAULT"
 			label="$label [$default]"
 			ASK_DEFAULT=
@@ -393,7 +387,7 @@ function _ask {
  		default="$2"
 	fi
 	
-	if test "$AUTOCONFIRM" = "default" && ! test -z "$default"; then
+	if [[ "$AUTOCONFIRM" = "default" && -n "$default" ]]; then
 		ANSWER="$default"
 		AUTOCONFIRM=
 		return
@@ -406,7 +400,7 @@ function _ask {
 		ANSWER=
 	elif [[ -z "$REPLY" && -n "$default" ]]; then
 		ANSWER="$default"
-	elif ! test -z "$allow"; then
+	elif test -n "$allow"; then
 		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=
 	else
 		ANSWER="$REPLY"
@@ -547,7 +541,7 @@ function _cdn_dl {
 	_download "$1" "$target"
 	_download "$1.map" "$target.map" 1
 
-	if ! test -z "$DOCROOT"; then
+	if test -n "$DOCROOT"; then
 		_cp "$target" "$DOCROOT/$2"
 
 		if test -f "$target.map"; then
@@ -557,7 +551,7 @@ function _cdn_dl {
 		if test -f "$DOCROOT/head.inc.html"; then
 			has_file=$(grep "=\"$2\"" "$DOCROOT/head.inc.html")
 
-			if ! test -z "$has_file"; then
+			if test -n "$has_file"; then
 				echo "$2 is already in head.inc.html"
 			elif test "$suffix" = "css" && test -f "$DOCROOT/$2"; then
 				sed -e "s/<\/head>/<link rel=\"stylesheet\" href=\"$2\" \/>/g" > "$DOCROOT/head.inc.html"
@@ -581,7 +575,7 @@ function _cd {
 	local has_realpath curr_dir goto_dir
 	has_realpath=$(command -v realpath)
 
-	if ! test -z "$has_realpath" && ! test -z "$1"; then
+	if [[ -n "$has_realpath" && -n "$1" ]]; then
 		curr_dir=$(realpath "$PWD")
 		goto_dir=$(realpath "$1")
 
@@ -594,10 +588,8 @@ function _cd {
 		echo "cd '$1'"
 	fi
 
-	if test -z "$1"
-	then
-		if ! test -z "$LAST_DIR"
-		then
+	if test -z "$1"; then
+		if test -n "$LAST_DIR"; then
 			_cd "$LAST_DIR"
 			return
 		else
@@ -658,7 +650,7 @@ function _cert_file {
 		CERT_ENGINE="acme.sh"
 	else
 		subdomain=$(ls $HOME/.acme.sh/*.$domain/fullchain.cer 2>/dev/null)
-		if ! test -z "$subdomain" && test -s "$subdomain"; then
+		if [[ -n "$subdomain" && -s "$subdomain" ]]; then
 			acme_dir=$(dirname $subdomain)
 			domain=$(basename $acme_dir)
 			CERT_ENGINE="acme.sh"
@@ -674,7 +666,7 @@ function _cert_file {
 		res=0
 	fi
 
-	if test "$UID" = "0" && ! test -z "$CERT_FULL"; then
+	if [[ "$UID" = "0" && -n "$CERT_FULL" ]]; then
 		if test -L "$le_live" || test -L "$le_live/fullchain.pem"; then
 			CERT_FULL="$le_live/fullchain.pem"
 			CERT_KEY="$le_live/privkey.pem"
@@ -926,24 +918,25 @@ function _check_ssl {
 # @param main dir privileges (default = dir privleges)
 #--
 function _chmod_df {
-	local CHMOD_PATH="$1"
-	local FPRIV=$2
-	local DPRIV=$3
-	local MDPRIV=$4
+	local chmod_path fpriv dpriv mdpriv
+	chmod_path="$1"
+	fpriv="$2"
+	dpriv="$3"
+	mdpriv="$4"
 
-	if ! test -d "$CHMOD_PATH" && ! test -f "$CHMOD_PATH"; then
-		_abort "no such directory or file: [$CHMOD_PATH]"
+	if [[ ! -d "$chmod_path" && ! -f "$chmod_path" ]]; then
+		_abort "no such directory or file: [$chmod_path]"
 	fi
 
-	test -z "$FPRIV" && FPRIV=644
-	test -z "$DPRIV" && DPRIV=755
+	test -z "$fpriv" && fpriv=644
+	test -z "$dpriv" && dpriv=755
 
-	_file_priv "$CHMOD_PATH" $FPRIV
-	_dir_priv "$CHMOD_PATH" $DPRIV
+	_file_priv "$chmod_path" $fpriv
+	_dir_priv "$chmod_path" $dpriv
 
-	if ! test -z "$MDPRIV" && test "$MDPRIV" != $"$DPRIV"; then
-		echo "chmod $MDPRIV '$CHMOD_PATH'"
-		chmod "$MDPRIV" "$CHMOD_PATH" || _abort "chmod $MDPRIV '$CHMOD_PATH'"
+	if [[ -n "$mdpriv" && "$mdpriv" != "$dpriv" ]]; then
+		echo "chmod $mdpriv '$chmod_path'"
+		chmod "$mdpriv" "$chmod_path" || _abort "chmod $mdpriv '$chmod_path'"
 	fi
 }
 
@@ -966,7 +959,7 @@ function _chmod {
 	test -z "$tmp" || _abort "invalid octal privileges '$1'"
 
 	cmd="chmod -R"
-	if ! test -z "$CHMOD"; then
+	if test -n "$CHMOD"; then
 		cmd="$CHMOD"
 		CHMOD=
 	fi
@@ -1008,14 +1001,14 @@ function _chmod {
 function _chown {
 	local cmd modify curr_owner curr_group has_group me
 
-	if test -z "$2" || test -z "$3"; then
+	if [[ -z "$2" || -z "$3" ]]; then
 		_abort "owner [$2] or group [$3] is empty"
 	fi
 
 	_require_program stat
 
 	local cmd="chown -R"
-	if ! test -z "$CHOWN"; then
+	if test -n "$CHOWN"; then
 		cmd="$CHOWN"
 		CHOWN=
 	fi
@@ -1050,7 +1043,7 @@ function _chown {
 	me=$(basename "$HOME")
 	if test "$me" = "$2"; then
 		has_group=$(groups "$me" | grep " $3 ")
-		if ! test -z "$has_group"; then
+		if test -n "$has_group"; then
 			_msg "$cmd $2.$3 '$1'"
 			$cmd "$2.$3" "$1" 2>/dev/null && return
 			_msg "$cmd '$2.$3' '$1' failed - try as root"
@@ -1187,7 +1180,7 @@ function _composer_pkg {
 		_abort "Install composer first"
 	fi
 
-	if test -d "vendor/$1" && test -f composer.json && ! test -z $(grep "$1" 'composer.json'); then
+	if [[ -d "vendor/$1" && -f composer.json ]] && grep -q "$1" 'composer.json'; then
 		echo "Update composer package $1 in vendor/"
 		php composer.phar update "$1"
 	else
@@ -1214,7 +1207,7 @@ function _composer {
 	if test -z "$action"; then
 		echo -e "\nWhat do you want to do?\n"
 
-		if test -z "$global_comp" && test -z "$local_comp"; then
+		if [[ -z "$global_comp" && -z "$local_comp" ]]; then
 			action=l
 			echo "[g] = global composer installation: /usr/local/bin/composer"
 			echo "[l] = local composer installation: composer.phar"
@@ -1228,7 +1221,7 @@ function _composer {
 				echo "[a] = update vendor/composer/autoload*"
 			fi
 
-			if ! test -z "$local_comp"; then
+			if test -n "$local_comp"; then
 				echo "[r] = remove local composer.phar"
 			fi
 		fi
@@ -1258,9 +1251,9 @@ function _composer {
 		fi
 	fi
 
-	if ! test -z "$local_comp"; then
+	if test -n "$local_comp"; then
 		cmd="php composer.phar"
-	elif ! test -z "$global_comp"; then
+	elif test -n "$global_comp"; then
 		cmd="composer"
 	fi
 
@@ -1293,7 +1286,7 @@ function _composer {
 function _confirm {
 	CONFIRM=
 
-	if ! test -z "$AUTOCONFIRM"; then
+	if test -n "$AUTOCONFIRM"; then
 		CONFIRM="${AUTOCONFIRM:0:1}"
 		echo "$1 <$CONFIRM>"
 		AUTOCONFIRM="${AUTOCONFIRM:1}"
@@ -1332,7 +1325,7 @@ function _confirm {
 		fi
 	done < /proc/$$/cmdline
 
-	if ! test -z "$CONFIRM"; then
+	if test -n "$CONFIRM"; then
 		# found -y or -n parameter
 		CONFIRM_TEXT="$CONFIRM"
 		return
@@ -1597,7 +1590,7 @@ function _decrypt {
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		pfile="$2"
 		pbase=$(basename "$pfile")
 		if test "${pbase:0:1}" = "." && test -s "$pfile"; then
@@ -1710,7 +1703,7 @@ function _dl_unpack {
 function _docker_rm {
 	_docker_stop "$1"
 
-	if ! test -z "$(docker ps -a | grep "$1")"; then
+	if test -n "$(docker ps -a | grep "$1")"; then
 		echo "docker rm $1"
 		docker rm "$1"
 	fi
@@ -1728,7 +1721,7 @@ function _docker_rm {
 function _docker_run {
 	_docker_rm "$1"
 
-	if ! test -z "$WORKSPACE" && ! test -z "$CURR" && test -d "$WORKSPACE/linux/rkdocker"; then
+	if [[ -n "$WORKSPACE" && -n "$CURR" && -d "$WORKSPACE/linux/rkdocker" ]]; then
 		_cd "$WORKSPACE/linux/rkdocker"
 	else
 		_abort "Export WORKSPACE (where $WORKSPACE/linux/rkdocker exists) and CURR=path/current/directory"
@@ -1757,7 +1750,7 @@ function _docker_run {
 # @param name
 #--
 function _docker_stop {
-	if ! test -z "$(docker ps | grep "$1")"; then
+	if test -n "$(docker ps | grep "$1")"; then
 		echo "docker stop $1"
 		docker stop "$1"
 	fi
@@ -1781,7 +1774,7 @@ function _download {
 	_wget "$1" "$2"
 	[[ -z "$3" && ! -s "$2" ]] && _abort "Download of $2 as $1 failed"
 
-	if ! test -z "$3"; then
+	if test -n "$3"; then
 		if test -s "$2"; then
 			echo "Download $1 as $2"
 		elif test -f "$2"; then
@@ -1820,7 +1813,7 @@ function _encrypt {
 		test "$CONFIRM" = "y" || _abort "user abort"
 	fi
 
-	if ! test -z "$pass"; then
+	if test -n "$pass"; then
 		if test "${base:0:1}" = "." && test -s "$2"; then
 			_msg "encrypt '$src' as *.cpt (use password from '$2')"
 			pass=$(cat "$2")
@@ -1857,11 +1850,11 @@ function _extract_tgz {
 	local target 
 	target="$2"
 
-	if test -z "$target" && test "${1: -4}" = ".tgz"; then
+	if [[ -z "$target" && "${1: -4}" = ".tgz" ]]; then
 		target="${1:0:-4}"
 	fi
 
-	if ! test -z "$target" && test -d "$target"; then
+	if [[ -n "$target" && -d "$target" ]]; then
 		_rm "$target"
 	fi
 
@@ -1872,7 +1865,7 @@ function _extract_tgz {
   tar -xzf "$1" >/dev/null || _abort "tar -xzf $1 failed"
   echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
-	if ! test -z "$target" && ! test -d "$target" && ! test -f "$target"; then
+	if [[ -n "$target" && ! -d "$target" && ! -f "$target" ]]; then
 		_abort "$target was not created"
 	fi
 }
@@ -1927,7 +1920,7 @@ function _file_priv {
 function _find_docroot {
 	local dir base last_dir
 
-	if ! test -z "$DOCROOT"; then
+	if test -n "$DOCROOT"; then
 		DOCROOT=$(realpath "$DOCROOT")
 		_msg "use existing DOCROOT=$DOCROOT"
 		test -z "$DOCROOT" && { test -z "$2" && _abort "invalid DOCROOT" || return 1; }
@@ -2038,7 +2031,7 @@ function _git_checkout {
 	curr="$PWD"
 	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
 
-	if ! test -z "${ARG[docroot]}"; then
+	if test -n "${ARG[docroot]}"; then
 		lnk_dir="$2"
 		git_dir="${ARG[docroot]}"
 
@@ -2055,7 +2048,7 @@ function _git_checkout {
 		fi
 	elif test -d "$git_dir"; then
 		_confirm "Update $git_dir (git pull)?" 1
-	elif ! test -z "$CONFIRM_CHECKOUT"; then
+	elif test -n "$CONFIRM_CHECKOUT"; then
 		_confirm "Checkout $1 to $git_dir (git clone)?" 1
 	fi
 
@@ -2089,7 +2082,7 @@ function _git_checkout {
 			_cd ..
 		fi
 
-		if ! test -z "$3"; then
+		if test -n "$3"; then
 			_cd "$git_dir"
 			echo "run [$3] in $git_dir"
 			$3
@@ -2120,11 +2113,11 @@ function _github_latest {
 	redir=$(curl -Ls -o /dev/null -w '%{url_effective}' "https://github.com/$1/releases/latest")
 	latest=$(basename "$redir" | sed -E 's/[^0-9]*([0-9]+\.[0-9]+)\.?([0-9]*).*/\1\2/')
 
-	if ! test -z "$latest"; then
+	if test -n "$latest"; then
 		GITHUB_LATEST[$2]=$(basename "$redir")
 		GITHUB_IS_LATEST[$2]=''
 
-		if ! test -z "$vnum" && test "$(echo "$vnum >= $latest" | bc -l)" == 1; then
+		if [[ -n "$vnum" && "$(echo "$vnum >= $latest" | bc -l)" == 1 ]]; then
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi
@@ -2277,9 +2270,9 @@ function _has_process {
 		process=$(ps -aux | grep -E "$rx" | grep " $logfile_pid ")
 	fi
 
-	if test $((flag & 4)) = 4 && test -z "$process"; then
+	if [[ $((flag & 4)) = 4 && -z "$process" ]]; then
 		_abort "no $1 process (rx=$rx, old_pid=$logfile_pid)"
-	elif test $((flag & 8)) = 8 && ! test -z "$process"; then
+	elif [[ $((flag & 8)) = 8 && -n "$process" ]]; then
 		_abort "process $1 is already running (rx=$rx, old_pid=$logfile_pid)"
 	fi
 	
@@ -2408,7 +2401,7 @@ function _ip_address {
 
 	IP6_ADDRESS=$(ip -6 addr | grep 'scope global' | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d')
 	ip6_dyn=$(ip -6 addr | grep 'scope global temporary dynamic' | awk '{print $2}' | sed -e 's/\/[0-9]*$//')
-	if ! test -z "$ip6_dyn"; then
+	if test -n "$ip6_dyn"; then
 		IP6_ADDRESS="$ip6_dyn"
 		DYNAMIC_IP=1
 	fi
@@ -2659,7 +2652,7 @@ function _label {
 # @export LICENSE
 #--
 function _license {
-	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
+	if [[ -n "$1" && "$1" != 'gpl-3.0' ]]; then
 		_abort "unknown license [$1] use [gpl-3.0]"
 	fi
 
@@ -2673,7 +2666,7 @@ function _license {
 
 	if test -s "$lfile"; then
 		is_gpl3=$(head -n 2 "$lfile" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3')
-		if ! test -z "$is_gpl3"; then
+		if test -n "$is_gpl3"; then
 			echo "keep existing gpl-3.0 LICENSE ($lfile)"
 			return
 		fi
@@ -2768,7 +2761,7 @@ function _log {
 
 	if ! test -d "$RKBASH_DIR/$2"; then
 		mkdir -p "$RKBASH_DIR/$2"
-		if ! test -z "$SUDO_USER"; then
+		if test -n "$SUDO_USER"; then
 			chown -R $SUDO_USER.$SUDO_USER "$RKBASH_DIR" || _abort "chown -R $SUDO_USER.$SUDO_USER '$RKBASH_DIR'"
 		elif test "$UID" = "0"; then
 			chmod -R 777 "$RKBASH_DIR" || _abort "chmod -R 777 '$RKBASH_DIR'"
@@ -2779,7 +2772,7 @@ function _log {
 	now=$(date +'%d.%m.%Y %H:%M:%S')
 	echo -e "# _$2: $now\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
-	if ! test -z "$SUDO_USER"; then
+	if test -n "$SUDO_USER"; then
 		chown $SUDO_USER.$SUDO_USER "${LOG_FILE[$2]}" || _abort "chown $SUDO_USER.$SUDO_USER '${LOG_FILE[$2]}'"
 	elif test "$UID" = "0"; then
 		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"
@@ -2802,7 +2795,7 @@ function _lynx {
 		_abort "url parameter missing"
 	fi
 
-	if ! test -z "$2" && test -s "$2"; then
+	if [[ -n "$2" && -s "$2" ]]; then
 		lynx -cmd_script="$2" -dump "$1"
 	else
 		lynx -dump "$1"
@@ -2872,7 +2865,7 @@ function _merge_sh {
 	my_app="${1:-$APP}"
 	sh_dir="${my_app}_"
 
-	if ! test -z "$2"; then
+	if test -n "$2"; then
 		my_app="$2"
 		sh_dir="$1"
 	else
@@ -2975,7 +2968,7 @@ function _mount {
 		_abort "no filesystem on $1"
 
 	if test -z "$(mount | grep -E "^$1 on $2")"; then
-		if ! test -z "$(mount | grep -E "^$1 on ")"; then
+		if test -n "$(mount | grep -E "^$1 on ")"; then
 			_confirm "umount $1 (and re-mount as $2)" 1
 			test "$CONFIRM" = "y" || _abort "user abort"
 			umount /dev/sdb2 || _abort "umount /dev/sdb2"
@@ -3065,7 +3058,7 @@ function _my_cnf {
 	DB_PASS=$(grep password "$my_cnf" | sed -E 's/.*=\s*//g')
 	DB_NAME=$(grep user "$my_cnf" | sed -E 's/.*=\s*//g')
 
-	if ! test -z "$DB_PASS" && ! test -z "$DB_NAME" && test -z "$mysql_sql"; then
+	if [[ -n "$DB_PASS" && -n "$DB_NAME" && -z "$mysql_sql" ]]; then
 		MYSQL="mysql --defaults-file=.my.cnf"
 	fi
 }
@@ -3142,7 +3135,7 @@ function _mysql_conn {
 
 	# $1=1 - root access required
 	if test -z "$MYSQL"; then
-		if ! test -z "$MYSQL_CONN"; then
+		if test -n "$MYSQL_CONN"; then
 			MYSQL="mysql $MYSQL_CONN"
 		elif test "$UID" = "0"; then
 			MYSQL="mysql -u root"
@@ -3363,7 +3356,7 @@ function _mysql_load {
 		_abort "invalid mysql dump [$dump]"
 	fi
 
-	if ! test -z "$FIX_MYSQL_DUMP"; then
+	if test -n "$FIX_MYSQL_DUMP"; then
 		echo "fix $dump"
 		tmp_dump="$(dirname $dump)/_fix.sql"
 		echo -e "SET FOREIGN_KEY_CHECKS=0;\nSTART TRANSACTION;\n" > "$tmp_dump"
@@ -3407,7 +3400,7 @@ function _mysql_restore {
 
 	sed -e 's/ datetime .*DEFAULT CURRENT_TIMESTAMP,/ timestamp,/g' create_tables.sql > create_tables.fix.sql
 
-	if ! test -z "$(cmp -b create_tables.sql create_tables.fix.sql)"; then
+	if test -n "$(cmp -b create_tables.sql create_tables.fix.sql)"; then
 		_mv create_tables.fix.sql create_tables.sql
 	else
 		_rm create_tables.fix.sql
@@ -3417,7 +3410,7 @@ function _mysql_restore {
 		# load only create_tables.sql ... write other load commands to restore.sh
 		_mysql_load "$a.sql"
 
-		if ! test -z "$2" && test "$a" = "create_tables"; then
+		if [[ -n "$2" && "$a" = "create_tables" ]]; then
 			_mysql_conn
 			echo "create restore.sh"
 			{
@@ -3432,7 +3425,7 @@ function _mysql_restore {
 		fi
 	done
 
-  if ! test -z "$2"; then
+  if test -n "$2"; then
     echo "start table imports in background"  
     source restore.sh
 
@@ -3819,7 +3812,7 @@ function _package_json {
 		echo "ToDo" > README.md
 	fi
 
-	if ! test -z "$1"; then
+	if test -n "$1"; then
 		echo "upgrade package.json"
 		_npm_module npm-check-updates -g
 		npm-check-updates -u
@@ -3836,7 +3829,7 @@ function _package_json {
 		fi
 	done
 
-	if ! test -z "$run_install"; then
+	if test -n "$run_install"; then
 		echo "run: npm install"
 		npm install
 	fi
@@ -3919,7 +3912,7 @@ function _parse_arg {
 # shellcheck disable=SC1090
 #--
 function _patch {
-	if ! test -z "$1" && test -d "$1"; then
+	if [[ -n "$1" && -d "$1" ]]; then
 		PATCH_SOURCE_DIR="$1"
 	elif test -s "$1"; then
 		PATCH_LIST=$(basename "$1" | sed -E 's/\.patch$//')
@@ -3989,13 +3982,8 @@ function _phpdocumentor {
 		_cd "$CURR"
 	fi
 
-	if ! test -z "$1"; then
-		SRC_DIR="$1"
-	fi
-
-	if ! test -z "$2"; then
-		DOC_DIR="$2"
-	fi
+	test -n "$1" && SRC_DIR="$1"
+	test -n "$2" && DOC_DIR="$2"
 
 	_require_dir "$SRC_DIR"
 
@@ -4283,7 +4271,7 @@ function _random_string {
 	chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 	len=${1:-8}
 
-	if ! test -z "$2" && ! test -z "$3"; then
+	if [[ -n "$2" && -n "$3" ]]; then
 		chars="${chars:$2:$3}"
 	fi
 
@@ -4427,11 +4415,11 @@ function _require_owner {
 	group=$(stat -c '%G' "$1" 2>/dev/null)
 	test -z "$group" && _abort "stat -c '%G' '$1'"
 
-	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
+	if [[ -n "${arr[0]}" && "${arr[0]}" != "$owner" ]]; then
 		_abort "invalid owner - chown ${arr[0]} '$1'"
 	fi
 
-	if ! test -z "${arr[1]}" && ! test "${arr[1]}" = "$group"; then
+	if [[ -n "${arr[1]}" && "${arr[1]}" != "$group" ]]; then
 		_abort "invalid group - chgrp ${arr[1]} '$1'"
 	fi
 }
@@ -4813,7 +4801,7 @@ function _show_list {
 	local i a
 	i=0
 
-	if ! test -z "$3"; then
+	if test -n "$3"; then
 		echo ""
 		_label "$3"
 	fi
@@ -5020,7 +5008,7 @@ function _sql_querystring {
 	fi
 
 	local query="$1"
-	if ! test -z "${SQL_PARAM[SEARCH]}"; then
+	if test -n "${SQL_PARAM[SEARCH]}"; then
 		query="${query//WHERE_SEARCH/WHERE 1=1 ${SQL_PARAM[SEARCH]}}"
 		query="${query//AND_SEARCH/${SQL_PARAM[SEARCH]}}"
 		SQL_PARAM[SEARCH]=
@@ -5247,7 +5235,7 @@ function _src2www_copy {
 		cp -r "www_src/$a" www/
 	done
 
-	if ! test -z "$SRC2WWW_RKJS_FILES"; then
+	if test -n "$SRC2WWW_RKJS_FILES"; then
 		_require_global SRC2WWW_RKJS_DIR
 		for a in $SRC2WWW_RKJS_FILES; do
 			cp "$SRC2WWW_RKJS_DIR/$a" www/js/
@@ -5308,7 +5296,7 @@ function _ssh_auth {
 	local ssh_ok
 	ssh_ok=$(ssh -o 'PreferredAuthentications=publickey' $1 "echo" 2>&1)
 
-	if ! test -z "$ssh_ok"; then
+	if test -n "$ssh_ok"; then
 		echo "copy ~/.ssh/id_rsa.pub to $1"
 
 		if test -d /Applications/iTunes.app; then
@@ -5495,7 +5483,7 @@ function _syntax {
 	test "${msg: -3:1}" = '|' && msg="${msg:0:-3}\n"
 
 	base=$(basename "$APP")
-	if ! test -z "$APP_PREFIX"; then
+	if test -n "$APP_PREFIX"; then
 		echo -e "\nSYNTAX: $APP_PREFIX $base $msg" 1>&2
 	else
 		echo -e "\nSYNTAX: $base $msg" 1>&2
@@ -5519,7 +5507,7 @@ function _syntax_cmd {
 	keys=$(_sort "${!SYNTAX_CMD[@]}")
 	msg="$1\n" 
 
-	if ! test -z "${SYNTAX_CMD[$1]}"; then
+	if test -n "${SYNTAX_CMD[$1]}"; then
 		msg="${SYNTAX_CMD[$1]}\n"
 	elif test "${1: -1}" = "*" && test "${#SYNTAX_CMD[@]}" -gt 0; then
 		if test "$1" = "*"; then
@@ -5579,7 +5567,7 @@ function _syntax_help {
 	for a in $keys; do
 		if test "$a" = "$1"; then
 			msg="$msg\n${SYNTAX_HELP[$a]}"
-		elif ! test -z "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
+		elif test -n "$rx" && grep -E "$rx" >/dev/null <<< "$a"; then
 			prefix=$(sed -E 's/^[a-zA-Z0-9_]+\.//' <<< "$a")
 			msg="$msg\n$prefix: ${SYNTAX_HELP[$a]}\n"
 		fi
@@ -5640,7 +5628,7 @@ function _use_shell {
 	test -L "/bin/sh" || _abort "no /bin/sh link"
 	test -f "/bin/$1" || _abort "no such shell /bin/$1"
 
-	if ! test -z "$(diff -u /bin/sh "/bin/$1")"; then
+	if test -n "$(diff -u /bin/sh "/bin/$1")"; then
 		_rm /bin/sh
 		_cd /bin
 		_ln "$1" sh
@@ -5720,7 +5708,7 @@ function _webserver_rw_dir {
 		server_user=$(grep -E '^export APACHE_RUN_USER=' /etc/apache2/envvars | sed -E 's/.*APACHE_RUN_USER=//')
 	fi
 
-	if ! test -z "$server_user" && test "$server_user" = "$(stat -c '%U' "$1")"; then
+	if [[ -n "$server_user" && "$server_user" = "$(stat -c '%U' "$1")" ]]; then
 		echo "directory $1 is already owned by webserver $server_user"
 		return
 	fi
