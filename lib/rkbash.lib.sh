@@ -1068,26 +1068,24 @@ function _chown {
 # @param 2^n flag (2^0= no echo, 2^1= print output)
 #--
 function _cmd {
-
 	# @ToDo unescape $1 to avoid eval
-	local EXEC="$1"
+	local exec flag curr_log_no_echo
+	exec="$1"
+	flag=$(($2 + 0))
+	curr_log_no_echo=$LOG_NO_ECHO
 
-	# change $2 into number
-	local FLAG=$(($2 + 0))
+	test $((flag & 1)) = 1 && LOG_NO_ECHO=1
 
-	local CURR_LOG_NO_ECHO=$LOG_NO_ECHO
-	test $((FLAG & 1)) = 1 && LOG_NO_ECHO=1
-
-	_log "$EXEC" cmd
-	eval "$EXEC ${LOG_CMD[cmd]}" || _abort "command failed"
+	_log "$exec" cmd
+	eval "$exec ${LOG_CMD[cmd]}" || _abort "command failed"
 	
-	if test $((FLAG & 2)) = 2; then
+	if test $((flag & 2)) = 2; then
 		tail -n +5 "${LOG_FILE[cmd]}"
 	else
 		echo "ok"
 	fi
 
-	LOG_NO_ECHO=$CURR_LOG_NO_ECHO
+	LOG_NO_ECHO=$curr_log_no_echo
 }
 
 
@@ -2141,14 +2139,16 @@ function _github_latest {
 # @param int flag (2^N, default=3)
 #--
 function _git_update_php {
-	local FLAG=$1
-	test -z "$FLAG" && FLAG=$(($1 & 0))
+	local flag
+	flag="$1"
+
+	test -z "$flag" && flag=$(($1 & 0))
 
 	_mkdir php 2>/dev/null
 	_cd php
 
-	test $((FLAG & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
-	test $((FLAG & 2)) -eq 2 && _git_checkout "rk@s1.dyn4.com:/data/git/php/phplib.git" phplib
+	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
+	test $((flag & 2)) -eq 2 && _git_checkout "rk@s1.dyn4.com:/data/git/php/phplib.git" phplib
 
 	_cd ..
 }
@@ -3000,8 +3000,13 @@ function _mount {
 # @param echo option (-n|-e|default='')
 #--
 function _msg {
-	echo "$2" "$1"
+	if test -z "$2"; then
+		echo "$1"
+	else
+		echo "$2" "$1"
+	fi
 }
+
 
 #--
 # Move files/directories. Target path directory must exist.
@@ -5351,32 +5356,34 @@ function _stop_http {
 
 #--
 # Switch to sudo mode. Switch back after command is executed.
-# 
+#
+# @global LOG_CMD[sudo] 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
 #--
 function _sudo {
-	local CURR_SUDO=$SUDO
+	local curr_sudo exec flag
+	curr_sudo="$SUDO"
 
 	# ToDo: unescape $1 to avoid eval. Example: use [$EXEC] instead of [eval "$EXEC"]
 	# and [_sudo "cp 'a' 'b'"] will execute [cp "'a'" "'b'"].
-	local EXEC="$1"
+	exec="$1"
 
 	# change $2 into number
-	local FLAG=$(($2 + 0))
+	flag=$(($2 + 0))
 
 	if test "$USER" = "root"; then
-		_log "$EXEC" sudo
-		eval "$EXEC ${LOG_CMD[sudo]}" || _abort "$EXEC"
-	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
-		_log "$EXEC" sudo
-		eval "$EXEC ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC" )
+		_log "$exec" sudo
+		eval "$exec ${LOG_CMD[sudo]}" || _abort "$exec"
+	elif test $((flag & 1)) = 1 && test -z "$curr_sudo"; then
+		_log "$exec" sudo
+		eval "$exec ${LOG_CMD[sudo]}" || \
+			( echo "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
 	else
 		SUDO=sudo
-		_log "sudo $EXEC" sudo
-		eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC"
-		SUDO=$CURR_SUDO
+		_log "sudo $exec" sudo
+		eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec"
+		SUDO="$curr_sudo"
 	fi
 }
 
@@ -5652,6 +5659,16 @@ function _use_shell {
 #--
 function _ver3 {
 	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
+}
+
+
+#--
+# Print warning (red color message to stdout and stderr)
+#
+# @param message
+#--
+function _warn {
+	echo -e "\033[0;31m$1\033[0m" 1>&2
 }
 
 
