@@ -536,7 +536,7 @@ function _cdn_dl {
 		elif [[ "$2" =~ \.css$ ]]; then
 			echo "<link rel=\"stylesheet\" href=\"$2\" />" >> "$CDN_HTML"
 		elif [[ "$2" =~ \.js$ ]]; then
-			echo "<script src=\"$2\"><\/script>" >> "$CDN_HTML"
+			echo "<script src=\"$2\"></script>" >> "$CDN_HTML"
 		fi
 	fi
 }
