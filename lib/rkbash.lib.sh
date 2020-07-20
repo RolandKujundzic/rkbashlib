@@ -89,7 +89,7 @@ function _add_abort_linenum {
 	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	_mkdir "$RKBASH_DIR/add_abort_linenum" >/dev/null
+	_mkdir "$RKBASH_DIR/add_abort_linenum"
 	tmp_file="$RKBASH_DIR/add_abort_linenum/"$(basename "$1")
 	test -f "$tmp_file" && _abort "$tmp_file already exists"
 
@@ -279,7 +279,7 @@ function _append_txt {
 	test -z "$found" || { _msg "$2 was already appended to $1"; return; }
 
 	dir=$(dirname "$1")
-	test -d "$dir" || _mkdir "$dir"
+	_mkdir "$dir"
 
 	_msg "append text '$2' to '$1'"
 	if ! test -f "$1" || test -w "$1"; then
@@ -446,7 +446,7 @@ function _backup_file {
 	n="${2:-5}"
 
 	_msg "backup $path"
-	_mkdir "$backup_dir" >/dev/null
+	_mkdir "$backup_dir"
 
 	test -f "$backup" && _cp "$backup" "$backup.old" >/dev/null
 
@@ -498,7 +498,7 @@ function _cache {
 	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
 	CACHE_FILE="$cdir/$key"
-	_mkdir "$cdir" >/dev/null
+	_mkdir "$cdir"
 
 	# if pameter $2 is set update CACHE_FILE
 	test -z "${2+x}" || echo "$2" > "$CACHE_FILE"
@@ -1391,7 +1391,7 @@ function _cordova_add_ios {
 #--
 function _cordova_create {
 	test -d "app/$1" && _abort "Cordova project app/$1 already exists"
-	test -d app || _mkdir app
+	_mkdir app
 
 	_cd app
 	cordova create "$1"
@@ -1402,11 +1402,11 @@ function _cordova_create {
 
 	if "$os_type" = "linux"; then
 		_cordova_add_android
-		test -d www_src/patch/android || _mkdir www_src/patch/android
+		_mkdir www_src/patch/android
 		echo -e "PATCH_LIST=\nPATCH_DIR=\n" > www_src/patch/android/patch.sh
 	elif "$os_type" = "macos"; then
 		_cordova_add_ios
-		test -d www_src/patch/ios || _mkdir www_src/patch/ios
+		_mkdir www_src/patch/ios
 		echo -e "PATCH_LIST=\nPATCH_DIR=\n" > www_src/patch/ios/patch.sh
 	fi
 
@@ -1530,7 +1530,7 @@ function _create_tgz {
 function _crontab {
 	_msg "install '$1' crontab: [$2 $3] ... " -n
 	_require_program crontab
-	_mkdir '/var/spool/cron/crontabs' >/dev/null
+	_mkdir '/var/spool/cron/crontabs'
 
 	test "$(whoami)" = "$1" || _run_as_root
 
@@ -2089,7 +2089,7 @@ function _git_update_php {
 
 	test -z "$flag" && flag=$(($1 & 0))
 
-	_mkdir php 2>/dev/null
+	_mkdir php
 	_cd php
 
 	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
@@ -2287,7 +2287,7 @@ function _install_app {
 	_require_dir "$1"
 	_require_global APP_PREFIX
 
-	test -d "$APP_PREFIX" || _mkdir "$APP_PREFIX"
+	_mkdir "$APP_PREFIX"
 
 	local dir file entry
 
@@ -2889,19 +2889,21 @@ function _merge_static {
 # Create directory (including parent directories) if directory does not exists.
 #
 # @param path
-# @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory)
+# @param flag (optional, 2^0=abort if directory already exists, 2^1=chmod 777 directory, 2^2=message if directory exists)
 # @global SUDO
 #--
 function _mkdir {
-	test -z "$1" && _abort "Empty directory path"
-	local flag=$(($2 + 0))
+	local flag
+	flag=$(($2 + 0))
 
-	if ! test -d "$1"; then
+	test -z "$1" && _abort "Empty directory path"
+
+	if test -d "$1"; then
+		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
+		test $((flag & 4)) = 4 && _msg "directory $1 already exists"
+	else
 		echo "mkdir -p $1"
 		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
-	else
-		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
-		echo "directory $1 already exists"
 	fi
 
 	test $((flag & 2)) = 2 && _chmod 777 "$1"
@@ -3965,7 +3967,7 @@ function _phpdocumentor {
 #--
 function _php_server {
 	_require_program php
-	_mkdir "$RKBASH_DIR" > /dev/null
+	_mkdir "$RKBASH_DIR"
 
 	local php_code=
 IFS='' read -r -d '' php_code <<'EOF'
@@ -4714,7 +4716,7 @@ function _set {
 	test "$dir" = "$HOME/.rkbash/$$" && dir="$HOME/.rkbash"
 	dir="$dir/$(basename "$APP")"
 
-	test -d "$dir" || _mkdir "$dir" >/dev/null
+	_mkdir "$dir"
 	test -z "$1" && _abort "empty name"
 
 	echo -e "$2" > "$dir/$1.nfo"
@@ -4807,7 +4809,7 @@ function _split_sh {
 	local output_dir
 	output_dir="$(basename "$1")_"
 	test -d "$output_dir" && _rm "$output_dir" >/dev/null
-	_mkdir "$output_dir" >/dev/null
+	_mkdir "$output_dir"
 
   local split_awk
 IFS='' read -r -d '' split_awk <<'EOF'
@@ -4831,7 +4833,7 @@ EOF
 
 	_require_global RKBASH_DIR
 	_msg "Split $1 into"
-	_mkdir "$RKBASH_DIR" >/dev/null
+	_mkdir "$RKBASH_DIR"
 	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKBASH_DIR/split_sh.awk"
 	awk -f "$RKBASH_DIR/split_sh.awk" "$1"
 
@@ -5102,7 +5104,7 @@ function _sql_transaction {
 
 	_require_global RKBASH_DIR
 	_require_dir "$sql_dir"
-	_mkdir "$RKBASH_DIR/sql_transaction" >/dev/null
+	_mkdir "$RKBASH_DIR/sql_transaction"
 
 	if test -s "$sql_dir/tables.txt"; then
 		tables=( "$(cat "$sql_dir/tables.txt")" )
@@ -5627,7 +5629,7 @@ function _webhome_php {
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
 	test $((flag & 2)) -eq 2 && git_dir=( "$git_dir" "phplib" )
 
-	_mkdir php >/dev/null
+	_mkdir php
 	_cd php 
 
 	for ((i = 0; i < ${#git_dir[@]}; i++)); do
@@ -5675,7 +5677,7 @@ function _webserver_rw_dir {
 
 
 #--
-# Download URL with wget. 
+# Download URL with wget. Autocreate target path.
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
@@ -5702,7 +5704,8 @@ function _wget {
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 		return
 	else
-		echo "download $1 as $2"
+		_mkdir "$(dirname "$2")"
+		echo "download $1 to $2"
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 	fi
 
@@ -5710,10 +5713,10 @@ function _wget {
 	if test -z "$2"; then
 		if ! test -s "$save_as"; then
 			new_files=$(find . -amin 1 -type f)
-			test -z "$new_files" && _abort "Download from $1 failed"
+			test -z "$new_files" && _abort "Download $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort "Download of $2 from $1 failed"
+		_abort "Download $2 to $1 failed"
 	fi
 }
 
