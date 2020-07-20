@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #--
-# Download URL with wget. 
+# Download URL with wget. Autocreate target path.
 #
 # @param url
 # @param save as default = autodect, use "-" for stdout
@@ -28,7 +28,8 @@ function _wget {
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 		return
 	else
-		echo "download $1 as $2"
+		_mkdir "$(dirname "$2")"
+		echo "download $1 to $2"
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 	fi
 
@@ -36,10 +37,10 @@ function _wget {
 	if test -z "$2"; then
 		if ! test -s "$save_as"; then
 			new_files=$(find . -amin 1 -type f)
-			test -z "$new_files" && _abort "Download from $1 failed"
+			test -z "$new_files" && _abort "Download $1 failed"
 		fi
 	elif ! test -s "$2"; then
-		_abort "Download of $2 from $1 failed"
+		_abort "Download $2 to $1 failed"
 	fi
 }
 
