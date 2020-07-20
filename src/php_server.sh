@@ -14,7 +14,7 @@
 #--
 function _php_server {
 	_require_program php
-	_mkdir "$RKBASH_DIR" > /dev/null
+	_mkdir "$RKBASH_DIR"
 
 	local php_code=
 IFS='' read -r -d '' php_code <<'EOF'

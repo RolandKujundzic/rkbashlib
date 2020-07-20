@@ -12,7 +12,7 @@ function _split_sh {
 	local output_dir
 	output_dir="$(basename "$1")_"
 	test -d "$output_dir" && _rm "$output_dir" >/dev/null
-	_mkdir "$output_dir" >/dev/null
+	_mkdir "$output_dir"
 
   local split_awk
 IFS='' read -r -d '' split_awk <<'EOF'
@@ -36,7 +36,7 @@ EOF
 
 	_require_global RKBASH_DIR
 	_msg "Split $1 into"
-	_mkdir "$RKBASH_DIR" >/dev/null
+	_mkdir "$RKBASH_DIR"
 	echo -e "$split_awk" | sed -E "s/_OUT_/$output_dir/g" >"$RKBASH_DIR/split_sh.awk"
 	awk -f "$RKBASH_DIR/split_sh.awk" "$1"
 

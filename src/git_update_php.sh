@@ -13,7 +13,7 @@ function _git_update_php {
 
 	test -z "$flag" && flag=$(($1 & 0))
 
-	_mkdir php 2>/dev/null
+	_mkdir php
 	_cd php
 
 	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib

@@ -14,7 +14,7 @@ function _set {
 	test "$dir" = "$HOME/.rkbash/$$" && dir="$HOME/.rkbash"
 	dir="$dir/$(basename "$APP")"
 
-	test -d "$dir" || _mkdir "$dir" >/dev/null
+	_mkdir "$dir"
 	test -z "$1" && _abort "empty name"
 
 	echo -e "$2" > "$dir/$1.nfo"

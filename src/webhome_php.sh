@@ -15,7 +15,7 @@ function _webhome_php {
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
 	test $((flag & 2)) -eq 2 && git_dir=( "$git_dir" "phplib" )
 
-	_mkdir php >/dev/null
+	_mkdir php
 	_cd php 
 
 	for ((i = 0; i < ${#git_dir[@]}; i++)); do

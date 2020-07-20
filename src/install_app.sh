@@ -14,7 +14,7 @@ function _install_app {
 	_require_dir "$1"
 	_require_global APP_PREFIX
 
-	test -d "$APP_PREFIX" || _mkdir "$APP_PREFIX"
+	_mkdir "$APP_PREFIX"
 
 	local dir file entry
 

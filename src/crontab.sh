@@ -10,7 +10,7 @@
 function _crontab {
 	_msg "install '$1' crontab: [$2 $3] ... " -n
 	_require_program crontab
-	_mkdir '/var/spool/cron/crontabs' >/dev/null
+	_mkdir '/var/spool/cron/crontabs'
 
 	test "$(whoami)" = "$1" || _run_as_root
 

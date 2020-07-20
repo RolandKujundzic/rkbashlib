@@ -21,7 +21,7 @@ function _sql_transaction {
 
 	_require_global RKBASH_DIR
 	_require_dir "$sql_dir"
-	_mkdir "$RKBASH_DIR/sql_transaction" >/dev/null
+	_mkdir "$RKBASH_DIR/sql_transaction"
 
 	if test -s "$sql_dir/tables.txt"; then
 		tables=( "$(cat "$sql_dir/tables.txt")" )

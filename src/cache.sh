@@ -33,7 +33,7 @@ function _cache {
 	test "$prefix" = "$key" && { prefix=""; cdir="$CACHE_DIR"; }
 
 	CACHE_FILE="$cdir/$key"
-	_mkdir "$cdir" >/dev/null
+	_mkdir "$cdir"
 
 	# if pameter $2 is set update CACHE_FILE
 	test -z "${2+x}" || echo "$2" > "$CACHE_FILE"

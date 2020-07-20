@@ -12,7 +12,7 @@ function _append_txt {
 	test -z "$found" || { _msg "$2 was already appended to $1"; return; }
 
 	dir=$(dirname "$1")
-	test -d "$dir" || _mkdir "$dir"
+	_mkdir "$dir"
 
 	_msg "append text '$2' to '$1'"
 	if ! test -f "$1" || test -w "$1"; then

@@ -10,7 +10,7 @@ function _add_abort_linenum {
 	local lines changes tmp_file fix_line
 	type -t caller >/dev/null 2>/dev/null && return
 
-	_mkdir "$RKBASH_DIR/add_abort_linenum" >/dev/null
+	_mkdir "$RKBASH_DIR/add_abort_linenum"
 	tmp_file="$RKBASH_DIR/add_abort_linenum/"$(basename "$1")
 	test -f "$tmp_file" && _abort "$tmp_file already exists"
 

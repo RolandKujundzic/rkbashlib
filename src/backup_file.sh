@@ -20,7 +20,7 @@ function _backup_file {
 	n="${2:-5}"
 
 	_msg "backup $path"
-	_mkdir "$backup_dir" >/dev/null
+	_mkdir "$backup_dir"
 
 	test -f "$backup" && _cp "$backup" "$backup.old" >/dev/null
 
