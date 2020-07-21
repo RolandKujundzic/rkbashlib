@@ -18,8 +18,8 @@ function _git_update_php {
 
 	if test $((flag & 4)) -eq 4; then
 		_require_program rks-git
-		test $((flag & 1)) -eq 1 && rks-git clone rkphplib --version=src --q1=y --q2=y
-		test $((flag & 2)) -eq 2 && rks-git clone phplib --version=src --q1=y --q2=y
+		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version=src --q1=y --q2=y
+		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version=src --q1=y --q2=y
 	fi
 
 	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
