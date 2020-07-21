@@ -2,7 +2,7 @@
 
 #--
 # @deprecated use _git_update_php
-# @param int flag (2^N, default=3)
+# @param int flag (2^N, default=7)
 #--
 function _git_update {
 	_msg "DEPRECATED: use _git_update_php"

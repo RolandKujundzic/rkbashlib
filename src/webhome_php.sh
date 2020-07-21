@@ -9,9 +9,8 @@
 #--
 function _webhome_php {
 	local i dir flag git_dir
-	flag=$1
+	flag=$(($1 + 0))
 
-	test -z "$flag" && flag=$(($1 & 0))
 	test $((flag & 1)) -eq 1 && git_dir=( "rkphplib" )
 	test $((flag & 2)) -eq 2 && git_dir=( "$git_dir" "phplib" )
 
