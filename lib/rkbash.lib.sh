@@ -3579,6 +3579,16 @@ function _npm_module {
 
 
 #--
+# Print warning (green color message to stdout and stderr)
+#
+# @param message
+#--
+function _ok {
+	echo -e "\033[0;32m$1\033[0m" 1>&2
+}
+
+
+#--
 # Backup $1 as $1.orig (if not already done).
 #
 # @param path
