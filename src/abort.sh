@@ -27,9 +27,12 @@ fi
 # shellcheck disable=SC2034,SC2009
 #--
 function _abort {
-	local msg line
-	msg="$1"
+	local msg line rf brf nf
+	rf="\033[0;31m"
+	brf="\033[1;31m"
+	nf="\033[0m"
 
+	msg="$1"
 	if test -n "$2"; then
 		msg="$2"
 		line="[$1]"
@@ -37,9 +40,11 @@ function _abort {
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "WARNING$line: $msg"
+		echo "${rf}WARNING${line}: ${msg}${nf}"
 		return 1
 	fi
+
+	msg="${rf}${msg}${nf}"
 
 	local frame trace
 	if type -t caller >/dev/null 2>/dev/null; then
@@ -48,7 +53,7 @@ function _abort {
 		msg="$msg\n\n$trace"
 	fi
 
-	echo -e "\nABORT$line: $msg\n" 1>&2
+	echo -e "\n${brf}ABORT${line}:${nf} $msg\n" 1>&2
 
 	local other_pid=
 
