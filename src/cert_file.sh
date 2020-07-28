@@ -9,6 +9,7 @@
 # - CERT_KEY=~/.acme.sh/domain.tld/domain.tld.key or /etc/letsencrypt/live/domain.tld/privkey.pem
 # - CERT_PUB=~/.acme.sh/domain.tld/domain.tld.cer or /etc/letsencrypt/live/domain.tld/cert.pem
 # - CERT_CA=~/.acme.sh/domain.tld/ca.cer or /etc/letsencrypt/live/domain.tld/chain.pem
+# - CERT_CONF=~/.acme.sh/domain.tld/domain.tld.conf
 #
 # @param domain.tld|.../domain.tld/fullchain.cer
 # @param abort if missing (default = 1)
@@ -37,6 +38,7 @@ function _cert_file {
 	CERT_KEY=
 	CERT_PUB=
 	CERT_CA=
+	CERT_CONF=
 	res=1
 
 	if test -s "$acme_dir/fullchain.cer"; then
@@ -56,6 +58,7 @@ function _cert_file {
 		CERT_KEY="$acme_dir/$domain.key"
 		CERT_PUB="$acme_dir/$domain.cer"
 		CERT_CA="$acme_dir/ca.cer"
+		CERT_CONF="$acme_dir/$domain.conf"
 		res=0
 	fi
 
