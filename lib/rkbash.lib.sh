@@ -1266,11 +1266,14 @@ function _composer {
 # shellcheck disable=SC2034
 #--
 function _confirm {
+	local msg
+	msg="\033[0;36m$1\033[0m"
+
 	CONFIRM=
 
 	if test -n "$AUTOCONFIRM"; then
 		CONFIRM="${AUTOCONFIRM:0:1}"
-		echo "$1 <$CONFIRM>"
+		echo -e "$msg <$CONFIRM>"
 		AUTOCONFIRM="${AUTOCONFIRM:1}"
 		return
 	fi
@@ -1315,12 +1318,12 @@ function _confirm {
 
 	if test $((flag & 1)) -ne 1; then
 		default=n
-		echo -n "$1  y [n]  "
+		echo -n -e "$msg  y [n]  "
 		read -r -n1 -t 10 CONFIRM
 		echo
 	else
 		default=y
-		echo -n "$1  [y] n  "
+		echo -n -e "$msg  [y] n  "
 		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
@@ -5590,6 +5593,33 @@ function _trim {
 	echo -e "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
+
+#--
+# Replace text in file or append text to file.
+# Ask (default = y) and backup first. 
+# For replace use s/orig/replace/ or s#orig#replace#g 
+# otherwise $1 will be appended to $2.
+#
+# @param sed replace expression (-E) or append text
+# @param file
+#--
+function _update_file {
+	_require_file "$2"
+
+	if [[ "${1:0:1}" = 's' && ( "${1:1:1}" = '/'  || "${1:1:1}" = '#' ) ]]; then
+		_confirm "Apply replace $1\nto $2" 1
+		if test "$CONFIRM" = 'y'; then
+			_backup_file "$2"
+			sed -i -E "$1" "$2"
+		fi
+	else
+		_confirm "Append '$2'\nto $2" 1
+		if test "$CONFIRM" = 'y'; then
+			_backup_file "$2"
+			echo "$1" >> "$2"
+		fi
+	fi
+}
 
 #--
 # Link /bin/sh to /bin/shell.
