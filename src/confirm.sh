@@ -15,11 +15,14 @@
 # shellcheck disable=SC2034
 #--
 function _confirm {
+	local msg
+	msg="\033[0;36m$1\033[0m"
+
 	CONFIRM=
 
 	if test -n "$AUTOCONFIRM"; then
 		CONFIRM="${AUTOCONFIRM:0:1}"
-		echo "$1 <$CONFIRM>"
+		echo -e "$msg <$CONFIRM>"
 		AUTOCONFIRM="${AUTOCONFIRM:1}"
 		return
 	fi
@@ -64,12 +67,12 @@ function _confirm {
 
 	if test $((flag & 1)) -ne 1; then
 		default=n
-		echo -n "$1  y [n]  "
+		echo -n -e "$msg  y [n]  "
 		read -r -n1 -t 10 CONFIRM
 		echo
 	else
 		default=y
-		echo -n "$1  [y] n  "
+		echo -n -e "$msg  [y] n  "
 		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
