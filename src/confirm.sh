@@ -16,7 +16,7 @@
 #--
 function _confirm {
 	local msg
-	msg="\033[0;36m$1\033[0m"
+	msg="\033[0;35m$1\033[0m"
 
 	CONFIRM=
 
