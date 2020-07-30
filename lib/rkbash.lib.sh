@@ -653,7 +653,7 @@ function _cert_file {
 		res=0
 	fi
 
-	if [[ "$UID" = "0" && -n "$CERT_FULL" ]]; then
+	if [[ "$UID" = "0" ]]; then
 		if test -L "$le_live" || test -L "$le_live/fullchain.pem"; then
 			CERT_FULL="$le_live/fullchain.pem"
 			CERT_KEY="$le_live/privkey.pem"
