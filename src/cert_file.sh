@@ -68,11 +68,13 @@ function _cert_file {
 			CERT_KEY="$le_live/privkey.pem"
 			CERT_PUB="$le_live/cert.pem"
 			CERT_CA="$le_live/chain.pem"
+			res=0
 		elif test -s "$le_acme/fullchain.pem"; then
 			CERT_FULL="$le_acme/fullchain.pem"
 			CERT_KEY="$le_acme/privkey.pem"
 			CERT_PUB="$le_acme/cert.pem"
 			CERT_CA="$le_acme/chain.pem"
+			res=0
 		fi
 	fi
 
