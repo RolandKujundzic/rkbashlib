@@ -72,7 +72,7 @@ function _confirm {
 		echo
 	else
 		default=y
-		echo -n -e "$msg  [y] n  "
+		echo -n -e "$msg  \033[0;35m[y]\033[0m n  "
 		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
