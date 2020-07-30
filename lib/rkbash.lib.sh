@@ -5444,8 +5444,9 @@ declare -A SYNTAX_HELP
 # @param info (e.g. cmd:* = show all SYNTAX_CMD otherwise show cmd|help:[name] = SYNTAX_CMD|SYNTAX_HELP[name])
 #--
 function _syntax {
-	local a msg old_msg desc base
+	local a msg old_msg desc base syntax
 	msg=$(_syntax_cmd "$1") 
+	syntax="\n\033[1;31mSYNTAX:\033[0m"
 
 	for a in $2; do
 		old_msg="$msg"
@@ -5465,9 +5466,9 @@ function _syntax {
 
 	base=$(basename "$APP")
 	if test -n "$APP_PREFIX"; then
-		echo -e "\nSYNTAX: $APP_PREFIX $base $msg" 1>&2
+		echo -e "$syntax \033[0;31m$APP_PREFIX $base $msg\033[0m" 1>&2
 	else
-		echo -e "\nSYNTAX: $base $msg" 1>&2
+		echo -e "$syntax \033[0;31m$base $msg\033[0m" 1>&2
 	fi
 
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
