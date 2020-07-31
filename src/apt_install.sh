@@ -11,6 +11,7 @@ function _apt_install {
 	curr_lne=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
 
+	_require_program apt
 	_run_as_root 1
 
 	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
