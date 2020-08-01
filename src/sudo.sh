@@ -6,6 +6,7 @@
 # @global LOG_CMD[sudo] 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
+# shellcheck disable=SC2034
 #--
 function _sudo {
 	local curr_sudo exec flag
@@ -31,5 +32,7 @@ function _sudo {
 		eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec"
 		SUDO="$curr_sudo"
 	fi
+
+	LOG_LAST=
 }
 
