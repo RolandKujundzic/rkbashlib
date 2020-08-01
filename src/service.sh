@@ -9,13 +9,19 @@ function _service {
 	test -z "$1" && _abort "empty service name"
 	test -z "$2" && _abort "empty action"
 
-	local has_service
-	has_service=$(service --status-all | grep -E '\s+'"$1"'$')
-	test -z "$has_service" && _abort "no such service $1"
+	local is_active
+	is_active=$(systemctl is-active "$1")
 
-	[[ ! "$has_service" =~ + && "$1" != 'enable' ]] && _abort "$1 is disabled"
+	if [[ "$is_active" != 'active' && ! "$2" =~ start && ! "$2" =~ able ]]; then
+		_abort "$is_active service $1"
+	fi
 
-	_msg "service $1 $2"
-	_sudo "service $1 $2"
+	if test "$2" = 'status'; then
+		_ok "$1 is active"
+		return
+	fi
+
+	_msg "systemctl $2 $1"
+	_sudo "systemctl $2 $1"
 }
 
