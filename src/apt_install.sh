@@ -13,20 +13,18 @@ function _apt_install {
 
 	_require_program apt
 	_run_as_root 1
-
-	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
+	_rkbash_dir
 
 	for a in $*; do
 		if test -d "$RKBASH_DIR/apt/$a"; then
-			echo "already installed, skip: apt -y install $a"
+			_msg "already installed, skip: apt -y install $a"
 		else
 			sudo apt -y install "$a" || _abort "apt -y install $a"
 			_log "apt -y install $a" "apt/$a"
 		fi
 	done
 
-	test "$RKBASH_DIR" = "$HOME/.rkbash" && RKBASH_DIR="$HOME/.rkbash/$$"
-
+	_rkbash_dir reset
 	LOG_NO_ECHO=$curr_lne
 }
 
