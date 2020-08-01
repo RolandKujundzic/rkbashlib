@@ -4,7 +4,7 @@
 # Install nginx, php_fpm and php site
 # shellcheck disable=SC2016,SC2012
 #--
-function nginx_php_fpm {
+function _nginx_php_fpm {
 	local site php_fpm
 	site=/etc/nginx/sites-available/default
 
