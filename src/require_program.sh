@@ -16,7 +16,7 @@ function _require_program {
 	command -v "./$1" >/dev/null 2>&1 && return
 
 	if test "${2:0:4}" = "apt:"; then
-		apt -y install "${2:4}"
+		_apt_install "${2:4}"
 	elif test -z "$2"; then
 		echo "No such program [$1]"
 		exit 1
