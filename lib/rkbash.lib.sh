@@ -367,6 +367,7 @@ function _apt_remove {
 #--
 # Run apt update (+upgrade). Skip if run within last week.
 # @param optional flag: 1 = run upgrade
+# shellcheck disable=SC2024
 #--
 function _apt_update {
 	_require_program apt
@@ -382,13 +383,13 @@ function _apt_update {
 		echo "$now" > "$lu" 
 
 		_run_as_root 1
-		echo -n "apt -y update ... "
-		apt -y update >"$RKBASH_DIR/update.log" 2>&1
+		echo -n "apt -y update &>$RKBASH_DIR/update.log ... "
+		sudo apt -y update &>"$RKBASH_DIR/update.log" || _abort 'sudo apt -y update'
 		echo "done"
 
 		if test "$1" = 1; then
-			echo -n "apt -y upgrade ... "
- 			apt -y upgrade >"$RKBASH_DIR/upgrade.log" 2>&1
+			echo -n "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... "
+ 			sudo apt -y upgrade &>"$RKBASH_DIR/upgrade.log" || _abort 'sudo apt -y upgrade'
 			echo "done"
 		fi
 	fi
@@ -4789,7 +4790,7 @@ function _run_as_root {
 	if test -z "$1"; then
 		_abort "Please change into root and try again"
 	else
-		echo "sudo true - Please type in your password"
+		echo "sudo true - you might need to type in your password"
 		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
 	fi
 }
