@@ -2425,9 +2425,18 @@ function _install_node {
 function _install_php {
 	_apt_update	
   _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
-  _apt_install 'php-dev php-imap php-sqlite3 php-xdebug php-pear php-zip php-pclzip'
+  _apt_install 'php-dev php-imap php-xdebug php-pear php-zip php-pclzip'
 }
 
+
+#--
+# Install sqlite3 and php-sqlite3
+#--
+function _install_sqlite3 {
+	_apt_update
+	_apt_install 'sqlite3 php-sqlite3'
+}
+	
 
 #--
 # Export ip address as IP_ADDRESS (ip4) and IP6_ADDRESS (ip6) (and DYNAMIC_IP).
