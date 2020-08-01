@@ -53,6 +53,10 @@ function _abort {
 		msg="$msg\n\n$trace"
 	fi
 
+	if [[ -n "$LOG_LAST" && -s "$LOG_LAST" ]]; then
+		msg="$msg\n\n$(tail -n+5 "$LOG_LAST")"
+	fi
+
 	echo -e "\n${brf}ABORT${line}:${nf} $msg\n" 1>&2
 
 	local other_pid=
