@@ -7,13 +7,14 @@ LOG_NO_ECHO=
 
 #--
 # Pring log message. If second parameter is set assume command logging.
-# Set LOG_NO_ECHO=1 to disable echo output.
+# Set LOG_NO_ECHO=1 to disable echo output. Use LOG_LAST to append
+# log file to abort message.
 #
 # @param message
 # @param name (if set use $RKBASH_DIR/$name/$NAME_COUNT.nfo)
-# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2] LOG_LAST
 # @global RKBASH_DIR
-# shellcheck disable=SC2086
+# shellcheck disable=SC2086,SC2034
 #--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
@@ -27,6 +28,7 @@ function _log {
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
 	LOG_FILE[$2]="$RKBASH_DIR/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
+	LOG_LAST=
 
 	if ! test -d "$RKBASH_DIR/$2"; then
 		mkdir -p "$RKBASH_DIR/$2"
@@ -48,5 +50,6 @@ function _log {
 	fi
 
 	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
+	test -s "${LOG_FILE[$2]}" && LOG_LAST="${LOG_FILE[$2]}"
 }
 
