@@ -326,20 +326,18 @@ function _apt_install {
 
 	_require_program apt
 	_run_as_root 1
-
-	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
+	_rkbash_dir
 
 	for a in $*; do
 		if test -d "$RKBASH_DIR/apt/$a"; then
-			echo "already installed, skip: apt -y install $a"
+			_msg "already installed, skip: apt -y install $a"
 		else
 			sudo apt -y install "$a" || _abort "apt -y install $a"
 			_log "apt -y install $a" "apt/$a"
 		fi
 	done
 
-	test "$RKBASH_DIR" = "$HOME/.rkbash" && RKBASH_DIR="$HOME/.rkbash/$$"
-
+	_rkbash_dir reset
 	LOG_NO_ECHO=$curr_lne
 }
 
@@ -363,6 +361,39 @@ function _apt_remove {
 	done
 
 	_apt_clean
+}
+
+
+#--
+# Run apt update (+upgrade). Skip if run within last week.
+# @param optional flag: 1 = run upgrade
+#--
+function _apt_update {
+	_require_program apt
+	local lu now
+
+	_rkbash_dir apt
+	lu="$RKBASH_DIR/last_update"
+	now=$(date +%s)
+
+	if [[ -f "$lu" && $(cat "$lu") -gt $((now - 3600 * 24 * 7)) ]]; then
+		:
+	else
+		echo "$now" > "$lu" 
+
+		_run_as_root 1
+		echo -n "apt -y update ... "
+		apt -y update >"$RKBASH_DIR/update.log" 2>&1
+		echo "done"
+
+		if test "$1" = 1; then
+			echo -n "apt -y upgrade ... "
+ 			apt -y upgrade >"$RKBASH_DIR/upgrade.log" 2>&1
+			echo "done"
+		fi
+	fi
+
+	_rkbash_dir reset
 }
 
 
@@ -2298,6 +2329,15 @@ require valid-user"
 
 
 #--
+# Install apache2 and mod php
+#--
+function _install_apache2 {
+	_apt_update
+	_apt_install "apache2 apache2-utils libapache2-mod-php"
+}
+	
+
+#--
 # Install files from APP_FILE_LIST and APP_DIR_LIST to APP_PREFIX.
 #
 # @param string app dir 
@@ -2335,6 +2375,24 @@ function _install_app {
 
 
 #--
+# Install mariadb server and client and php-mysql
+#--
+function _install_mariadb {
+	_apt_update
+	_apt_install 'mariadb-server mariadb-client php-mysql'
+}
+	
+
+#--
+# Install nginx and php-fpm
+#--
+function _install_nginx {
+	_apt_update
+	_apt_install 'nginx php-fpm'
+}
+	
+
+#--
 # Install node NODE_VERSION from latest binary package. 
 # If you want to install|update node/npm use _node_version instead.
 #
@@ -2357,6 +2415,16 @@ function _install_node {
 	SUDO=sudo
 	_install_app "node-$NODE_VERSION-linux-x64" "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.xz"
 	SUDO=$curr_sudo
+}
+
+
+#--
+# Install php and php packages
+#--
+function _install_php {
+	_apt_update	
+  _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
+  _apt_install 'php-dev php-imap php-sqlite3 php-xdebug php-pear php-zip php-pclzip'
 }
 
 
@@ -4447,7 +4515,7 @@ function _require_program {
 	command -v "./$1" >/dev/null 2>&1 && return
 
 	if test "${2:0:4}" = "apt:"; then
-		apt -y install "${2:4}"
+		_apt_install "${2:4}"
 	elif test -z "$2"; then
 		echo "No such program [$1]"
 		exit 1
@@ -4472,6 +4540,30 @@ function _require_version {
 	fi
 }
 
+
+#--
+# Change RKBASH_DIR to ~/.rkbash/$1 if directory is default. 
+# Use $1 = reset to change to ~/.rkbash/$$.
+# 
+# @param optional ~/.rkbash subdirectory or reset
+# @export RKBASH_DIR
+#--
+function _rkbash_dir {
+	if [[ "$RKBASH_DIR" = "$HOME/.rkbash" && "$1" = 'reset' ]]; then
+		RKBASH_DIR="$HOME/.rkbash/$$"
+		return
+	fi
+
+	if [[ "$RKBASH_DIR" != "$HOME/.rkbash/$$" ]]; then
+		:
+	elif test -z "$1"; then
+		RKBASH_DIR="$HOME/.rkbash"
+	elif [[ "$1" != 'reset' ]]; then
+		RKBASH_DIR="$HOME/.rkbash/$1"
+		_mkdir "$RKBASH_DIR"
+	fi
+}
+	
 
 #--
 # Export required $RKBASH_SRC/src/* functions as $RKBASH_INC
@@ -5385,6 +5477,8 @@ function _sudo {
 		eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec"
 		SUDO="$curr_sudo"
 	fi
+
+	LOG_LAST=
 }
 
 
