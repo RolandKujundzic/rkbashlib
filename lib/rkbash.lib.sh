@@ -62,6 +62,10 @@ function _abort {
 		msg="$msg\n\n$trace"
 	fi
 
+	if [[ -n "$LOG_LAST" && -s "$LOG_LAST" ]]; then
+		msg="$msg\n\n$(tail -n+5 "$LOG_LAST")"
+	fi
+
 	echo -e "\n${brf}ABORT${line}:${nf} $msg\n" 1>&2
 
 	local other_pid=
@@ -320,6 +324,7 @@ function _apt_install {
 	curr_lne=$LOG_NO_ECHO
 	LOG_NO_ECHO=1
 
+	_require_program apt
 	_run_as_root 1
 
 	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
@@ -2709,13 +2714,14 @@ LOG_NO_ECHO=
 
 #--
 # Pring log message. If second parameter is set assume command logging.
-# Set LOG_NO_ECHO=1 to disable echo output.
+# Set LOG_NO_ECHO=1 to disable echo output. Use LOG_LAST to append
+# log file to abort message.
 #
 # @param message
 # @param name (if set use $RKBASH_DIR/$name/$NAME_COUNT.nfo)
-# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
+# @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2] LOG_LAST
 # @global RKBASH_DIR
-# shellcheck disable=SC2086
+# shellcheck disable=SC2086,SC2034
 #--
 function _log {
 	test -z "$LOG_NO_ECHO" && echo -n "$1"
@@ -2729,6 +2735,7 @@ function _log {
 	LOG_COUNT[$2]=$((LOG_COUNT[$2] + 1))
 	LOG_FILE[$2]="$RKBASH_DIR/$2/${LOG_COUNT[$2]}.nfo"
 	LOG_CMD[$2]=">>'${LOG_FILE[$2]}' 2>&1"
+	LOG_LAST=
 
 	if ! test -d "$RKBASH_DIR/$2"; then
 		mkdir -p "$RKBASH_DIR/$2"
@@ -2750,6 +2757,7 @@ function _log {
 	fi
 
 	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
+	test -s "${LOG_FILE[$2]}" && LOG_LAST="${LOG_FILE[$2]}"
 }
 
 
@@ -4732,6 +4740,32 @@ function _scp {
 
 
 #--
+# Control service start|stop|restart|reload|enable|disable
+# @param service name
+# @param action
+#--
+function _service {
+	test -z "$1" && _abort "empty service name"
+	test -z "$2" && _abort "empty action"
+
+	local is_active
+	is_active=$(systemctl is-active "$1")
+
+	if [[ "$is_active" != 'active' && ! "$2" =~ start && ! "$2" =~ able ]]; then
+		_abort "$is_active service $1"
+	fi
+
+	if test "$2" = 'status'; then
+		_ok "$1 is active"
+		return
+	fi
+
+	_msg "systemctl $2 $1"
+	_sudo "systemctl $2 $1"
+}
+
+
+#--
 # Save value as $name.nfo (in $RKBASH_DIR/$APP).
 #
 # @param string name (required)
@@ -5302,25 +5336,19 @@ function _stop_http {
 	_os_type linux
 
 	if ! _is_running port:80; then
-		echo "no service on port 80"
+		_warn "no service on port 80"
 		return
 	fi
 
 	if _is_running docker:80; then
-		echo "ignore docker service on port 80"
+		_warn "ignore docker service on port 80"
 		return
 	fi
 
 	if _is_running nginx; then
-		echo "stop nginx"
-		sudo service nginx stop
-		return
-	fi
-
-	if _is_running apache; then
-		echo "stop apache2"
-		sudo service apache2 stop
-		return
+		_service nginx stop
+	elif _is_running apache; then
+		_service apache2 stop
 	fi
 }
 
@@ -5331,6 +5359,7 @@ function _stop_http {
 # @global LOG_CMD[sudo] 
 # @param command
 # @param optional flag (1=try sudo if normal command failed)
+# shellcheck disable=SC2034
 #--
 function _sudo {
 	local curr_sudo exec flag
