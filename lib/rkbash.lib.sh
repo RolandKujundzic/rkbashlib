@@ -2142,8 +2142,8 @@ function _git_update_php {
 	_mkdir php
 	_cd php
 
-	# @ToDo 5|7|8
-	version=$(_version php 2)
+	# @ToDo $(_version php 2)
+	version=8
 
 	if test $((flag & 4)) -eq 4; then
 		_require_program rks-git
