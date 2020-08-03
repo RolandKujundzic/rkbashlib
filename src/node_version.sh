@@ -16,14 +16,12 @@ function _node_version {
 		_install_node 
 	fi
 
-	local node_ver npm_ver
+	if [[ $(_version node 1) -lt $(_version $NODE_VERSION 1) ]]; then
+		_install_node
+	fi
 
-	node_ver=$(node --version || _abort "node --version failed")
-	[[ $(_ver3 "$node_ver") -lt $(_ver3 $NODE_VERSION) ]] && _install_node
-
-	npm_ver=$(npm --version || _abort "npm --version failed")
-	if [[ $(_ver3 "$npm_ver") -lt $(_ver3 $NPM_VERSION) ]]; then
-		_msg "Update npm from $npm_ver to latest"
+	if [[ $(_version npm 1) -lt $(_version $NPM_VERSION 1) ]]; then
+		_msg "Update npm to latest"
 		_sudo "npm i -g npm"
 	fi
 }
