@@ -2136,16 +2136,19 @@ function _github_latest {
 # @param int flag (2^N, default=7)
 #--
 function _git_update_php {
-	local flag
+	local flag version
 	flag=$((${1:-7} + 0))
 
 	_mkdir php
 	_cd php
 
+	# @ToDo 5|7|8
+	version=$(_version php 2)
+
 	if test $((flag & 4)) -eq 4; then
 		_require_program rks-git
-		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version=src --q1=y --q2=y
-		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version=src --q1=y --q2=y
+		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version="$version" --q1=y --q2=y
+		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version="$version" --q1=y --q2=y
 	fi
 
 	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
@@ -3623,14 +3626,12 @@ function _node_version {
 		_install_node 
 	fi
 
-	local node_ver npm_ver
+	if [[ $(_version node 1) -lt $(_version $NODE_VERSION 1) ]]; then
+		_install_node
+	fi
 
-	node_ver=$(node --version || _abort "node --version failed")
-	[[ $(_ver3 "$node_ver") -lt $(_ver3 $NODE_VERSION) ]] && _install_node
-
-	npm_ver=$(npm --version || _abort "npm --version failed")
-	if [[ $(_ver3 "$npm_ver") -lt $(_ver3 $NPM_VERSION) ]]; then
-		_msg "Update npm from $npm_ver to latest"
+	if [[ $(_version npm 1) -lt $(_version $NPM_VERSION 1) ]]; then
+		_msg "Update npm to latest"
 		_sudo "npm i -g npm"
 	fi
 }
@@ -5808,15 +5809,46 @@ function _use_shell {
 
 
 #--
-# Convert nn.mm.kk into nnmmkk (with leading zeros) 
-# e.g. 3.10.8 = 031008, 14.22.72 = 142272 
-# 
-# @param version number (nn.mm.kk)
+# Return program version nn[.mm.kk]
+# If $1 is not version number '$1 --version' must be supported
+# If $2=1 convert nn.mm.kk into number e.g. 3.0.8 = 30008, 14.22.72 = 142272 
+# If $2=2 return main version (nn)
+# If $2=4 return main.sub version (nn.mm)
+#
+# @param program name or version number (nn.mm.kk)
+# @param optional flag
 # @print int
 # shellcheck disable=SC2183,SC2046
 #--
-function _ver3 {
-	printf "%02d%02d%02d" $(echo "$1" | tr -d 'v' | tr '.' ' ')
+function _version {
+	local flag version
+	flag=$(($2 + 0))
+
+	if [[ "$1" =~ ^v?[0-9\.]+$ ]]; then
+		version="$1"
+	elif command -v "$1" &>/dev/null; then
+		version=$({ $1 --version || _abort "$1 --version"; } | head -1 | grep -E -o 'v?[0-9]+\.[0-9\.]+')
+	fi
+
+	version="${version/v/}"
+
+	[[ "$version" =~ ^[0-9\.]+$ ]] || _abort "version detection failed ($1)"
+
+	if [[ $((flag & 1)) = 1 ]]; then
+		if [[ "$version" =~ ^[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
+			printf "%d%02d" $(echo "$version" | tr '.' ' ')
+		elif [[ "$version" =~ ^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
+			printf "%d%02d%02d" $(echo "$version" | tr '.' ' ')
+		else
+			_abort "failed to convert $version to number"
+		fi
+	elif [[ $((flag & 2)) ]]; then
+		echo -n "${version%%.*}"
+	elif [[ $((flag & 4)) ]]; then
+		echo -n "${version%.*}"
+	else
+		echo -n "$version"
+	fi
 }
 
 
