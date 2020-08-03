@@ -10,16 +10,19 @@
 # @param int flag (2^N, default=7)
 #--
 function _git_update_php {
-	local flag
+	local flag version
 	flag=$((${1:-7} + 0))
 
 	_mkdir php
 	_cd php
 
+	# @ToDo 5|7|8
+	version=$(_version php 2)
+
 	if test $((flag & 4)) -eq 4; then
 		_require_program rks-git
-		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version=src --q1=y --q2=y
-		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version=src --q1=y --q2=y
+		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version="$version" --q1=y --q2=y
+		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version="$version" --q1=y --q2=y
 	fi
 
 	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
