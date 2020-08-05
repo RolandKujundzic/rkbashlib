@@ -7,7 +7,7 @@
 # @return log file path
 #--
 function _log_file {
-	_mkdir "$(dirname "$RKBASH_DIR/$1")"
+	_mkdir "$(dirname "$RKBASH_DIR/$1")" >/dev/null
 	echo -n "$RKBASH_DIR/$1"
 }
 	
