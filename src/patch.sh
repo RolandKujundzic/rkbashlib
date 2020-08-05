@@ -23,7 +23,7 @@ function _patch {
 		fi
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=$(dirname "$1")
-		source "$1/patch.sh" || _abort ". $1/patch.sh"
+		_include "$1/patch.sh"
 	fi
 
 	_require_program patch

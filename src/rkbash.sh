@@ -28,7 +28,7 @@ function _rkbash {
 	for a in $1; do
 		if ! test "$(type -t $a)" = "function"; then
 			echo "load $a"
-			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
+			_include "$RKBASH_SRC/${a:1}.sh" 
 		else 
 			echo "found $a"
 		fi

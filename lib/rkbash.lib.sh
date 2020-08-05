@@ -2343,6 +2343,18 @@ require valid-user"
 
 
 #--
+# Include shell script $1
+# @param shell script path
+# shellcheck disable=SC1090 
+#--
+function _include {
+	_require_file "$1"
+	_msg "include $1"
+	source "$1" || _abort "source '$1'"
+}
+
+
+#--
 # Install apache2 and mod php
 #--
 function _install_apache2 {
@@ -3511,7 +3523,7 @@ function _mysql_restore {
 
   if test -n "$2"; then
     echo "start table imports in background"  
-    source restore.sh
+    _include restore.sh
 
     _rm "create_tables.sql"
     import=1
@@ -4041,7 +4053,7 @@ function _patch {
 		fi
 	elif test -f "$1/patch.sh"; then
 		PATCH_SOURCE_DIR=$(dirname "$1")
-		source "$1/patch.sh" || _abort ". $1/patch.sh"
+		_include "$1/patch.sh"
 	fi
 
 	_require_program patch
@@ -4704,7 +4716,7 @@ function _rkbash {
 	for a in $1; do
 		if ! test "$(type -t $a)" = "function"; then
 			echo "load $a"
-			source "$RKBASH_SRC/${a:1}.sh" || $abort "no such function $a"
+			_include "$RKBASH_SRC/${a:1}.sh" 
 		else 
 			echo "found $a"
 		fi

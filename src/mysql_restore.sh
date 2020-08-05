@@ -49,7 +49,7 @@ function _mysql_restore {
 
   if test -n "$2"; then
     echo "start table imports in background"  
-    source restore.sh
+    _include restore.sh
 
     _rm "create_tables.sql"
     import=1
