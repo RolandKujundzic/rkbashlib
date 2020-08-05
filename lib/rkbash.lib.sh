@@ -2798,6 +2798,18 @@ function _ln {
 }
 
 
+#--
+# Return $RKBASH_DIR/$1 create directory if missing.
+# 
+# @param log file name
+# @return log file path
+#--
+function _log_file {
+	_mkdir "$RKBASH_DIR"
+	echo "$RKBASH_DIR/$1"
+}
+	
+
 declare -Ai LOG_COUNT  # define hash (associative array) of integer
 declare -A LOG_FILE  # define hash
 declare -A LOG_CMD  # define hash
@@ -5126,7 +5138,7 @@ function _sql_load {
 
 	test "$2" = "1" && AUTOCONFIRM=y
 	_confirm "load sql dump '$1'?" 1
-	test "$CONFIRM" = "y" && rks-db load >/dev/null "$1" --q1=n --q2=y
+	test "$CONFIRM" = "y" && rks-db load "$1" --q1=n --q2=y >/dev/null
 }
 
 
