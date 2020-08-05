@@ -2805,7 +2805,7 @@ function _ln {
 # @return log file path
 #--
 function _log_file {
-	_mkdir "$RKBASH_DIR"
+	_mkdir "$(dirname "$RKBASH_DIR/$1")"
 	echo -n "$RKBASH_DIR/$1"
 }
 	
