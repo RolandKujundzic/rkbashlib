@@ -2806,7 +2806,7 @@ function _ln {
 #--
 function _log_file {
 	_mkdir "$RKBASH_DIR"
-	echo "$RKBASH_DIR/$1"
+	echo -n "$RKBASH_DIR/$1"
 }
 	
 
