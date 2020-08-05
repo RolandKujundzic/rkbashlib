@@ -1,5 +1,5 @@
 # rkbashlib
-Bash script library. More than 150 functions (04/2020).
+Bash script library. More than 170 functions (08/2020).
 
 ## Examples
 
