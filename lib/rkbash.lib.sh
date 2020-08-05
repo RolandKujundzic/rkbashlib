@@ -2063,8 +2063,7 @@ function _git_checkout {
 		_cd "$git_dir"
 		echo "git pull $git_dir"
 		git pull
-		test -s .gitmodules && git submodule update --init --recursive --remote
-		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
+		_git_submodule
 		_cd "$curr"
 	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
 		_ln "../../$git_dir" "$git_dir"
@@ -2079,8 +2078,7 @@ function _git_checkout {
 
 		if test -s "$git_dir/.gitmodules"; then
 			_cd "$git_dir"
-			test -s .gitmodules && git submodule update --init --recursive --remote
-			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
+			_git_submodule
 			_cd ..
 		fi
 
@@ -2123,6 +2121,18 @@ function _github_latest {
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi
+}
+
+
+#--
+# Update|Checkout submodule if .gitmodules exists
+#--
+function _git_submodule {
+	test -s .gitmodules || return
+
+	git submodule sync	# copy changes from .gitmodules to .git/config
+	git submodule update --init --recursive --remote
+	git submodule foreach "(git checkout master; git pull)"
 }
 
 
