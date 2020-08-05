@@ -51,8 +51,7 @@ function _git_checkout {
 		_cd "$git_dir"
 		echo "git pull $git_dir"
 		git pull
-		test -s .gitmodules && git submodule update --init --recursive --remote
-		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
+		_git_submodule
 		_cd "$curr"
 	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
 		_ln "../../$git_dir" "$git_dir"
@@ -67,8 +66,7 @@ function _git_checkout {
 
 		if test -s "$git_dir/.gitmodules"; then
 			_cd "$git_dir"
-			test -s .gitmodules && git submodule update --init --recursive --remote
-			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
+			_git_submodule
 			_cd ..
 		fi
 
