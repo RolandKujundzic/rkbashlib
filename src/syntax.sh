@@ -12,6 +12,7 @@ declare -A SYNTAX_HELP
 # @global SYNTAX_CMD SYNTAX_HELP APP APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4 $APP_PREFIX 
 # @param message
 # @param info (e.g. cmd:* = show all SYNTAX_CMD otherwise show cmd|help:[name] = SYNTAX_CMD|SYNTAX_HELP[name])
+# shellcheck disable=SC2086
 #--
 function _syntax {
 	local a msg old_msg desc base syntax
@@ -36,9 +37,9 @@ function _syntax {
 
 	base=$(basename "$APP")
 	if test -n "$APP_PREFIX"; then
-		echo -e "$syntax \033[0;31m$APP_PREFIX $base $msg\033[0m" 1>&2
+		echo -e "$syntax $(_warn_msg $APP_PREFIX $base $msg)" 1>&2
 	else
-		echo -e "$syntax \033[0;31m$base $msg\033[0m" 1>&2
+		echo -e "$syntax $(_warn_msg $base $msg)" 1>&2
 	fi
 
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
