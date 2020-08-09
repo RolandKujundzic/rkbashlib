@@ -1,7 +1,9 @@
 #!/bin/bash
 
 #--
-# @example x="Error\nInfo" && echo -e "$(_warn_msg "$x")"
+# Return first line colored in red (replace \n with newline).
+#
+# @example x='Error\nInfo' && echo -e "$(_warn_msg "$x")"
 # @param multiline
 # @return multiline with first line in red
 #--
@@ -14,6 +16,6 @@ function _warn_msg {
 			echo '\033[0;31m'"$line"'\033[0m'
 			first=1
 		fi
-	done <<< "$@"
+	done <<< "${1//\\n/$'\n'}"
 }
 
