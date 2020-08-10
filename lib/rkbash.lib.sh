@@ -367,7 +367,7 @@ function _apt_remove {
 #--
 # Run apt update (+upgrade). Skip if run within last week.
 # @param optional flag: 1 = run upgrade
-# shellcheck disable=SC2024
+# shellcheck disable=SC2024,SC2120
 #--
 function _apt_update {
 	_require_program apt
