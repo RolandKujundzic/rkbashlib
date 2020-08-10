@@ -2329,7 +2329,7 @@ require valid-user"
 		_append_txt "$1/.htaccess" "$basic_auth"
 
 		_msg "add user ${SPLIT[1]} to $1/.htpasswd"
-		htpasswd -cb "$1/.htpasswd" "${SPLIT[1]}" "${SPLIT[2]}" 2>/dev/null
+		echo "${SPLIT[2]}" | htpasswd -i "$1/.htpasswd" "${SPLIT[1]}" 2>/dev/null
 
 		_chown "$1/.htpasswd" rk www-data
 		_chmod 660 "$1/.htpasswd"
