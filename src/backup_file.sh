@@ -32,9 +32,9 @@ function _backup_file {
 	fi
 
 	for ((i = n - 1; i > 0; i--)); do
-		test -f "$backup.$i" && _cp "$backup.$i" "$backup.$((i + 1))"
+		test -f "$backup.$i" && _cp "$backup.$i" "$backup.$((i + 1))" >/dev/null
 	done
 
-	_mv "$backup.old" "$backup.1"
+	_mv "$backup.old" "$backup.1" >/dev/null
 }
 

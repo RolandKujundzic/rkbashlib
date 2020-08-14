@@ -500,10 +500,10 @@ function _backup_file {
 	fi
 
 	for ((i = n - 1; i > 0; i--)); do
-		test -f "$backup.$i" && _cp "$backup.$i" "$backup.$((i + 1))"
+		test -f "$backup.$i" && _cp "$backup.$i" "$backup.$((i + 1))" >/dev/null
 	done
 
-	_mv "$backup.old" "$backup.1"
+	_mv "$backup.old" "$backup.1" >/dev/null
 }
 
 
@@ -2460,7 +2460,7 @@ function _install_node {
 function _install_php {
 	_apt_update	
   _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
-  _apt_install 'php-dev php-imap php-xdebug php-pear php-zip php-pclzip'
+  _apt_install 'php-dev php-imap php-intl php-xdebug php-pear php-zip php-pclzip'
 }
 
 
