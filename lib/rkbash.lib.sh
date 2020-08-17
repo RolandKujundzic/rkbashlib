@@ -470,7 +470,8 @@ function _aws {
 
 #--
 # Backup (realpath) $1 as RKBASH_DIR/backup/$1
-# Keep last n backups.
+# Keep last n backups. Do not backup if last
+# backup is younger than 5sec.
 #
 # @global RKBASH_DIR
 # @param path
@@ -486,6 +487,8 @@ function _backup_file {
 	backup_dir="$(dirname "$RKBASH_DIR")/backup/$dir"
 	backup="$backup_dir/$base"
 	n="${2:-5}"
+
+	[[ -f "$backup" && $(stat -c %Y "$backup") -ge $(( $(date +%s) - 5 )) ]] && return
 
 	_msg "backup $path"
 	_mkdir "$backup_dir"
