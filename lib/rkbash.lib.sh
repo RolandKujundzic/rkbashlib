@@ -1701,7 +1701,6 @@ function _dl_unpack {
 	archive=$(basename "$2")
 
 	if ! test -f "$archive"; then
-		_msg "Download $2"
 		_wget "$2"
 	fi
 
