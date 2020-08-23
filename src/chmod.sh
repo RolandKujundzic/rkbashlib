@@ -7,7 +7,6 @@
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
-# shellcheck disable=SC2006
 #--
 function _chmod {
 	local tmp cmd i priv
@@ -28,7 +27,7 @@ function _chmod {
 			priv=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				priv=`stat -c "%a" "${FOUND[$i]}"`
+				priv=$(stat -c "%a" "${FOUND[$i]}")
 			fi
 
 			if test "$1" != "$priv" && test "$1" != "0$priv"; then
@@ -36,7 +35,7 @@ function _chmod {
 			fi
 		done
 	elif test -f "$2"; then
-		priv=`stat -c "%a" "$2"`
+		priv=$(stat -c "%a" "$2")
 
 		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
 			_sudo "$cmd $1 '$2'" 1

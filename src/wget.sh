@@ -16,20 +16,20 @@ function _wget {
 	if test -s "$save_as"; then
 		_confirm "Overwrite $save_as" 1
 		if test "$CONFIRM" != "y"; then
-			echo "keep $save_as - skip wget '$1'"
+			_msg "keep $save_as - skip wget '$1'"
 			return
 		fi
 	fi
 
 	if test -z "$2"; then
-		echo "download $1"
+		_msg "download $1"
 		wget -q "$1" || _abort "wget -q '$1'"
 	elif test "$2" = "-"; then
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 		return
 	else
 		_mkdir "$(dirname "$2")"
-		echo "download $1 to $2"
+		_msg "download $1 to $2"
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 	fi
 

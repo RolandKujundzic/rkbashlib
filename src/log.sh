@@ -17,7 +17,7 @@ LOG_NO_ECHO=
 # shellcheck disable=SC2086,SC2034
 #--
 function _log {
-	test -z "$LOG_NO_ECHO" && echo -n "$1"
+	test -z "$LOG_NO_ECHO" && _msg "$1" -n
 	
 	if test -z "$2"; then
 		test -z "$LOG_NO_ECHO" && echo
@@ -49,7 +49,7 @@ function _log {
 		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"
 	fi
 
-	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
+	test -z "$LOG_NO_ECHO" && _msg " ${LOG_CMD[$2]}"
 	test -s "${LOG_FILE[$2]}" && LOG_LAST="${LOG_FILE[$2]}"
 }
 

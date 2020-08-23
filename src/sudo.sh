@@ -25,7 +25,7 @@ function _sudo {
 	elif test $((flag & 1)) = 1 && test -z "$curr_sudo"; then
 		_log "$exec" sudo
 		eval "$exec ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
+			( _msg "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
 	else
 		SUDO=sudo
 		_log "sudo $exec" sudo

@@ -977,7 +977,6 @@ function _chmod_df {
 # @param file mode (octal)
 # @param file path (if path is empty use $FOUND)
 # global CHMOD (default chmod -R)
-# shellcheck disable=SC2006
 #--
 function _chmod {
 	local tmp cmd i priv
@@ -998,7 +997,7 @@ function _chmod {
 			priv=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				priv=`stat -c "%a" "${FOUND[$i]}"`
+				priv=$(stat -c "%a" "${FOUND[$i]}")
 			fi
 
 			if test "$1" != "$priv" && test "$1" != "0$priv"; then
@@ -1006,7 +1005,7 @@ function _chmod {
 			fi
 		done
 	elif test -f "$2"; then
-		priv=`stat -c "%a" "$2"`
+		priv=$(stat -c "%a" "$2")
 
 		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
 			_sudo "$cmd $1 '$2'" 1
@@ -2862,7 +2861,7 @@ LOG_NO_ECHO=
 # shellcheck disable=SC2086,SC2034
 #--
 function _log {
-	test -z "$LOG_NO_ECHO" && echo -n "$1"
+	test -z "$LOG_NO_ECHO" && _msg "$1" -n
 	
 	if test -z "$2"; then
 		test -z "$LOG_NO_ECHO" && echo
@@ -2894,7 +2893,7 @@ function _log {
 		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"
 	fi
 
-	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
+	test -z "$LOG_NO_ECHO" && _msg " ${LOG_CMD[$2]}"
 	test -s "${LOG_FILE[$2]}" && LOG_LAST="${LOG_FILE[$2]}"
 }
 
@@ -2997,7 +2996,7 @@ function _merge_sh {
 
 	tmp_app="$sh_dir"'_'
 	test -s "$my_app" && md5_old=$(_md5 "$my_app")
-	echo -n "merge $sh_dir into $my_app ... "
+	_msg "merge $sh_dir into $my_app ... " -n
 
 	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
 	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
@@ -3018,10 +3017,10 @@ function _merge_sh {
 
 	md5_new=$(_md5 "$tmp_app")
 	if test "$md5_old" = "$md5_new"; then
-		echo "no change"
+		_msg "no change"
 		_rm "$tmp_app" >/dev/null
 	else
-		echo "update"
+		_msg "update"
 		_mv "$tmp_app" "$my_app"
 		_chmod 755 "$my_app"
 	fi
@@ -3109,13 +3108,13 @@ function _mount {
 # Print message
 #
 # @param message
-# @param echo option (-n|-e|default='')
+# @param optional -n
 #--
 function _msg {
-	if test -z "$2"; then
-		echo "$1"
+	if test "$2" == '-n'; then
+		echo -n -e "\033[0;2m$1\033[0m"
 	else
-		echo "$2" "$1"
+		echo -e "\033[0;2m$1\033[0m"
 	fi
 }
 
@@ -3146,10 +3145,10 @@ function _mv {
 
 	if test "$AFTER_LAST_SLASH" = "*"
 	then
-		echo "mv $1 $2"
+		_msg "mv $1 $2"
 		mv "$1" "$2" || _abort "mv $1 $2 failed"
 	else
-		echo "mv '$1' '$2'"
+		_msg "mv '$1' '$2'"
 		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
 	fi
 }
@@ -5564,7 +5563,7 @@ function _sudo {
 	elif test $((flag & 1)) = 1 && test -z "$curr_sudo"; then
 		_log "$exec" sudo
 		eval "$exec ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
+			( _msg "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
 	else
 		SUDO=sudo
 		_log "sudo $exec" sudo
@@ -6016,20 +6015,20 @@ function _wget {
 	if test -s "$save_as"; then
 		_confirm "Overwrite $save_as" 1
 		if test "$CONFIRM" != "y"; then
-			echo "keep $save_as - skip wget '$1'"
+			_msg "keep $save_as - skip wget '$1'"
 			return
 		fi
 	fi
 
 	if test -z "$2"; then
-		echo "download $1"
+		_msg "download $1"
 		wget -q "$1" || _abort "wget -q '$1'"
 	elif test "$2" = "-"; then
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 		return
 	else
 		_mkdir "$(dirname "$2")"
-		echo "download $1 to $2"
+		_msg "download $1 to $2"
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 	fi
 

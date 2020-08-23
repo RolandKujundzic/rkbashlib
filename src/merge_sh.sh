@@ -33,7 +33,7 @@ function _merge_sh {
 
 	tmp_app="$sh_dir"'_'
 	test -s "$my_app" && md5_old=$(_md5 "$my_app")
-	echo -n "merge $sh_dir into $my_app ... "
+	_msg "merge $sh_dir into $my_app ... " -n
 
 	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
 	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
@@ -54,10 +54,10 @@ function _merge_sh {
 
 	md5_new=$(_md5 "$tmp_app")
 	if test "$md5_old" = "$md5_new"; then
-		echo "no change"
+		_msg "no change"
 		_rm "$tmp_app" >/dev/null
 	else
-		echo "update"
+		_msg "update"
 		_mv "$tmp_app" "$my_app"
 		_chmod 755 "$my_app"
 	fi
