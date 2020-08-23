@@ -4638,7 +4638,7 @@ function _require_version {
 # @example _resolv domain2ip some.domain.tld
 # @example _resolv ip2domain 8.8.8.8
 #--
-function _resolv {
+function _resolve {
 	local res
 
 	if test "$1" = 'domain2ip'; then
