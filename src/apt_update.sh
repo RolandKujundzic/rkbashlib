@@ -19,14 +19,14 @@ function _apt_update {
 		echo "$now" > "$lu" 
 
 		_run_as_root 1
-		echo -n "apt -y update &>$RKBASH_DIR/update.log ... "
+		_msg "apt -y update &>$RKBASH_DIR/update.log ... " -n
 		sudo apt -y update &>"$RKBASH_DIR/update.log" || _abort 'sudo apt -y update'
-		echo "done"
+		_msg "done"
 
 		if test "$1" = 1; then
-			echo -n "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... "
+			_msg "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... " -n
  			sudo apt -y upgrade &>"$RKBASH_DIR/upgrade.log" || _abort 'sudo apt -y upgrade'
-			echo "done"
+			_msg "done"
 		fi
 	fi
 

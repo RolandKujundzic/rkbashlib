@@ -292,10 +292,10 @@ function _append_txt {
 
 	_msg "append text '$2' to '$1'"
 	if ! test -f "$1" || test -w "$1"; then
-		echo "append [$2] to [$1]"
+		_msg "append [$2] to [$1]"
 		echo "$2" >> "$1" || _abort "echo '$2' >> '$1'"
 	else
-		echo "sudo append [$2] to [$1]"
+		_msg "sudo append [$2] to [$1]"
 		{ echo "$2" | sudo tee -a "$1" >/dev/null; } || _abort "echo '$2' | sudo tee -a '$1'"
 	fi
 }
@@ -383,14 +383,14 @@ function _apt_update {
 		echo "$now" > "$lu" 
 
 		_run_as_root 1
-		echo -n "apt -y update &>$RKBASH_DIR/update.log ... "
+		_msg "apt -y update &>$RKBASH_DIR/update.log ... " -n
 		sudo apt -y update &>"$RKBASH_DIR/update.log" || _abort 'sudo apt -y update'
-		echo "done"
+		_msg "done"
 
 		if test "$1" = 1; then
-			echo -n "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... "
+			_msg "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... " -n
  			sudo apt -y upgrade &>"$RKBASH_DIR/upgrade.log" || _abort 'sudo apt -y upgrade'
-			echo "done"
+			_msg "done"
 		fi
 	fi
 
@@ -608,9 +608,7 @@ function _cd {
 		fi
 	fi
 
-	if test -z "$2"; then
-		echo "cd '$1'"
-	fi
+	test -z "$2" && _msg "cd '$1'"
 
 	if test -z "$1"; then
 		if test -n "$LAST_DIR"; then
@@ -2800,7 +2798,7 @@ function _ln {
 		old_target=$(realpath "$2")
 
 		if test "$target" = "$old_target"; then
-			echo "Link $2 to $target already exists"
+			_msg "Link $2 to $target already exists"
 			return
 		fi
 
@@ -2817,12 +2815,12 @@ function _ln {
 		_cd "$target_dir"
 		tname=$(basename "$1")
 		lname=$(basename "$2")
-		echo "ln -s '$tname' '$lname' # in $PWD"
+		_msg "ln -s '$tname' '$lname' # in $PWD"
 		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
 		_cd "$cwd"
 	else
 		_mkdir "$link_dir"
-		echo "Link $2 to $target"
+		_msg "Link $2 to $target"
 		ln -s "$target" "$2"
 	fi
 
@@ -3066,7 +3064,7 @@ function _mkdir {
 		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
 		test $((flag & 4)) = 4 && _msg "directory $1 already exists"
 	else
-		echo "mkdir -p $1"
+		_msg "mkdir -p $1"
 		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
 	fi
 

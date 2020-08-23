@@ -21,9 +21,7 @@ function _cd {
 		fi
 	fi
 
-	if test -z "$2"; then
-		echo "cd '$1'"
-	fi
+	test -z "$2" && _msg "cd '$1'"
 
 	if test -z "$1"; then
 		if test -n "$LAST_DIR"; then

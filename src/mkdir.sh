@@ -17,7 +17,7 @@ function _mkdir {
 		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
 		test $((flag & 4)) = 4 && _msg "directory $1 already exists"
 	else
-		echo "mkdir -p $1"
+		_msg "mkdir -p $1"
 		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
 	fi
 

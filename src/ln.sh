@@ -18,7 +18,7 @@ function _ln {
 		old_target=$(realpath "$2")
 
 		if test "$target" = "$old_target"; then
-			echo "Link $2 to $target already exists"
+			_msg "Link $2 to $target already exists"
 			return
 		fi
 
@@ -35,12 +35,12 @@ function _ln {
 		_cd "$target_dir"
 		tname=$(basename "$1")
 		lname=$(basename "$2")
-		echo "ln -s '$tname' '$lname' # in $PWD"
+		_msg "ln -s '$tname' '$lname' # in $PWD"
 		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
 		_cd "$cwd"
 	else
 		_mkdir "$link_dir"
-		echo "Link $2 to $target"
+		_msg "Link $2 to $target"
 		ln -s "$target" "$2"
 	fi
 
