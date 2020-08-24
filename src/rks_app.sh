@@ -2,7 +2,8 @@
 
 #--
 # Prepare rks-app. Adjust APP_DESC if SYNTAX_HELP[$1|$1.$2] is set.
-# Execute self_update or help action if $1 = self_update|help.
+# Execute self_update if $1 = self_update.
+# Show help if last parameter is help or --help is set.
 #
 # @example _parse_arg "$@"; APP_DESC='...'; _rks_app "$0" "$@"
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
@@ -40,13 +41,16 @@ function _rks_app {
 
 	[[ "$p1" =	'self_update' ]] && _merge_sh
 
-	[[ "$p1" = 'help' ]] && _syntax "*" "cmd:* help:*"
+	[[ "$p1" = 'help' || "${ARG[help]}" = '1' ]] && _syntax "*" "cmd:* help:*"
 	test -z "$p1" && return
 
 	test -z "${SYNTAX_HELP[$p1]}" || APP_DESC="${SYNTAX_HELP[$p1]}"
 	test -z "${SYNTAX_HELP[$p1.$p2]}" || APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
 
-	[[ -n "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
-	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
+	[[ -n "${SYNTAX_CMD[$p1]}" && ("$p2" = 'help' || "${ARG[help]}" = '1') ]] && \
+		_syntax "$p1" "help:"
+
+	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && ("$p3" = 'help' || "${ARG[help]}" = '1') ]] && \
+		_syntax "$p1.$p2" "help:"
 }
 
