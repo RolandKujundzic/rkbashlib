@@ -4816,17 +4816,19 @@ function _rks_app {
 
 	[[ "$p1" =	'self_update' ]] && _merge_sh
 
-	[[ "$p1" = 'help' || "${ARG[help]}" = '1' ]] && _syntax "*" "cmd:* help:*"
+	[[ "$p1" = 'help' ]] && _syntax "*" "cmd:* help:*"
 	test -z "$p1" && return
 
-	test -z "${SYNTAX_HELP[$p1]}" || APP_DESC="${SYNTAX_HELP[$p1]}"
-	test -z "${SYNTAX_HELP[$p1.$p2]}" || APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
+	test -n "${SYNTAX_HELP[$p1]}" && APP_DESC="${SYNTAX_HELP[$p1]}"
+	[[ -n "$p2" && -n "${SYNTAX_HELP[$p1.$p2]}" ]] && APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
+
+	[[ -n "$p2" && -n "${SYNTAX_CMD[$p1.$p2]}" && ("$p3" = 'help' || "${ARG[help]}" = '1') ]] && \
+		_syntax "$p1.$p2" "help:"
 
 	[[ -n "${SYNTAX_CMD[$p1]}" && ("$p2" = 'help' || "${ARG[help]}" = '1') ]] && \
 		_syntax "$p1" "help:"
 
-	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && ("$p3" = 'help' || "${ARG[help]}" = '1') ]] && \
-		_syntax "$p1.$p2" "help:"
+	test "${ARG[help]}" = '1' && _syntax "*" "cmd:* help:*"
 }
 
 
