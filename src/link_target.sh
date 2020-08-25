@@ -13,6 +13,8 @@ function _link_target {
 	local target
 	test -z "$1" && _abort "empty link path"
 
+	LINK_TARGET_MISSING=
+
 	if [[ -f "$1" || -d "$1" ]]; then
 		target=$(realpath "$1" 2>/dev/null)
 	fi
