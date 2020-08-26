@@ -26,6 +26,7 @@ function _backup_file {
 	test "$backup" = "$BACKUP_FILE" && return
 
 	if [[ -f "$backup" && $(stat -c %Y "$backup") -ge $(( $(date +%s) - 5 )) ]]; then
+		BACKUP_FILE="$backup"
 		_msg "keep existing backup (younger than 5s)"
 		return
 	fi
