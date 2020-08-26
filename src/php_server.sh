@@ -8,7 +8,6 @@
 #   - script (buildin = RKBASH_DIR/php_server.php)
 #	  - host (0.0.0.0)
 #
-# @call_before _parse_arg "$@" 
 # @global RKBASH_DIR ARG
 # shellcheck disable=SC2009
 #--
@@ -67,7 +66,7 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
+	test -z "${ARG[0]}" && _abort 'call _rks_app "$@" or _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
 		echo "$php_code" > "$RKBASH_DIR/php_server.php"

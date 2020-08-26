@@ -122,10 +122,10 @@ done
 
 _parse_arg "$@"
 
-if [[ ! -z "${ARG[scan]}" && -s "${ARG[scan]}" ]]; then
+if [[ -n "${ARG[scan]}" && -s "${ARG[scan]}" ]]; then
 	_rkbash_inc "${ARG[scan]}" #>/dev/null
 	echo "found $RKBASH_INC_NUM: $RKBASH_INC"
-elif [[ ! -z "${ARG[self_update]}" && -f "${ARG[self_update]}" && -d "${ARG[self_update]}_" ]]; then
+elif [[ -n "${ARG[self_update]}" && -f "${ARG[self_update]}" && -d "${ARG[self_update]}_" ]]; then
 	echo "_merge_sh '${ARG[self_update]}_' '${ARG[self_update]}'"
 	_merge_sh "${ARG[self_update]}_" "${ARG[self_update]}" 
 else

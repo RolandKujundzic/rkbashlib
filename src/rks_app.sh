@@ -5,21 +5,22 @@
 # Execute self_update if $1 = self_update.
 # Show help if last parameter is help or --help is set.
 #
-# @example _parse_arg "$@"; APP_DESC='...'; _rks_app "$0" "$@"
+# @example APP_DESC='...'; _rks_app "$@"
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_DIR APP_PID (if not set)
 # @param $0 $@
 # shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {
+	_parse_arg "$@"
+
 	local me p1 p2 p3
-	me="$1"
-	shift
+	me="$0"
 	p1="$1"
 	p2="$2"
 	p3="$3"
 
-	test -z "$me" && _abort "call _rks_app '$0' $*"
+	test -z "$me" && _abort 'call _rks_app "$@"'
 	test -z "${ARG[1]}" || p1="${ARG[1]}"
 	test -z "${ARG[2]}" || p2="${ARG[2]}"
 	test -z "${ARG[3]}" || p3="${ARG[3]}"

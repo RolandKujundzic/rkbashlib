@@ -8,8 +8,8 @@ declare ARGV
 # name=value (name = ^[a-zA-Z0-9_\.\-]+). If --name set ARG[name]=1. 
 # Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
-# Use _parse_arg "$@" to preserve whitespace.
-#
+# 
+# @example _parse_arg "$@"
 # @param "$@"
 # @export ARG (hash) ARGV (array)
 # shellcheck disable=SC2034,SC1001
@@ -24,12 +24,12 @@ function _parse_arg {
 		val="${!i}"
 		key=
 
-		if [[ $val =~ ^\-?\-?[a-zA-Z0-9_\.\-]+= ]]; then
+		if [[ "$val" =~ ^\-?\-?[a-zA-Z0-9_\.\-]+= ]]; then
 			key="${val/=*/}"
 			val="${val#*=}"
 			test "${key:0:2}" = '--' && key="${key:2}"
 			test "${key:0:1}" = '-' && key="${key:1}"
-		elif [[ ${val:0:2} =~ ^\-\-[[a-zA-Z0-9_\.\-]+$ ]]; then
+		elif [[ "$val" =~ ^\-\-[[a-zA-Z0-9_\.\-]+$ ]]; then
 			key="${val:2}"
 			val=1
 		fi

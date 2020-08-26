@@ -4048,11 +4048,12 @@ declare -A ARG
 declare ARGV
 
 #--
-# Set ARG[name]=value if --name=value or name=value.
-# If --name set ARG[name]=1. Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
+# Set ARG[name]=value if --name=value, -name=value or 
+# name=value (name = ^[a-zA-Z0-9_\.\-]+). If --name set ARG[name]=1. 
+# Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
 # (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
-# Use _parse_arg "$@" to preserve whitespace.
-#
+# 
+# @example _parse_arg "$@"
 # @param "$@"
 # @export ARG (hash) ARGV (array)
 # shellcheck disable=SC2034,SC1001
@@ -4067,16 +4068,14 @@ function _parse_arg {
 		val="${!i}"
 		key=
 
-		if [[ $val == "--"*"="* ]]; then
+		if [[ "$val" =~ ^\-?\-?[a-zA-Z0-9_\.\-]+= ]]; then
 			key="${val/=*/}"
-			key="${key/--/}"
 			val="${val#*=}"
-		elif [[ $val == "--"* ]]; then
-			key="${val/--/}"
+			test "${key:0:2}" = '--' && key="${key:2}"
+			test "${key:0:1}" = '-' && key="${key:1}"
+		elif [[ "$val" =~ ^\-\-[[a-zA-Z0-9_\.\-]+$ ]]; then
+			key="${val:2}"
 			val=1
-		elif [[ $val =~ ^[a-zA-Z0-9_\.\-]+= ]]; then
-			key="${val/=*/}"
-			val="${val#*=}"
 		fi
 
 		if test -z "$key"; then
@@ -4200,7 +4199,6 @@ function _phpdocumentor {
 #   - script (buildin = RKBASH_DIR/php_server.php)
 #	  - host (0.0.0.0)
 #
-# @call_before _parse_arg "$@" 
 # @global RKBASH_DIR ARG
 # shellcheck disable=SC2009
 #--
@@ -4259,7 +4257,7 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
+	test -z "${ARG[0]}" && _abort 'call _rks_app "$@" or _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
 		echo "$php_code" > "$RKBASH_DIR/php_server.php"
@@ -4814,21 +4812,22 @@ function _rkbash {
 # Execute self_update if $1 = self_update.
 # Show help if last parameter is help or --help is set.
 #
-# @example _parse_arg "$@"; APP_DESC='...'; _rks_app "$0" "$@"
+# @example APP_DESC='...'; _rks_app "$@"
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_DIR APP_PID (if not set)
 # @param $0 $@
 # shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {
+	_parse_arg "$@"
+
 	local me p1 p2 p3
-	me="$1"
-	shift
+	me="$0"
 	p1="$1"
 	p2="$2"
 	p3="$3"
 
-	test -z "$me" && _abort "call _rks_app '$0' $*"
+	test -z "$me" && _abort 'call _rks_app "$@"'
 	test -z "${ARG[1]}" || p1="${ARG[1]}"
 	test -z "${ARG[2]}" || p2="${ARG[2]}"
 	test -z "${ARG[3]}" || p3="${ARG[3]}"
