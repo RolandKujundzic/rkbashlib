@@ -4051,7 +4051,8 @@ declare ARGV
 # Set ARG[name]=value if --name=value, -name=value or 
 # name=value (name = ^[a-zA-Z0-9_\.\-]+). If --name set ARG[name]=1. 
 # Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
-# (Re)Set ARGV=( $@ ). Don't reset ARG (allow default).
+# Set ARGV=( $@ ). Don't reset ARG (allow default).
+# Skip if ${#ARGV[@]} -gt 0.
 # 
 # @example _parse_arg "$@"
 # @param "$@"
@@ -4059,6 +4060,7 @@ declare ARGV
 # shellcheck disable=SC2034,SC1001
 #--
 function _parse_arg {
+	test "${#ARG[@]}" -gt 0 && return
 	ARGV=()
 
 	local i n key val
