@@ -29,7 +29,7 @@ fi
 # Abort with error message. Use NO_ABORT=1 for just warning output (return 1, export ABORT=1).
 #
 # @exit
-# @global APP NO_ABORT
+# @global APP NO_ABORT ABORT_MSG
 # @export ABORT
 # @param string abort message|line number
 # @param abort message (optional - use if $1 = line number)
@@ -55,7 +55,7 @@ function _abort {
 
 	msg="${rf}${msg}${nf}"
 
-	local frame trace
+	local frame trace 
 	if type -t caller >/dev/null 2>/dev/null; then
 		frame=0
 		trace=$(while caller $frame; do ((frame++)); done)
@@ -65,6 +65,8 @@ function _abort {
 	if [[ -n "$LOG_LAST" && -s "$LOG_LAST" ]]; then
 		msg="$msg\n\n$(tail -n+5 "$LOG_LAST")"
 	fi
+
+	test -n "$ABORT_MSG" && msg="$msg\n\n$ABORT_MSG" 
 
 	echo -e "\n${brf}ABORT${line}:${nf} $msg\n" 1>&2
 
