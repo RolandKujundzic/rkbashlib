@@ -5741,10 +5741,10 @@ function _syntax {
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
-			msg="$msg$(_syntax_cmd_other "$a")"
+			msg="$msg $(_syntax_cmd_other "$a")"
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
-			msg="$msg$(_syntax_help "${a:5}")"
+			msg="$msg $(_syntax_help "${a:5}")"
 		fi
 
 		test "$old_msg" != "$msg" && msg="$msg\n"
