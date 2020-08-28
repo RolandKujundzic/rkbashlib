@@ -3625,18 +3625,22 @@ function _mysql_restore {
 function _mysql_split_dsn {
 	_my_cnf
 
-	[[ -z "$DB_NAME" || -z "$DB_PASS" ]] || return 0
+	[[ -n "$DB_NAME" && -n "$DB_PASS" ]] && return 0
+
+	_msd_mysqli
+
+	[[ -n "$DB_NAME" && -n "$DB_PASS" ]] && return 0
 
 	if ! test -f "$1"; then
 		test -z "$DOCROOT" && { _find_docroot "$PWD" "$2" || return 1; }
 
 		if test -f "$DOCROOT/settings.php"; then
-			_settings_php "$DOCROOT/settings.php"
+			_msd_settings_php "$DOCROOT/settings.php"
 		elif test -f "$DOCROOT/index.php"; then
-			_settings_php "$DOCROOT/settings.php"
+			_msd_settings_php "$DOCROOT/settings.php"
 		fi
 	else
-		_settings_php "$1"
+		_msd_settings_php "$1"
 	fi
 
 	[[ -z "$DB_NAME" || -z "$DB_PASS" ]] || return 0
@@ -3647,12 +3651,31 @@ function _mysql_split_dsn {
 
 
 #--
+# Try to detect mysqli://... in *.php
+#--
+function _msd_mysqli {
+	local dsn
+
+	for a in *.php; do
+		test -z "$dsn" && dsn=$(grep -E 'define.+SETTINGS_DSN' "$a")
+	done
+
+	if [[ -z "$dsn" && "$dsn" =~ mysqli://(.+):(.+)@(.+)/(.+)\'\)\; ]]; then
+		if test "${BASH_REMATCH[0]}" = "${BASH_REMATCH[3]}"; then
+			DB_NAME="${BASH_REMATCH[0]}"
+			DB_PASS="${BASH_REMATCH[1]}"
+		fi
+	fi
+}
+
+
+#--
 # Load settings.php via php and export SETTINGS_(DB_NAME|DB_PASS|DSN), PATH_(RKPHPLIB|PHPLIB) and DOCROOT.
 # @param settings.php path
 #	@export DB_USER DB_NAME DB_PASS
 # shellcheck disable=SC2016,SC2034
 #--
-function _settings_php {
+function _msd_settings_php {
 	local php_code
 
 	IFS='' read -r -d '' php_code <<'EOF'
