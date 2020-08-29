@@ -3660,10 +3660,10 @@ function _msd_mysqli {
 		test -z "$dsn" && dsn=$(grep -E 'define.+SETTINGS_DSN' "$a")
 	done
 
-	if [[ -z "$dsn" && "$dsn" =~ mysqli://(.+):(.+)@(.+)/(.+)\'\)\; ]]; then
-		if test "${BASH_REMATCH[0]}" = "${BASH_REMATCH[3]}"; then
-			DB_NAME="${BASH_REMATCH[0]}"
-			DB_PASS="${BASH_REMATCH[1]}"
+	if [[ -n "$dsn" && "$dsn" =~ mysqli://(.+):(.+)@(.+)/(.+)\'\)\; ]]; then
+		if test "${BASH_REMATCH[1]}" = "${BASH_REMATCH[4]}"; then
+			DB_NAME="${BASH_REMATCH[1]}"
+			DB_PASS="${BASH_REMATCH[2]}"
 		fi
 	fi
 }
