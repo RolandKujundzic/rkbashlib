@@ -40,7 +40,7 @@ function _abort {
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "${rf}WARNING${line}: ${msg}${nf}"
+		echo -e "${rf}WARNING${line}: ${msg}${nf}"
 		return 1
 	fi
 
