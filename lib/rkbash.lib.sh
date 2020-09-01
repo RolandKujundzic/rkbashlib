@@ -49,7 +49,7 @@ function _abort {
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "${rf}WARNING${line}: ${msg}${nf}"
+		echo -e "${rf}WARNING${line}: ${msg}${nf}"
 		return 1
 	fi
 
@@ -4661,40 +4661,49 @@ function _require_priv {
 #
 # @param program
 # @param string default='' (abort if missing), 1=return false, apt:xxx (install xxx if missing)
-# @return bool (if $2==1)
+# @return bool (if $2==1 or NO_ABORT=1)
 #--
 function _require_program {
 	local ptype
 	ptype=$(type -t "$1")
 
-	test "$ptype" = "function" && return
-	command -v "$1" >/dev/null 2>&1 && return
-	command -v "./$1" >/dev/null 2>&1 && return
+	test "$ptype" = "function" && return 0
+	command -v "$1" >/dev/null 2>&1 && return 0
+	command -v "./$1" >/dev/null 2>&1 && return 0
 
 	if test "${2:0:4}" = "apt:"; then
 		_apt_install "${2:4}"
-	elif test -z "$2"; then
-		echo "No such program [$1]"
-		exit 1
-	else
-		return 1
+		return 0
 	fi
+
+	[[ -n "$2" || "$NO_ABORT" = 1 ]] && return 1
+
+	# don't use _msg or _abort
+	echo "No such program [$1]"
+	exit 1
 }
 
 
 #--
 # Abort if '$1 --version' is lowner than $2.
+# Use NO_ABORT=1 to return 1 if version is wrong.
 #
 # @param app name
 # @param app version
+# @return bool
 #--
 function _require_version {
 	_require_program "$1"
+
 	local version
 	version="$($1 --version 2>/dev/null | sed -E 's/.+ version ([0-9]+\.[0-9]+)\.?([0-9]*).+/\1\2/')"
+
 	if (( $(echo "$version < $2" | bc -l) )); then
 		_abort "$1 --version < $2"
+		return 1
 	fi
+
+	return 0
 }
 
 
@@ -4959,7 +4968,7 @@ function _rsync {
 	if test "$error" = "1"; then
 		test -z "$(tail -4 "${LOG_FILE[rsync]}" | grep 'speedup is ')" && _abort "$rsync"
 		test -z "$(tail -1 "${LOG_FILE[rsync]}" | grep "rsync error:")" || \
-			_msg "[WARNING]: FIX rsync errors in ${LOG_FILE[rsync]}"
+			_warn "FIX rsync errors in ${LOG_FILE[rsync]}"
 	fi
 }
 
