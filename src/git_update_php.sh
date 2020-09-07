@@ -11,7 +11,7 @@
 # @param int flag (2^N, default=15)
 #--
 function _git_update_php {
-	local flag version
+	local flag version co_phplib co_rkphplib
 	flag=$((${1:-7} + 0))
 
 	if [[ $((flag & 8)) -eq 8 && -s settings.php ]]; then
@@ -27,17 +27,27 @@ function _git_update_php {
 	_mkdir php
 	_cd php
 
-	# @ToDo $(_version php 2)
-	version=8
+	[[ $((flag & 2)) = 2 && -d phplib ]] && co_phplib=1
+	[[ $((flag & 1)) = 1 && -d rkphplib ]] && co_rkphplib=1
 
 	if test $((flag & 4)) -eq 4; then
 		_require_program rks-git
-		[[ $((flag & 1)) = 1 && ! -d rkphplib ]] && rks-git clone rkphplib --version="$version" --q1=y --q2=y
-		[[ $((flag & 2)) = 2 && ! -d phplib ]] && rks-git clone phplib --version="$version" --q1=y --q2=y
+		# @ToDo $(_version php 2)
+		version=8
+
+		if [[ $((flag & 1)) = 1 && ! -d rkphplib ]]; then
+			rks-git clone rkphplib --version="$version" --q1=y --q2=y
+			co_rkphplib=
+		fi
+
+		if [[ $((flag & 2)) = 2 && ! -d phplib ]]; then
+			rks-git clone phplib --version="$version" --q1=y --q2=y
+			co_phplib=
+		fi
 	fi
 
-	test $((flag & 1)) -eq 1 && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
-	test $((flag & 2)) -eq 2 && _git_checkout "rk@s1.dyn4.com:/data/git/php/phplib.git" phplib
+	test "$co_rkphplib" = '1' && _git_checkout "https://github.com/RolandKujundzic/rkphplib.git" rkphplib
+	test "$co_phplib" = '1' && _git_checkout "rk@s1.dyn4.com:/data/git/php/phplib.git" phplib
 
 	_cd ..
 }
