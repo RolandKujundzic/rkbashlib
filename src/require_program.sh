@@ -22,8 +22,15 @@ function _require_program {
 
 	[[ -n "$2" || "$NO_ABORT" = 1 ]] && return 1
 
-	# don't use _msg or _abort
-	echo "No such program [$1]"
+	# trace
+	local frame trace 
+	if type -t caller >/dev/null 2>/dev/null; then
+		frame=0
+		trace=$(while caller $frame; do ((frame++)); done)
+	fi
+
+	# don't use _abort
+	echo -e "\n\033[1;31mABORT:\033[0m \033[0;31mNo such program [$1]\033[0m\n\n$trace\n" 1>&2
 	exit 1
 }
 
