@@ -24,7 +24,8 @@ function _composer {
 		test "$action" = 'q' && return
 	fi
 
-	$cmd validate --no-check-all --strict
+	$cmd validate --no-check-publish 2>/dev/null || \
+		_abort "$cmd validate --no-check-publish"
 
 	if test -f composer.json; then
 		if test "$action" = 'i'; then
