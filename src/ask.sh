@@ -9,16 +9,16 @@
 # @param string label
 # @param default answer or answer selection
 # @param bool required 1|[] (default empty)
-# @global ASK_DEFAULT
+# @global ASK_DEFAULT ASK_DESC
 # @export ANSWER
 #--
 function _ask {
-	local allow default label recursion
+	local allow default msg label recursion
 	
 	if test -z "$2"; then
-		label="$1  "
+		:
 	elif [[ "${2:0:1}" == "<" && "${2: -1}" == ">" ]]; then
-		label="$1  $2  "
+		label="$2  "
  		allow="|${2:1: -1}|"
 
 		if test -n "$ASK_DEFAULT"; then
@@ -27,7 +27,7 @@ function _ask {
 			ASK_DEFAULT=
 		fi
 	else 
-		label="$1  [$2]  "
+		label="[$2]  "
  		default="$2"
 	fi
 	
@@ -37,7 +37,14 @@ function _ask {
 		return
 	fi
 
-	echo -n "$label"
+	msg="\033[0;35m$1\033[0m"
+	if test -z "$ASK_DESC"; then
+		echo -en "$msg$label"
+	else
+		echo -en "$msg\n\n$ASK_DESC\n\n$label"
+	fi
+
+	ASK_DESC=
 	read -r
 
 	if test "$REPLY" = " "; then
