@@ -8,26 +8,20 @@
 # @param [install|update|remove] (empty = default = update or install)
 #--
 function _composer {
-	local action global_comp local_comp cmd
-	global_comp=$(command -v composer)
+	local action cmd
 	action="$1"
 
-	test -f 'composer.phar' && local_comp=composer.phar
-
-	if [[ -z "$global_comp" && -z "$local_comp" ]]; then
+	if [[ ! -f 'composer.phar' && ! -f '/usr/local/bin/composer' ]]; then
 		_composer_install
 		test "$action" = 'q' && return
 	fi
 
+	cmd=$(command -v composer)
+	test -z "$cmd" && cmd='php composer.phar'
+
 	if test -z "$action"; then
 		_composer_ask
 		test "$action" = 'q' && return
-	fi
-
-	if test -n "$local_comp"; then
-		cmd='php composer.phar'
-	elif test -n "$global_comp"; then
-		cmd='composer'
 	fi
 
 	$cmd validate --no-check-all --strict
@@ -46,7 +40,7 @@ function _composer {
 
 #--
 # Install composer globally or as ./composer.phar
-# @global global_comp local_comp action
+# @global action
 #--
 function _composer_install {
 	ASK_DESC="[g] = Global installation as /usr/local/bin/composer\n[l] = Local installation as ./composer.phar"
