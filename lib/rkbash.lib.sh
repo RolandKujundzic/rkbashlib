@@ -5770,6 +5770,7 @@ function _sync_db {
 #
 # @param source directory
 # @param output file
+# @param optional (1 = run check)
 # @global PATH_RKPHPLIB
 # shellcheck disable=SC2028
 #--
@@ -5793,6 +5794,11 @@ function _syntax_check_php {
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
+
+	if test "$3" = '1'; then
+		php "$2" || _abort "php $2"
+		_rm "$2"
+	fi
 }
 
 
