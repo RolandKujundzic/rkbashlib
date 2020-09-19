@@ -1265,6 +1265,8 @@ function _composer {
 		cmd='composer'
 	fi
 
+	$cmd validate --no-check-all --strict
+
 	if test -f composer.json; then
 		if test "$action" = 'i'; then
 			$cmd install
