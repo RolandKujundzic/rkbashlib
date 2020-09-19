@@ -423,7 +423,7 @@ function _ask {
 
 		if test -n "$ASK_DEFAULT"; then
 			default="$ASK_DEFAULT"
-			label="$label [$default]"
+			label="$label [$default]  "
 			ASK_DEFAULT=
 		fi
 	else 
