@@ -41,7 +41,7 @@ function _git_update_php {
 		fi
 
 		if [[ $((flag & 2)) = 2 && ! -d phplib ]]; then
-			rks-git clone phplib --version="$version,js,css" --q1=y --q2=y
+			rks-git clone phplib --version="$version" --q1=y --q2=y
 			co_phplib=
 		fi
 	fi
