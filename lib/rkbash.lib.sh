@@ -4136,7 +4136,7 @@ declare ARGV
 # name=value (name = ^[a-zA-Z0-9_\.\-]+). If --name set ARG[name]=1. 
 # Set ARG[0], ARG[1], ... (num = ARG[#]) otherwise.
 # Set ARGV=( $@ ). Don't reset ARG (allow default).
-# Skip if ${#ARGV[@]} -gt 0.
+# Skip if ${#ARGV[@]} -gt 0. Called in _rks_app..
 # 
 # @example _parse_arg "$@"
 # @param "$@"
@@ -4917,7 +4917,7 @@ function _rkbash {
 # @example APP_DESC='...'; _rks_app "$@"
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_DIR APP_PID (if not set)
-# @param $0 $@
+# @param $@
 # shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {

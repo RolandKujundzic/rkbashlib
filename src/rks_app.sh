@@ -8,7 +8,7 @@
 # @example APP_DESC='...'; _rks_app "$@"
 # @global APP_DESC SYNTAX_CMD SYNTAX_HELP
 # @export APP CURR APP_DIR APP_PID (if not set)
-# @param $0 $@
+# @param $@
 # shellcheck disable=SC2034,SC2119
 #--
 function _rks_app {
