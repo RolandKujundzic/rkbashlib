@@ -36,7 +36,6 @@ function _rks_app {
 		fi
 	fi
 
-	test -z "$APP_DESC" && _abort "APP_DESC is empty"
 	test -z "${#SYNTAX_CMD[@]}" && _abort "SYNTAX_CMD is empty"
 	test -z "${#SYNTAX_HELP[@]}" && _abort "SYNTAX_HELP is empty"
 
