@@ -23,7 +23,7 @@ function _webhome_php {
 
 		if test -d "$dir"; then
 			_cd "$dir"
-			git pull
+			_git_pull
 			_cd ..
 		else
 			ln -s "/webhome/.php/$dir" "$dir" || _abort "ln -s '/webhome/.php/$dir' '$dir'"

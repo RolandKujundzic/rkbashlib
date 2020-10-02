@@ -50,7 +50,7 @@ function _git_checkout {
 	if test -d "$git_dir"; then
 		_cd "$git_dir"
 		echo "git pull $git_dir"
-		git pull
+		_git_pull
 		_git_submodule
 		_cd "$curr"
 	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
