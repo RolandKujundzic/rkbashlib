@@ -1241,6 +1241,7 @@ function _composer_pkg {
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
+# shellcheck disable=SC2120
 #--
 function _composer {
 	local action cmd
@@ -2107,7 +2108,7 @@ function _git_checkout {
 	if test -d "$git_dir"; then
 		_cd "$git_dir"
 		echo "git pull $git_dir"
-		git pull
+		_git_pull
 		_git_submodule
 		_cd "$curr"
 	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
@@ -2166,6 +2167,14 @@ function _github_latest {
 			GITHUB_IS_LATEST[$2]=1
 		fi
 	fi
+}
+
+
+#--
+# Abort git pull if longer than 30 sec
+#--
+function _git_pull {
+	timeout 30 git pull >/dev/null || _abort "timeout 30 git pull # in $PWD"
 }
 
 
@@ -6149,7 +6158,7 @@ function _webhome_php {
 
 		if test -d "$dir"; then
 			_cd "$dir"
-			git pull
+			_git_pull
 			_cd ..
 		else
 			ln -s "/webhome/.php/$dir" "$dir" || _abort "ln -s '/webhome/.php/$dir' '$dir'"
