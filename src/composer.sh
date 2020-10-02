@@ -6,6 +6,7 @@
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
+# shellcheck disable=SC2120
 #--
 function _composer {
 	local action cmd
