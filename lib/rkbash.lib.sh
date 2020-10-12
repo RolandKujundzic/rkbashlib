@@ -470,6 +470,7 @@ function _ask {
 
 #--
 # Install Amazon AWS PHP SDK.
+# shellcheck disable=SC2119
 #--
 function _aws {
 	_composer
@@ -1241,7 +1242,7 @@ function _composer_pkg {
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# shellcheck disable=SC2120
+# shellcheck disable=SC2120,SC2119
 #--
 function _composer {
 	local action cmd
@@ -2458,6 +2459,7 @@ function _include {
 
 #--
 # Install apache2 and mod php
+# shellcheck disable=SC2119
 #--
 function _install_apache2 {
 	_apt_update
@@ -2504,6 +2506,7 @@ function _install_app {
 
 #--
 # Install mariadb server and client and php-mysql
+# shellcheck disable=SC2119
 #--
 function _install_mariadb {
 	_apt_update
@@ -2513,6 +2516,7 @@ function _install_mariadb {
 
 #--
 # Install nginx and php-fpm
+# shellcheck disable=SC2119
 #--
 function _install_nginx {
 	_apt_update
@@ -2548,6 +2552,7 @@ function _install_node {
 
 #--
 # Install php and php packages
+# shellcheck disable=SC2119
 #--
 function _install_php {
 	_apt_update	
@@ -2558,6 +2563,7 @@ function _install_php {
 
 #--
 # Install sqlite3 and php-sqlite3
+# shellcheck disable=SC2119
 #--
 function _install_sqlite3 {
 	_apt_update

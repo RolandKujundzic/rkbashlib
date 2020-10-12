@@ -2,6 +2,7 @@
 
 #--
 # Install php and php packages
+# shellcheck disable=SC2119
 #--
 function _install_php {
 	_apt_update	
