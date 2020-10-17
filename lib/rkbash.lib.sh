@@ -439,7 +439,7 @@ function _ask {
 
 	msg="\033[0;35m$1\033[0m"
 	if test -z "$ASK_DESC"; then
-		echo -en "$msg$label"
+		echo -en "$msg  $label"
 	else
 		echo -en "$msg\n\n$ASK_DESC\n\n$label"
 	fi
