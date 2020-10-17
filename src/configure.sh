@@ -11,7 +11,8 @@ function _configure {
 	_mkdir "$(dirname "$log")" >/dev/null
 
 	SECONDS=0
-	_msg "./configure $* (see $log)"
+	_msg "./configure $*"
+	_msg "log: $log"
 	./configure $* >"$log" 2>&1 || _abort "./configure $* >$log 2>&1"
 	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 }

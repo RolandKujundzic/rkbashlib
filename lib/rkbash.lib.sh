@@ -1344,7 +1344,8 @@ function _configure {
 	_mkdir "$(dirname "$log")" >/dev/null
 
 	SECONDS=0
-	_msg "./configure $* (see $log)"
+	_msg "./configure $*"
+	_msg "log: $log"
 	./configure $* >"$log" 2>&1 || _abort "./configure $* >$log 2>&1"
 	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 }
@@ -3063,7 +3064,8 @@ function _make_install {
 	_mkdir "$(dirname "$log")" >/dev/null
 
 	SECONDS=0
-	_msg "sudo make install (see $log)"
+	_msg "sudo make install"
+	_msg "log: $log"
 	sudo make install >"$log" 2>&1 || _abort "make install >$log 2>&1"
 	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 }
@@ -3072,6 +3074,7 @@ function _make_install {
 #--
 # Run make script
 # @param check|test|... (optional)
+# shellcheck disable=SC2086
 #--
 function _make {
 	local log
@@ -3079,8 +3082,9 @@ function _make {
 	_mkdir "$(dirname "$log")" >/dev/null
 
 	SECONDS=0
-	_msg "make $1 (see $log)"
-	make "$1" >"$log" 2>&1 || _abort "make $1 >$log 2>&1"
+	_msg "make $1"
+	_msg "log: $log"
+	make $1 >"$log" 2>&1 || _abort "make $1 >$log 2>&1"
 	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 }
 
