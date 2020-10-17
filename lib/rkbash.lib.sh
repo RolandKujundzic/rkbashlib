@@ -1334,6 +1334,23 @@ function _composer_ask {
 
 
 #--
+# Run configure script
+# @param *
+# shellcheck disable=SC2086,SC2048
+#--
+function _configure {
+	local log
+	log="$RKBASH_DIR/$(basename "$PWD")/configure.log"
+	_mkdir "$(dirname "$log")" >/dev/null
+
+	SECONDS=0
+	_msg "./configure $* (see $log)"
+	./configure $* >"$log" 2>&1 || _abort "./configure $* >$log 2>&1"
+	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
+}
+
+
+#--
 # Show "message  y [n]" (or $2 & 1: [y] n) and wait for key press. 
 # Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
 # key was pressed or 10 (3) sec expired. Use --q1=y and --q2=n call parameter to confirm
@@ -1899,10 +1916,10 @@ function _extract_tgz {
 
 	tar -tzf "$1" >/dev/null 2>/dev/null || _abort "_extract_tgz: invalid archive '$1'"
 
-  echo "extract archive $1"
-  SECONDS=0
-  tar -xzf "$1" >/dev/null || _abort "tar -xzf $1 failed"
-  echo "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
+	_msg "extract archive $1"
+	SECONDS=0
+	tar -xzf "$1" >/dev/null || _abort "tar -xzf $1 failed"
+	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 
 	if [[ -n "$target" && ! -d "$target" && ! -f "$target" ]]; then
 		_abort "$target was not created"
@@ -3033,6 +3050,38 @@ function _lynx {
 	else
 		lynx -dump "$1"
 	fi
+}
+
+
+#--
+# Run make install script
+# shellcheck disable=SC2024
+#--
+function _make_install {
+	local log
+	log="$RKBASH_DIR/$(basename "$PWD")/make_install.log"
+	_mkdir "$(dirname "$log")" >/dev/null
+
+	SECONDS=0
+	_msg "sudo make install (see $log)"
+	sudo make install >"$log" 2>&1 || _abort "make install >$log 2>&1"
+	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
+}
+
+
+#--
+# Run make script
+# @param check|test|... (optional)
+#--
+function _make {
+	local log
+	log="$RKBASH_DIR/$(basename "$PWD")/make$1.log"
+	_mkdir "$(dirname "$log")" >/dev/null
+
+	SECONDS=0
+	_msg "make $1 (see $log)"
+	make "$1" >"$log" 2>&1 || _abort "make $1 >$log 2>&1"
+	_msg "$((SECONDS / 60)) minutes and $((SECONDS % 60)) seconds elapsed."
 }
 
 
