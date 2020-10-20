@@ -1671,7 +1671,7 @@ function _ctar {
 	opt='-czf'
 
 	test $((flag & 1)) = 1 && opt="--absolute-names $opt" 
-	test $((flag & 2)) = 2 && opt="$opt --to-stdout" 
+	test $((flag & 2)) = 2 && opt="$opt -" 
 
 	tar $opt $* || _abort "tar $opt $*"
 }
