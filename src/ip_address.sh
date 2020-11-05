@@ -24,11 +24,11 @@ function _ip_address {
 
 	local ping4
 	_require_program ping
-  if ping -4 -c1 localhost &>/dev/null; then
-    ping4="ping -4 -c 1"
-  else
-    ping4="ping -c 1"
-  fi
+	if ping -4 -c1 localhost &>/dev/null; then
+		ping4="ping -4 -c 1"
+	else
+		ping4="ping -c 1"
+	fi
 
 	host=$(hostname)
 	ping_ok=$($ping4 "$host" 2>/dev/null | grep "$IP_ADDRESS")
