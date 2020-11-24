@@ -6314,8 +6314,10 @@ function _webserver_rw_dir {
 
 #--
 # Download URL with wget. Autocreate target path.
+# Use WGET_KEEP to keep existing files.
 #
 # @param url
+# @global WGET_KEEP
 # @param save as default = autodect, use "-" for stdout
 #--
 function _wget {
@@ -6326,6 +6328,11 @@ function _wget {
 
 	save_as=${2:-$(basename "$1")}
 	if test -s "$save_as"; then
+		if test "$WGET_KEEP" = '1'; then
+			_msg "keep existing $save_as"
+			return
+		fi
+
 		_confirm "Overwrite $save_as" 1
 		if test "$CONFIRM" != "y"; then
 			_msg "keep $save_as - skip wget '$1'"
