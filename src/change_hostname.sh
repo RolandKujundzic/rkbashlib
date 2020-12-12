@@ -4,11 +4,12 @@
 # Change hostname if hostname != $1.
 #
 # @param name.domain.tld
+# shellcheck disable=SC1001
 #--
 function _change_hostname {
 	local hname ip hs hd
 
-	[[ -z "$1" || ! "$1" =~ ^[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+$ ]]&& \
+	[[ -z "$1" || ! "$1" =~ ^[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+$ ]] && \
 		_abort "invalid hostname '$1' use name.domain.tld"
 
 	_run_as_root

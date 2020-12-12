@@ -4,7 +4,7 @@
 # Install apt packages.
 # @param $* (package list)
 # @global LOG_NO_ECHO
-# shellcheck disable=SC2048
+# shellcheck disable=SC2048,SC2033
 #--
 function _apt_install {
 	local curr_lne

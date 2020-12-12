@@ -11,7 +11,7 @@
 # shellcheck disable=SC2028
 #--
 function _syntax_check_php {
-	local a php_files php_bin
+	local a php_files fnum
 
 	if test "$1" = 'test'; then
 		_require_file 'test/run.sh'
@@ -24,8 +24,15 @@ function _syntax_check_php {
 		return
 	fi
 
-	php_files=$(find "$1" -type f -name '*.php')
-	php_bin=$(grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//')
+	php_files=$(grep -R -E '^#\!/usr/bin/php' "$1" | sed -E 's/\:\#\!.+//')
+	fnum=$(echo "$php_files" | xargs -n1 | wc -l)
+	_msg "Syntax check $fnum executable php files in $1"
+	for a in $php_files
+	do
+		if ! php -l "$a" >/dev/null; then
+			_abort "syntax error in $a"
+		fi
+	done
 
 	_require_global PATH_RKPHPLIB
 
@@ -36,16 +43,25 @@ function _syntax_check_php {
 		echo -e "\n}\n"
 	} >"$2"
 
-	for a in $php_files $php_bin
+	php_files=$(find "$1" -type f -name '*.php')
+	fnum=$(echo "$php_files" | xargs -n1 | wc -l)
+	_msg "Syntax check $fnum php files in $1"
+	for a in $php_files
 	do
-		if test -z "$(head -1 "$a" | grep 'php -c skip_syntax_check')"; then
+		if ! php -l "$a" >/dev/null; then
+			_abort "syntax error in $a"
+		fi
+
+		if test -z "$(head -1 "$a" | grep -E '^#\!/usr/bin/php')"; then
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
 
 	if test "$3" = '1'; then
-		php "$2" || _abort "php $2"
+		_msg "Execute $2"
+		php "$2" > "$2.log" || _abort "php $2  # see $2.log"
 		_rm "$2"
+		_rm "$2.log"
 	fi
 }
 
