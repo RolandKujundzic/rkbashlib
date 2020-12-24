@@ -3,9 +3,10 @@
 #--
 # Download URL with wget. Autocreate target path.
 # Use WGET_KEEP to keep existing files.
+# Use WGET_SHA256 for sha256sum check.
 #
 # @param url
-# @global WGET_KEEP
+# @global WGET_KEEP WGET_SHA256
 # @param save as default = autodect, use "-" for stdout
 #--
 function _wget {
@@ -16,6 +17,7 @@ function _wget {
 
 	save_as=${2:-$(basename "$1")}
 	if test -s "$save_as"; then
+		_sha256 "$save_as" "$WGET_SHA256"
 		if test "$WGET_KEEP" = '1'; then
 			_msg "keep existing $save_as"
 			return
@@ -49,5 +51,7 @@ function _wget {
 	elif ! test -s "$2"; then
 		_abort "Download $2 to $1 failed"
 	fi
+
+	_sha256 "$save_as" "$WGET_SHA256"
 }
 

@@ -5267,6 +5267,20 @@ function _set {
 
 
 #--
+# Abort if file and checksum are set and mismatch
+# @param file
+# @param sha256 checksum
+#--
+function _sha256 {
+	[[ ! -f "$1" || -z "$2" ]] && return
+	local checksum
+
+	checksum=$(sha256sum "$1" | awk '{print $1}')
+	test "$checksum" = "$2" || _abort "invalid SH256 checksum\n$1\n$checksum != $2"
+}
+
+
+#--
 # Run shellcheck for *.sh files in directory $1 and subdirectories
 # @param directory
 # shellcheck disable=SC2034,SC2207
@@ -6332,9 +6346,10 @@ function _webserver_rw_dir {
 #--
 # Download URL with wget. Autocreate target path.
 # Use WGET_KEEP to keep existing files.
+# Use WGET_SHA256 for sha256sum check.
 #
 # @param url
-# @global WGET_KEEP
+# @global WGET_KEEP WGET_SHA256
 # @param save as default = autodect, use "-" for stdout
 #--
 function _wget {
@@ -6345,6 +6360,7 @@ function _wget {
 
 	save_as=${2:-$(basename "$1")}
 	if test -s "$save_as"; then
+		_sha256 "$save_as" "$WGET_SHA256"
 		if test "$WGET_KEEP" = '1'; then
 			_msg "keep existing $save_as"
 			return
@@ -6378,5 +6394,7 @@ function _wget {
 	elif ! test -s "$2"; then
 		_abort "Download $2 to $1 failed"
 	fi
+
+	_sha256 "$save_as" "$WGET_SHA256"
 }
 
