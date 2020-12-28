@@ -2602,19 +2602,27 @@ function _install_nginx {
 
 #--
 # Install node NODE_VERSION from latest binary package. 
-# If you want to install|update node/npm use _node_version instead.
+# To instal latest use _node_current instead.
 #
-# @see _node_version
 # @global NODE_VERSION
+# @param remove (optional)
 # shellcheck disable=SC2034
 #--
 function _install_node {
-	_require_global NODE_VERSION
-	local os_type curr_sudo
+	local a os_type curr_sudo
 
 	os_type=$(_os_type)
 	test "$os_type" = "linux" || _abort "Update node to version >= $NODE_VERSION - see https://nodejs.org/"
 
+	if test "$1" == 'remove'; then
+		for a in '/usr/local/bin/npm' '/usr/local/bin/node'; do
+			_rm "$a"
+		done
+
+		return
+	fi
+
+	_require_global NODE_VERSION
 	_msg "Install node $NODE_VERSION"
 	APP_SYNC="bin include lib share"
 	APP_PREFIX="/usr/local"
@@ -3920,14 +3928,14 @@ location ~ \.php$ { fastcgi_pass unix:/var/run/php5-fpm.sock; fastcgi_index inde
 #--
 # Check node.js version. Install node and npm if missing. 
 # Update to NODE_VERSION and NPM_VERSION if necessary.
-# Use NODE_VERSION=v12.15.3 and NPM_VERSION=6.13.4 as default.
+# Use NODE_VERSION=v15.5.0 and NPM_VERSION=7.3 as default.
 #
 # @global NODE_VERSION NPM_VERSION
 # @export NODE_VERSION NPM_VERSION
 #--
-function _node_version {
-	test -z "$NODE_VERSION" && NODE_VERSION=v14.15.3
-	test -z "$NPM_VERSION" && NPM_VERSION=6.14.10
+function _node_current {
+	test -z "$NODE_VERSION" && NODE_VERSION=v15.5.0
+	test -z "$NPM_VERSION" && NPM_VERSION=7.3
 
 	if ! command -v node >/dev/null || ! command -v npm >/dev/null; then
 		_install_node 
@@ -3978,7 +3986,7 @@ function _npm2js {
 #--
 function _npm_module {
 	if ! command -v npm >/dev/null; then
-		_node_version
+		_node_current
   fi
 
 	local extra_param

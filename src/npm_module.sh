@@ -10,7 +10,7 @@
 #--
 function _npm_module {
 	if ! command -v npm >/dev/null; then
-		_node_version
+		_node_current
   fi
 
 	local extra_param
