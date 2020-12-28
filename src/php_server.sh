@@ -7,11 +7,17 @@
 #   - docroot ($PWD)
 #   - script (buildin = RKBASH_DIR/php_server.php)
 #	  - host (0.0.0.0)
+#   - list
 #
 # @global RKBASH_DIR ARG
 # shellcheck disable=SC2009
 #--
 function _php_server {
+	if test "${ARG[list]}" = '1'; then
+		ps aux | grep -Po '[p]hp .*\-S .+'
+		return
+	fi
+
 	_require_program php
 	_mkdir "$RKBASH_DIR"
 
