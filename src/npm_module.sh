@@ -14,28 +14,28 @@ function _npm_module {
   fi
 
 	local extra_param
-	if test "$1" = "ios-deploy"; then
-		extra_param="--unsafe-perm=true --allow-root"
-	fi
+	extra_param="$2"
+	test "$1" = "ios-deploy" && extra_param="$2 --unsafe-perm=true --allow-root"
 
 	if test "$2" = "-g"; then
 		if test -d "/usr/local/lib/node_modules/$1"; then
-			echo "node module $1 is already globally installed - updating"
-			sudo npm update $extra_param -g "$1"
+			_msg "node module $1 is already globally installed - updating"
+			sudo npm update $extra_param "$1"
 			return
 		else
-			echo "install node module $1 globally"
-			sudo npm install $extra_param -g "$1"
+			_msg "install node module $1 globally"
+			sudo npm install $extra_param "$1"
 			return
 		fi
 	fi
 
 	if test -d "node_modules/$1"; then
-		echo "node module $1 is already installed - updating"
-		npm update $extra_param "$1"
-	return
+		_msg "node module $1 is already installed - updating"
+		npm update $extra_param "$1" >/dev/null
+	else
+		test -z "$extra_param" && extra_param='--save'
+		_msg "install node module $1"
+		npm install $extra_param "$1"
 	fi
-
-	npm install $extra_param "$1" $2
 }
 
