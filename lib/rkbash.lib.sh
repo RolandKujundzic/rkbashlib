@@ -770,11 +770,11 @@ function _cert_info {
 	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
 	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/,? ?DNS\:/ /g' | _trim)
 
-	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
-	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+' | sed 's/Subject: CN=//')
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+\.[a-z]+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+\.[a-z]+' | sed 's/Subject: CN=//')
 	
 	CERT_DOMAIN="$domain"
-	CERT_ISSUER=$(echo "$certinfo" | grep 'Issuer:' | sed -E 's/.+O = (.+), CN =.+/\1/')
+	CERT_ISSUER=$(echo "$certinfo" | grep 'Issuer:' | sed -E 's/.+O = (.+), CN =.+\.[a-z]+/\1/')
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
 	CERT_UNTIL=$(echo "$certinfo" | grep "GMT" | grep -o -E 'Not After .+' | sed -E -e 's/.+\: (.+ GMT).*/\1/i') 
@@ -3928,14 +3928,14 @@ location ~ \.php$ { fastcgi_pass unix:/var/run/php5-fpm.sock; fastcgi_index inde
 #--
 # Check node.js version. Install node and npm if missing. 
 # Update to NODE_VERSION and NPM_VERSION if necessary.
-# Use NODE_VERSION=v15.5.0 and NPM_VERSION=7.3 as default.
+# Use NODE_VERSION=v15.6.0 and NPM_VERSION=7.4.0 as default.
 #
 # @global NODE_VERSION NPM_VERSION
 # @export NODE_VERSION NPM_VERSION
 #--
 function _node_current {
-	test -z "$NODE_VERSION" && NODE_VERSION=v15.5.0
-	test -z "$NPM_VERSION" && NPM_VERSION=7.3
+	test -z "$NODE_VERSION" && NODE_VERSION=v15.6.0
+	test -z "$NPM_VERSION" && NPM_VERSION=7.4.0
 
 	if ! command -v node >/dev/null || ! command -v npm >/dev/null; then
 		_install_node 
