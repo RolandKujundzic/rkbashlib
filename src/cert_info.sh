@@ -23,11 +23,11 @@ function _cert_info {
 	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
 	dns=$(openssl x509 -in "$CERT_FULL" -text | grep "DNS:" | sed -E -e 's/,? ?DNS\:/ /g' | _trim)
 
-	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
-	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+' | sed 's/Subject: CN=//')
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'CN = .+\.[a-z]+' | grep -v 'Encrypt Authority' | sed 's/CN = //')
+	test -z "$domain" && domain=$(echo "$certinfo" | grep -E -o 'Subject\: CN=.+\.[a-z]+' | sed 's/Subject: CN=//')
 	
 	CERT_DOMAIN="$domain"
-	CERT_ISSUER=$(echo "$certinfo" | grep 'Issuer:' | sed -E 's/.+O = (.+), CN =.+/\1/')
+	CERT_ISSUER=$(echo "$certinfo" | grep 'Issuer:' | sed -E 's/.+O = (.+), CN =.+\.[a-z]+/\1/')
 	CERT_GMT=$(echo "$certinfo" | grep "GMT" | _trim)
 	CERT_DNS=$(echo "$certinfo" | grep "DNS:" | _trim)
 	CERT_UNTIL=$(echo "$certinfo" | grep "GMT" | grep -o -E 'Not After .+' | sed -E -e 's/.+\: (.+ GMT).*/\1/i') 
