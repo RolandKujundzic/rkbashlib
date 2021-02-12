@@ -6,7 +6,7 @@
 #
 # @global NODE_VERSION
 # @param remove (optional)
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2120
 #--
 function _install_node {
 	local a os_type curr_sudo

@@ -2606,7 +2606,7 @@ function _install_nginx {
 #
 # @global NODE_VERSION
 # @param remove (optional)
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC2120
 #--
 function _install_node {
 	local a os_type curr_sudo
@@ -4467,6 +4467,7 @@ function _php_server {
 
 #--
 # Start buildin php http server on ARG[host]:ARG[port] with ARG[script] as ARG[user]
+# shellcheck disable=SC200
 #--
 function _php_server_start {
 	local log server_pid
