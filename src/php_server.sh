@@ -56,7 +56,7 @@ function _php_server {
 
 #--
 # Start buildin php http server on ARG[host]:ARG[port] with ARG[script] as ARG[user]
-# shellcheck disable=SC200
+# shellcheck disable=SC2009
 #--
 function _php_server_start {
 	local log server_pid
