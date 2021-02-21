@@ -5108,6 +5108,9 @@ function _rks_app {
 		fi
 	fi
 
+	test -z "$APP_DIR" &&
+		APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+
 	test -z "${#SYNTAX_CMD[@]}" && _abort "SYNTAX_CMD is empty"
 	test -z "${#SYNTAX_HELP[@]}" && _abort "SYNTAX_HELP is empty"
 
