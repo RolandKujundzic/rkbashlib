@@ -6,7 +6,7 @@
 # @param directory path
 #--
 function _webserver_rw_dir {
-	test -d "$1" || _abort "no such directory $1"
+	_require_dir "$1"
 	local me server_user
 
 	if test -s "/etc/apache2/envvars"; then
@@ -18,7 +18,10 @@ function _webserver_rw_dir {
 		return
 	fi
 
-	_chmod 770 "$1"
+	_msg "find '$1' -type d -exec chmod 770 {} \\;"
+	find "$1" -type d -exec chmod 770 {} \;
+	_msg "find '$1' -type f -exec chmod 660 {} \\;"
+	find "$1" -type f -exec chmod 660 {} \;
 
 	me="$USER"
 	test -z "$SUDO_USER" || me="$SUDO_USER"
