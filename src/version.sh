@@ -34,9 +34,9 @@ function _version {
 		else
 			_abort "failed to convert $version to number"
 		fi
-	elif [[ $((flag & 2)) ]]; then
+	elif [[ $((flag & 2)) = 2 ]]; then
 		echo -n "${version%%.*}"
-	elif [[ $((flag & 4)) ]]; then
+	elif [[ $((flag & 4)) = 4 ]]; then
 		echo -n "${version%.*}"
 	else
 		echo -n "$version"
