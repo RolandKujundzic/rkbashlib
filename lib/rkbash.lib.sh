@@ -550,9 +550,9 @@ function _base64 {
 			echo "$1" | base64 -d
 		fi
 	elif [[ $((flag & 2)) = 2 ]]; then
-		base64 "$1"
+		base64 --wrap=0 "$1"
 	else
-		echo "$1" | base64
+		echo "$1" | base64 --wrap=0
 	fi
 }
 
