@@ -530,6 +530,33 @@ function _backup_file {
 }
 
 
+#--
+# Print base64 of input (or file content if flag == 1).
+#
+# @param input
+# @param optional flag (2^0 = decode, 2^1 = file input)
+#--
+function _base64 {
+	_require_program base64
+	test -z "$1" && _abort "Empty parameter"
+	local flag
+
+	flag=$(($2 + 0))
+
+	if [[ $((flag & 1)) = 1 ]]; then
+		if [[ $((flag & 2)) = 2 ]]; then
+			base64 -d "$1"
+		else
+			echo "$1" | base64 -d
+		fi
+	elif [[ $((flag & 2)) = 2 ]]; then
+		base64 "$1"
+	else
+		echo "$1" | base64
+	fi
+}
+
+
 test -z "$CACHE_DIR" && CACHE_DIR="$HOME/.rkbash/cache"
 test -z "$CACHE_REF" && CACHE_REF="sh/run ../rkbash/src"
 CACHE_OFF=
@@ -6282,9 +6309,9 @@ function _version {
 		else
 			_abort "failed to convert $version to number"
 		fi
-	elif [[ $((flag & 2)) ]]; then
+	elif [[ $((flag & 2)) = 2 ]]; then
 		echo -n "${version%%.*}"
-	elif [[ $((flag & 4)) ]]; then
+	elif [[ $((flag & 4)) = 4 ]]; then
 		echo -n "${version%.*}"
 	else
 		echo -n "$version"
