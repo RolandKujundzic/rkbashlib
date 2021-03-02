@@ -7,6 +7,7 @@
 #
 # @global NODE_VERSION NPM_VERSION
 # @export NODE_VERSION NPM_VERSION
+# shellcheck disable=SC2119
 #--
 function _node_current {
 	test -z "$NODE_VERSION" && NODE_VERSION=v15.6.0

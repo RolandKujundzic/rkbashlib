@@ -3959,6 +3959,7 @@ location ~ \.php$ { fastcgi_pass unix:/var/run/php5-fpm.sock; fastcgi_index inde
 #
 # @global NODE_VERSION NPM_VERSION
 # @export NODE_VERSION NPM_VERSION
+# shellcheck disable=SC2119
 #--
 function _node_current {
 	test -z "$NODE_VERSION" && NODE_VERSION=v15.6.0
@@ -6406,15 +6407,22 @@ function _webserver_rw_dir {
 		return
 	fi
 
-	_msg "find '$1' -type d -exec chmod 770 {} \\;"
-	find "$1" -type d -exec chmod 770 {} \;
-	_msg "find '$1' -type f -exec chmod 660 {} \\;"
-	find "$1" -type f -exec chmod 660 {} \;
-
 	me="$USER"
-	test -z "$SUDO_USER" || me="$SUDO_USER"
+	[[ "$me" = 'root' && -n "$SUDO_USER" ]] && me="$SUDO_USER"
 
 	_chown "$1" "$me" "$server_user"
+
+	if test "$me" = "$server_user"; then
+		_msg "find '$1' -type d -exec chmod 777 {} \\;"
+		find "$1" -type d -exec chmod 777 {} \; || _abort 'chmod failed'
+		_msg "chmod -R ugo+rw '$1'"
+		chmod -R ugo+rw "$1" || _abort 'chmod failed'
+	else
+		_msg "find '$1' -type d -exec chmod 770 {} \\;"
+		find "$1" -type d -exec chmod 770 {} \; || _abort 'chmod failed'
+		_msg "chmod -R ug+rw,o-rwx '$1'"
+		chmod -R ug+rw,o-rwx "$1" || _abort 'chmod failed'
+	fi
 }
 
 
