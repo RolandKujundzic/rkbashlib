@@ -787,11 +787,18 @@ function _cert_info {
 
 	if test -f "$1"; then
 		CERT_FULL="$1"
+		test -z "$CERT_KEY" && _cert_file "$1"
 	else
 		_cert_file "$1"
 		domain="$1"
 		test -z "$CERT_SUB" || domain="$CERT_SUB"
 	fi
+
+	local md5_priv md5_cert
+	md5_priv=$(openssl rsa -modulus -noout -in "$CERT_KEY" | openssl md5)
+	md5_cert=$(openssl x509 -modulus -noout -in "$CERT_FULL" | openssl md5)
+	[[ -z "$md5_cert" || "$md5_priv" != "$md5_cert" ]] && \
+		_abort "openssl md5 comparison failed\n$CERT_KEY\n$CERT_FULL"
 
 	local certinfo dns
 	certinfo=$(openssl x509 -text -noout -in "$CERT_FULL")
