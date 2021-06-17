@@ -1815,6 +1815,7 @@ function _dir_priv {
 #
 # @param string directory name
 # @param string download url
+# shellcheck disable=SC2143
 #--
 function _dl_unpack {
 	if test -d "$1"; then
@@ -1834,7 +1835,13 @@ function _dl_unpack {
 	if test "${archive##*.}" = "zip"; then
 		_msg "Unpack zip: unzip '$archive'"
 
-		if test -z "$(unzip -l "$archive" | grep "$1\$")"; then
+		local tdir tbase
+		tdir=$(dirname "$1")
+		tbase=$(basename "$1")
+
+		if [[ -d "$tdir" && -n "$(unzip -l "$archive" | grep "$tbase/\$")" ]]; then
+			unzip "$archive" -d "$tdir"
+		elif test -z "$(unzip -l "$archive" | grep "$1/\$")"; then
 			_mkdir "$1"
 			_cd "$1"
 			unzip "../$archive" || _abort "unzip '../$archive'"
