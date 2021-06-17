@@ -3916,8 +3916,8 @@ if (defined('SETTINGS_DB_NAME') && defined('SETTINGS_DB_PASS')) {
 	$pass= SETTINGS_DB_PASS;
 }
 else if (defined('SETTINGS_DSN') && defined('PATH_RKPHPLIB')) {
-	require(constant('PATH_RKPHPLIB').'ADatabase.php');
-	$dsn = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
+	require(constant('PATH_RKPHPLIB').'db/ADatabase.php');
+	$dsn = \rkphplib\db\ADatabase::splitDSN(SETTINGS_DSN);
 	$login = $dsn['login'];
 	$name = $dsn['name'];
 	$pass = $dsn['password'];
