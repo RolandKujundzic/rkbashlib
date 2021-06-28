@@ -6045,7 +6045,8 @@ function _syntax_check_php {
 	_require_global PATH_RKPHPLIB
 
 	{
-		echo -e "<?php\n\ndefine('APP_HELP', 'quiet');\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');\n"
+		echo -e "<?php\n\ndefine('APP_HELP', 'quiet');\ndefine('PATH_RKPHPLIB', '$PATH_RKPHPLIB');"
+		echo -e "define('DOCROOT', getcwd());\n"
 		echo -e "function _syntax_test(\$php_file) {\n  print \"\$php_file ... \";\n  include_once \$php_file;"
 		echo -n '  print "ok\n";'
 		echo -e "\n}\n"
