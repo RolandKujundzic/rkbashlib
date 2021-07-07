@@ -25,13 +25,17 @@ require valid-user"
 		_msg "add user ${SPLIT[1]} to $1/.htpasswd"
 		echo "${SPLIT[2]}" | htpasswd -i "$1/.htpasswd" "${SPLIT[1]}" 2>/dev/null
 
-		_chown "$1/.htpasswd" rk www-data
-		_chmod 660 "$1/.htpasswd"
+		if [[ "$1" =~ data/ ]]; then
+			_chown "$1/.htpasswd" rk www-data
+			_chmod 660 "$1/.htpasswd"
+		fi
 	else
 		_abort "invalid second parameter use deny|auth:user:pass"
 	fi
 
-	_chown "$1/.htaccess" rk www-data
-	_chmod 660 "$1/.htaccess"
+	if [[ "$1" =~ data/ ]]; then
+		_chown "$1/.htaccess" rk www-data
+		_chmod 660 "$1/.htaccess"
+	fi
 }
 
