@@ -67,12 +67,12 @@ function _confirm {
 
 	if test $((flag & 1)) -ne 1; then
 		default=n
-		echo -n -e "$msg  y [n]  "
+		echo -n -e "$msg  y \033[0;32m[n]\033[0m  "
 		read -r -n1 -t 10 CONFIRM
 		echo
 	else
 		default=y
-		echo -n -e "$msg  \033[0;35m[y]\033[0m n  "
+		echo -n -e "$msg  \033[0;32m[y]\033[0m n  "
 		read -r -n1 -t 3 CONFIRM
 		echo
 	fi
