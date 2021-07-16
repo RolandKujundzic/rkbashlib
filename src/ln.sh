@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #--
-# Link $2 to $1.
+# Link $2 to $1. 
 #
+# @global LN_SILENT_IF_EXISTS
 # @param source path
 # @param link path
 #--
@@ -18,7 +19,7 @@ function _ln {
 		old_target=$(realpath "$2")
 
 		if test "$target" = "$old_target"; then
-			_msg "Link $2 to $target already exists"
+			test -z "$LN_SILENT_IF_EXISTS" && _msg "Link $2 to $target already exists"
 			return
 		fi
 
