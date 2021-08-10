@@ -815,7 +815,9 @@ function _cert_info {
 	CERT_DOMAINS="$dns"
 
 	[[ "$CERT_DNS" =~ DNS:*.$domain ]] && return
-	[[ "$CERT_DNS" =~ DNS:$domain ]] || _abort "missing domain $domain in $CERT_FULL"
+	if [[ "$CERT_DNS" =~ DNS:$domain && "$CERT_FULL" != "/home/rk/.acme.sh/$domain/fullchain.cer" ]]; then
+		_abort "missing domain $domain in $CERT_FULL"
+	fi
 
 	for a in $2; do
 		[[ "$CERT_DNS" =~ DNS:$a.$domain ]] || _abort "missing domain $a.$domain in $CERT_FULL"
